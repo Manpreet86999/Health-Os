@@ -17,6 +17,7 @@ try {
   }
   const ps = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', `Start-Process 'http://localhost:${port}'`], { detached: true, stdio: 'ignore', windowsHide: true }); ps.unref();
 } catch (error) {
+  process.exitCode = 1;
   appendFileSync(log, `${new Date().toISOString()} ${error.message}\n`);
   const message = 'Health OS could not start. Please see your local Health Os logs folder.';
   spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', `Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('${message}', 'Health OS')`], { stdio: 'ignore', windowsHide: true }).unref();

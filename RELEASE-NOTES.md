@@ -2,12 +2,16 @@
 
 Health Os is here — a connected workspace for training, nutrition, recovery, health records, body progress, personal care, insights, Pods and automations.
 
+## Corrected Windows package
+
+The original Windows installer and portable ZIP were withdrawn and rebuilt to include `start.bat`, `requirement.txt` and `requirements.txt`. The version remains v0.1.0 as requested. Download the rebuilt Windows package and use the updated `SHA256SUMS.txt`; older copies do not include this launcher. Android is unchanged. This same-version replacement does not trigger an update notification in an existing v0.1.0 installation.
+
 ## Downloads
 
-- **Windows 10/11 x64:** `Health-OS-Setup-v0.1.0.exe`. Includes the compiled web app and official verified Node.js runtime. No developer-tool installation is required. The normal installer always asks for an installation folder, including updates.
+- **Windows 10/11 x64:** `Health-OS-Setup-v0.1.0.exe`. Includes the compiled web app and official verified Node.js runtime. Includes `start.bat` and `requirement.txt`. Double-click `start.bat` in your installation folder, or use the Health Os Start menu shortcut. No developer-tool installation is required. The normal installer always asks for an installation folder, including updates.
 - **Android 12+:** `Health-OS-v0.1.0.apk` (`app.healthos.mobile`, version code `2026100908`). Open the downloaded APK and approve installation in Android.
 - **Browser build:** `Health-OS-Web-v0.1.0.zip`, ready to serve on a web server.
-- **Windows portable files:** `Health-OS-Windows-Portable-v0.1.0.zip`. Extract to your chosen folder and open `Health Os.vbs`; the browser app and runtime are included.
+- **Windows portable files:** `Health-OS-Windows-Portable-v0.1.0.zip`. Extract to your chosen folder and double-click `start.bat`; the browser app and runtime are included.
 - **Integrity:** compare downloads with `SHA256SUMS.txt`.
 
 ## New release experience

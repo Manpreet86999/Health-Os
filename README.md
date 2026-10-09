@@ -6,7 +6,7 @@ Health Os brings training, nutrition, recovery, health records, body progress, p
 
 Get the [Windows installer and Android APK](https://github.com/Manpreet86999/Health-Os/releases/tag/v0.1.0).
 
-- **Windows:** `Health-OS-Setup-v0.1.0.exe`, Windows 10/11 x64. Choose the installation folder every time. The compiled web app and verified official Node.js runtime are included; users do not need npm, Java, Python or development tools. Open **Health Os** from the Start menu or desktop.
+- **Windows:** `Health-OS-Setup-v0.1.0.exe`, Windows 10/11 x64. Choose the installation folder every time. The compiled web app and verified official Node.js runtime are included; users do not need npm, Java, Python or development tools. Double-click **start.bat** in the installation folder, or open **Health Os** from the Start menu or desktop. The package includes **requirement.txt** describing its bundled dependencies.
 - **Android:** `Health-OS-v0.1.0.apk`, Android 12 or newer, package `app.healthos.mobile`, version code `2026100908`. Android asks for permission to install a downloaded APK.
 - **Web files:** `Health-OS-Web-v0.1.0.zip` contains the compiled browser app. Serve these files from a web server; opening `index.html` directly does not support browser modules.
 

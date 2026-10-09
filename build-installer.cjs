@@ -16,16 +16,19 @@ for (const name of ['serve-web.mjs', 'desktop-updater.mjs', 'launch-health-os.mj
 }
 fs.mkdirSync(path.join(stage, 'runtime'), { recursive: true });
 fs.copyFileSync(process.execPath, path.join(stage, 'runtime/node.exe'));
-fs.copyFileSync(path.join(root, 'Health Os.vbs'), path.join(stage, 'Health Os.vbs'));
+for (const name of ['Health Os.vbs', 'start.bat', 'requirement.txt', 'requirements.txt']) {
+  fs.copyFileSync(path.join(root, name), path.join(stage, name));
+}
 fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify({ name: 'health-os', version: pkg.version, type: 'module', private: true }, null, 2));
 fs.writeFileSync(path.join(stage, 'VERSION.txt'), `Health Os v${pkg.version}\nPublic release: https://github.com/Manpreet86999/Health-Os/releases\n`);
-fs.writeFileSync(path.join(stage, 'README.txt'), 'Health Os\r\nOpen Health Os from the Start menu or desktop.\r\nThe installer includes the Node.js runtime and compiled web app; npm, Python, Java and build tools are not required.\r\nUse your own cloud account. Internet is needed for sign-in, cloud sync and online services. AI and optional personal-worker features need their own configuration.\r\nYour browser stores the session and queued offline records. Sign in using the same browser after an update.\r\nLogs: %LOCALAPPDATA%\\Health Os\\logs\\desktop.log\r\n');
+fs.writeFileSync(path.join(stage, 'README.txt'), 'Health Os\r\nDouble-click start.bat, or open Health Os from the Start menu or desktop.\r\nThe installer includes the Node.js runtime and compiled web app; npm, Python, Java and build tools are not required.\r\nUse your own cloud account. Internet is needed for sign-in, cloud sync and online services. AI and optional personal-worker features need their own configuration.\r\nrequirement.txt documents the bundled runtime and optional source features.\r\nYour browser stores the session and queued offline records. Sign in using the same browser after an update.\r\nLogs: %LOCALAPPDATA%\\Health Os\\logs\\desktop.log\r\n');
 // Include the license shipped with the official Node runtime when available.
 const nodeLicense = path.join(root, '.build-tools/release-runtime/LICENSE');
 if (!fs.existsSync(nodeLicense)) throw new Error('Missing Node.js runtime license. Run the release preparation first.');
 fs.copyFileSync(nodeLicense, path.join(stage, 'runtime/LICENSE.txt'));
 const icon = path.join(root, 'src/client/public/favicon.ico');
 fs.copyFileSync(icon, path.join(stage, 'favicon.ico'));
+execFileSync(process.execPath, [path.join(root, 'scripts/verify-windows-package.mjs'), stage], { cwd: root, stdio: 'inherit' });
 const iss = `[Setup]
 AppId={{46A23601-216B-4B1F-979F-68033AA168C2}
 AppName=Health Os
