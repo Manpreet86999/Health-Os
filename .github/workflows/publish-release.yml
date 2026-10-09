@@ -1,0 +1,71 @@
+name: Build and publish Health Os
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: health-os-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          npm ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          sdkmanager 'build-tools;35.0.0'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate source and build Windows installer
+        shell: pwsh
+        run: |
+          npm run typecheck
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test scripts/release-logic.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build:installer
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build Android with the same distribution certificate
+        shell: pwsh
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if (!$env:ANDROID_KEYSTORE_BASE64 -or !$env:ANDROID_KEYSTORE_PASSWORD) { throw 'Distribution signing secrets are required. Do not generate a replacement key.' }
+          New-Item -ItemType Directory -Force scratch | Out-Null
+          $keystore = Join-Path (Get-Location) 'scratch/distribution.p12'
+          [IO.File]::WriteAllBytes($keystore,[Convert]::FromBase64String($env:ANDROID_KEYSTORE_BASE64))
+          $version = node -p "require('./package.json').version"
+          $code = node --input-type=module -e "import {releaseConfig} from './src/client/public/release-config.js'; console.log(releaseConfig.androidVersionCode)"
+          ./apps/health-os-mobile/scripts/build-review.ps1 -Keystore $keystore -StorePassword $env:ANDROID_KEYSTORE_PASSWORD -VersionCode $code -VersionName $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./apps/health-os-mobile/scripts/verify-review.ps1 -VersionCode $code -VersionName $version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item "outputs/apk-refinement/Health-OS-$version-$code-review.apk" "outputs/release-v$version/Health-OS-v$version.apk"
+      - name: Package and publish the new stable release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          $folder = "outputs/release-v$version"
+          Compress-Archive -LiteralPath 'dist/client' -DestinationPath "$folder/Health-OS-Web-v$version.zip"
+          Compress-Archive -Path 'installer/stage/*' -DestinationPath "$folder/Health-OS-Windows-Portable-v$version.zip"
+          $lines = Get-ChildItem -LiteralPath $folder -File | Where-Object { $_.Extension -in '.exe','.apk','.zip' } | ForEach-Object { '{0}  {1}' -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(),$_.Name }
+          [IO.File]::WriteAllLines((Join-Path (Get-Location) "$folder/SHA256SUMS.txt"),$lines,[Text.UTF8Encoding]::new($false))
+          gh release create "v$version" "$folder/Health-OS-Setup-v$version.exe" "$folder/Health-OS-v$version.apk" "$folder/Health-OS-Web-v$version.zip" "$folder/Health-OS-Windows-Portable-v$version.zip" "$folder/SHA256SUMS.txt" --title "Health Os v$version" --notes-file RELEASE-NOTES.md --target $env:GITHUB_SHA --latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

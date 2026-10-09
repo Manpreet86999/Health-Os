@@ -1,0 +1,3 @@
+Health Os v0.1.0
+Windows web app and Android
+Release channel: https://github.com/Manpreet86999/Health-Os

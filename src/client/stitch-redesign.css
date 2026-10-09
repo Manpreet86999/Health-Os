@@ -1,0 +1,583 @@
+/* Live component styling derived from the user's Stitch Health OS exports.
+   Loaded after legacy page styles so every existing workflow uses one system. */
+:root {
+  --stitch-primary:#074a35; --stitch-primary-hover:#27624b; --stitch-on-primary:#fff;
+  --stitch-heading:'Plus Jakarta Sans',Inter,ui-sans-serif,system-ui,sans-serif;
+  --font:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg-0:#f4fbf6; --bg-1:#fff; --bg-2:#eef5f0; --bg-elevated:#fff; --bg-inset:#f8fbf8;
+  --surface-1:#fff; --surface-2:#eef5f0; --surface-3:#e3eae5;
+  --surface-hover:#e8f0eb; --surface-active:#dceee2;
+  --text-primary:#161d1a; --text-secondary:#404944; --text-tertiary:#637168; --text-disabled:#7c8981;
+  --text-0:var(--text-primary); --text-1:var(--text-secondary); --text-2:var(--text-tertiary);
+  --text:var(--text-primary); --muted:var(--text-secondary); --text-inv:#fff;
+  --border-subtle:#dfe7e1; --border-default:#cbd6ce; --border-strong:#a5b5aa;
+  --line:var(--border-subtle); --line-strong:var(--border-default);
+  --accent:var(--stitch-primary); --accent-dim:var(--stitch-primary-hover); --accent-ink:var(--stitch-on-primary);
+  --accent-soft:#e3f1e8; --signal:var(--stitch-primary); --blue:var(--stitch-primary); --blue-bright:#2e6951;
+  --success:#27624b; --good:#27624b; --warning:#936219; --warn:#936219; --danger:#ba1a1a; --info:#426c80;
+  --today:#27624b; --train:#27624b; --eat:#52713a; --recover:#427567; --sleep:#6b6683;
+  --health:#ad3213; --body:#64755b; --care:#886347; --insights:#48667c; --supplements:#946329;
+  --cyan:#427567; --water:#426c80; --ai-purple:#6b6683; --ai-indigo:#48667c;
+  --app-gradient:linear-gradient(120deg,#074a35,#27624b); --brand-gradient:var(--app-gradient);
+  --app-gradient-soft:linear-gradient(120deg,#eef5f0,#f4fbf6);
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
+  --shadow-sm:0 1px 8px rgb(22 29 26 / 3%); --shadow-md:0 4px 20px rgb(22 29 26 / 4%);
+  --shadow-lg:0 16px 48px rgb(22 29 26 / 12%); --shadow-glow:none;
+  --hero-stat-bg:var(--surface-1); --hero-stat-border:var(--line); --hero-stat-icon-bg:var(--surface-2); --hero-stat-shadow:var(--shadow-sm);
+  --card-radius:12px; --control-radius:8px; --card-padding:24px;
+  font-family:var(--font); background:var(--bg-0); color-scheme:light;
+}
+body.dark {
+  --stitch-primary:#97d3b6; --stitch-primary-hover:#b2f0d2; --stitch-on-primary:#002115;
+  --bg-0:#151d19; --bg-1:#1d2721; --bg-2:#253229; --bg-elevated:#28382e; --bg-inset:#18231c;
+  --surface-1:#1d2721; --surface-2:#253229; --surface-3:#304135;
+  --surface-hover:#304135; --surface-active:#345340;
+  --text-primary:#ebf2ed; --text-secondary:#c0cdc4; --text-tertiary:#a0b1a5; --text-disabled:#89988e;
+  --text-0:var(--text-primary); --text-1:var(--text-secondary); --text-2:var(--text-tertiary);
+  --text:var(--text-primary); --muted:var(--text-secondary); --text-inv:#002115;
+  --border-subtle:#34453a; --border-default:#465b4d; --border-strong:#6d8575;
+  --line:var(--border-subtle); --line-strong:var(--border-default);
+  --accent:var(--stitch-primary); --accent-dim:var(--stitch-primary-hover); --accent-ink:var(--stitch-on-primary); --accent-soft:#2a4234;
+  --signal:var(--stitch-primary); --blue:var(--stitch-primary); --blue-bright:#b2f0d2;
+  --success:#97d3b6; --good:#97d3b6; --warning:#e6bc79; --warn:#e6bc79; --danger:#ffb4ab; --info:#aacddd;
+  --today:#97d3b6; --train:#97d3b6; --eat:#b0cb91; --recover:#a1cebc; --sleep:#c4b8dc;
+  --health:#ffb4a2; --body:#bacba7; --care:#e0b9a1; --insights:#aec8da; --supplements:#e6c28c;
+  --cyan:#a1cebc; --water:#aacddd; --ai-purple:#c4b8dc; --ai-indigo:#aec8da;
+  --app-gradient:linear-gradient(120deg,#97d3b6,#b2f0d2); --brand-gradient:var(--app-gradient);
+  --app-gradient-soft:linear-gradient(120deg,#253229,#1d2721);
+  --shadow-sm:0 1px 8px rgb(0 0 0 / 8%); --shadow-md:0 4px 20px rgb(0 0 0 / 10%); --shadow-lg:0 16px 48px rgb(0 0 0 / 25%);
+  --hero-stat-bg:var(--surface-1); --hero-stat-border:var(--line); --hero-stat-icon-bg:var(--surface-2);
+  background:var(--bg-0); color-scheme:dark;
+}
+html,html:has(body.dark),body,body.dark {background:var(--bg-0)}
+body {font:14px/1.55 var(--font);color:var(--text-primary)}
+.os-frame,.os-frame[data-section] {--accent:var(--stitch-primary);--accent-ink:var(--stitch-on-primary);--accent-soft:color-mix(in srgb,var(--accent) 10%,var(--surface-1));--bio-accent:var(--accent);--bio-dim:var(--accent-soft);--surface:var(--surface-1);--card-fill:var(--surface-1);--stitch-sidebar-width:64px;min-height:100dvh}
+.os-frame :is(h1,h2,.page-title,.hero-title,.dash-title) {font-family:var(--stitch-heading);letter-spacing:-.025em}
+.os-frame h1,.page-title {font-size:clamp(26px,2.4vw,36px);line-height:1.25;font-weight:600}
+.os-frame h2 {font-size:20px;font-weight:600;line-height:1.35}
+.os-frame h3 {font-weight:600;line-height:1.45}
+.stitch-skip-link {position:fixed;top:8px;left:280px;transform:translateY(-200%);z-index:10010;background:var(--stitch-primary);color:var(--stitch-on-primary);padding:12px 18px;border-radius:8px}
+.stitch-skip-link:focus {transform:none}
+.os-frame :is(button,a,input,select,textarea):focus-visible {outline:2px solid var(--stitch-primary);outline-offset:3px;box-shadow:none}
+.os-frame :is(input,select,textarea):focus {border-color:var(--stitch-primary);box-shadow:0 0 0 3px var(--accent-soft)}
+.os-frame button:hover {filter:none}
+.os-frame button:disabled {opacity:.5;cursor:not-allowed}
+.os-frame .btn {border-radius:8px;min-height:40px;font-size:13px;line-height:1.4;font-weight:500;padding:10px 16px;letter-spacing:0;box-shadow:none;white-space:normal}
+.os-frame .btn-hot,.btn-hot {background:var(--stitch-primary);color:var(--stitch-on-primary);border:1px solid transparent;box-shadow:none}
+.os-frame .btn-hot:hover,.btn-hot:hover {background:var(--stitch-primary-hover)}
+.os-frame :is(.btn-soft,.btn-ghost) {background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border-default)}
+.os-frame .btn-soft:hover {background:var(--surface-2)}
+.os-frame .btn-danger {background:color-mix(in srgb,var(--danger) 9%,var(--surface-1));border-color:var(--danger);color:var(--danger)}
+.os-frame .btn-sm {min-height:34px;padding:7px 11px;font-size:12px}
+.os-frame :is(.input,input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) {background:var(--bg-inset);border:1px solid var(--border-default);border-radius:8px;color:var(--text-primary);font:14px/1.5 var(--font);min-height:42px;max-width:100%}
+.os-frame input::placeholder,.os-frame textarea::placeholder {color:var(--text-tertiary)}
+.os-frame input[type=checkbox],.os-frame input[type=radio] {accent-color:var(--stitch-primary);width:16px;height:16px}
+.os-frame :is(.glass,.card,.page-panel,.health-card,.health-panel,.dash-panel,.metric-light,.bio-metric) {background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--shadow-sm);backdrop-filter:none}
+.os-frame :is(.page-hero,.page-header,.bio-page-head) {background:transparent;border:0;border-radius:0;box-shadow:none;padding:0 0 20px;margin:0}
+.os-frame :is(.page-eyebrow,.bio-eyebrow,.health-overline) {font-size:11px;letter-spacing:.08em;font-weight:500;color:var(--text-tertiary)}
+.os-frame :is(.page-sub,.hero-sub) {font-size:14px;line-height:1.6;color:var(--text-secondary)}
+.os-frame :is(.pill,.chip) {background:var(--surface-2);border-color:var(--border-subtle);border-radius:6px;font-size:12px;letter-spacing:0;color:var(--text-secondary)}
+.os-frame :is(.pill-green,.ready-ok) {background:var(--accent-soft);color:var(--stitch-primary)}
+.os-frame :is(.pill-orange,.ready-caution) {background:color-mix(in srgb,var(--warning) 10%,var(--surface-1));color:var(--warning)}
+.metric-value,.bio-metric strong,.health-metric-number,.domain-hero-stats strong {font-variant-numeric:tabular-nums;font-weight:500;letter-spacing:-.025em}
+.os-frame :is(.page-panel,.health-card,.flow-workspace>.card,.bio-os>.card) {padding:24px}
+.os-frame :is(.form-field,.flow-field-grid>label,.bio-form-grid>label) {font-size:13px;gap:8px}
+.os-frame :is(.stack,.flow-workspace,.page-shell) {gap:24px}
+.os-frame :is(.grid-auto,.flow-field-grid,.bio-form-grid,.care-form-grid) {gap:20px}
+.os-frame :is(.page-progress,.progress-track,.health-progress-track,.health-mini-bar) {background:var(--surface-3);height:6px;border:0}
+.os-frame :is(.progress-fill,.health-progress-track>i,.health-mini-bar>i) {background:var(--stitch-primary);box-shadow:none}
+
+/* Two sidebars: persistent domain rail and contextual page drawer. */
+.os-frame .os-rail {inset:0 auto 0 0;width:var(--stitch-sidebar-width);padding:18px 8px 14px;gap:6px;background:var(--surface-2);border-right:1px solid var(--border-subtle);border-radius:0;z-index:85;box-shadow:none}
+.os-frame .os-logo-link {margin:0 0 16px;min-height:40px;display:flex;align-items:center;justify-content:center}
+.os-frame .os-rail-item {width:42px;min-height:42px;border-radius:9px;color:var(--text-tertiary);background:transparent}
+.os-frame .os-rail-item:is(.selected,.previewing,:hover) {color:var(--stitch-primary);background:var(--accent-soft)}
+.os-frame .os-rail-item.selected::before {background:var(--stitch-primary);left:-9px;width:3px;border-radius:2px}
+.os-frame .os-sidebar {inset:0 auto 0 var(--stitch-sidebar-width);width:min(264px,calc(100vw - var(--stitch-sidebar-width)));padding:24px 16px 16px;background:var(--surface-1);border-right:1px solid var(--border-subtle);box-shadow:12px 0 32px rgb(22 29 26 / 8%);border-radius:0;z-index:84;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain}
+.os-frame .os-sidebar-brand {margin-bottom:28px;color:var(--stitch-primary)}
+.os-frame .os-sidebar-heading {margin-bottom:16px;letter-spacing:0;color:var(--text-primary)}
+.os-frame .os-sidebar-heading strong {font:600 23px/1.4 var(--stitch-heading)}
+.os-frame .os-sidebar-heading .bio-eyebrow {font-size:9px;letter-spacing:.07em;margin-bottom:6px}
+.os-frame .os-sidebar-close {border:1px solid var(--border-subtle);border-radius:7px;color:var(--text-secondary)}
+.os-frame .os-page-link {min-height:42px;font-size:13px;border-radius:8px;padding:11px 12px;color:var(--text-secondary);background:transparent}
+.os-frame .os-page-link:is(.selected,:hover) {background:var(--accent-soft);color:var(--text-primary)}
+.os-frame .os-nav-group {font-size:10px;letter-spacing:.07em;color:var(--text-tertiary);padding-top:20px}
+.os-frame .os-sidebar-assistant {margin-top:auto;background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:10px;color:var(--stitch-primary);padding:14px 10px;box-shadow:none}
+.os-frame .os-sidebar-assistant small,.os-frame .os-sidebar-foot {color:var(--text-tertiary);letter-spacing:0}
+.os-frame .os-drawer-scrim {display:none}
+.os-frame .os-main,.os-frame.os-sidebar-open .os-main {margin-left:var(--stitch-sidebar-width);min-width:0}
+.os-frame .os-topbar {position:sticky;top:0;height:72px;min-height:72px;max-width:none;margin:0;padding:14px 32px;background:var(--bg-0);border:0;border-bottom:1px solid var(--border-subtle);border-radius:0;backdrop-filter:none;box-shadow:none;z-index:60;gap:24px}
+.os-frame .os-header-left {display:flex;flex:1;gap:12px;min-width:0}
+.os-frame .os-search-control {width:100%;max-width:360px;min-height:40px;background:var(--surface-1);border-color:var(--border-subtle);border-radius:8px;color:var(--text-tertiary);font-size:12px;padding:9px 12px}
+.os-search-control kbd {white-space:nowrap}
+.os-frame .os-header-actions {gap:10px!important}
+.os-frame .os-header-date {font-size:12px;color:var(--text-secondary)}
+.os-frame .os-avatar {background:var(--accent-soft);color:var(--stitch-primary);border:1px solid var(--border-default);width:34px;height:34px}
+.os-frame .os-voice-button {width:36px;height:36px;border-radius:8px;background:transparent;border:1px solid var(--border-subtle);color:var(--text-secondary);box-shadow:none}
+.os-frame .os-capture-button {width:auto;height:38px;min-height:38px;border-radius:8px;padding:8px 12px;box-shadow:none;font-size:12px;background:var(--stitch-primary);color:var(--stitch-on-primary)}
+.os-frame .os-all-pages-button {font-size:11px;min-height:36px;border-color:var(--border-subtle);color:var(--text-secondary);border-radius:8px}
+.os-frame .os-content {padding:0 32px 48px;max-width:1600px;margin:0 auto;min-width:0;outline:none}
+.primary-workspace {min-width:0;gap:24px!important}
+.primary-workspace>div {min-width:0}
+.stitch-section-nav {display:flex;gap:24px;align-items:center;overflow-x:auto;min-height:58px;border-bottom:1px solid var(--border-default);scrollbar-width:thin;max-width:100%}
+.stitch-section-nav button {position:relative;flex-shrink:0;min-height:56px;padding:16px 0;background:none;border:0;border-bottom:2px solid transparent;color:var(--text-secondary);font-size:13px;font-weight:500;white-space:nowrap}
+.stitch-section-nav button[aria-current=page] {color:var(--stitch-primary);border-bottom-color:var(--stitch-primary)}
+.os-frame .primary-view-tabs {padding:0;border:0;background:transparent;box-shadow:none;display:flex;gap:8px;flex-wrap:wrap;overflow:visible;margin:0}
+.os-frame .primary-view-tabs .page-tab {font-size:12px;padding:8px 12px;min-height:36px;border-radius:7px;border:1px solid transparent;color:var(--text-secondary);background:transparent;box-shadow:none}
+.os-frame .primary-view-tabs .page-tab.active {background:var(--surface-1);color:var(--stitch-primary);border-color:var(--border-default)}
+.os-frame .os-workout-region {padding:16px 32px 24px}
+
+/* Quiet, editorial headers and plain metrics for the domain workspaces. */
+.os-frame .domain-hero,body.dark .os-frame .domain-hero {background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;min-height:0;grid-template-columns:minmax(0,1fr) 200px;gap:24px}
+.os-frame .domain-hero-glow {display:none}
+.os-frame .domain-hero-chips {gap:12px;margin:0 0 16px}
+.os-frame .domain-hero-chips>span {padding:0;border:0;background:none;color:var(--text-tertiary);font-size:11px;letter-spacing:0}
+.os-frame .domain-hero-chips>span:first-child {color:var(--stitch-primary)}
+.os-frame .domain-hero-kicker {display:none}
+.os-frame .domain-hero h1 {font-size:clamp(26px,2.5vw,36px);margin:0 0 10px;max-width:800px;font-weight:600;line-height:1.3}
+.os-frame .domain-hero-description {font-size:14px;line-height:1.6;max-width:65ch;margin:0 0 20px}
+.os-frame .domain-hero-actions {margin:0;gap:10px}
+.os-frame .domain-hero-actions .btn {font-size:13px;border-radius:8px;min-height:40px;gap:10px}
+.os-frame .domain-hero-metric {padding:16px 20px;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;gap:10px;align-self:start}
+.stitch-summary-metric {display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+.stitch-summary-metric strong {font-size:38px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--stitch-primary)}
+.stitch-summary-metric span {font-size:12px;color:var(--text-secondary)}
+.os-frame .domain-hero-metric>p {font-size:11px;margin:0}
+.os-frame .domain-hero-stats {padding:18px 0 0;border-top:1px solid var(--border-default);gap:24px}
+.os-frame .domain-hero-stats>div {padding-left:24px;border-left:1px solid var(--border-default)}
+.os-frame .domain-hero-stats>div:first-child {padding-left:0;border-left:0}
+.os-frame .domain-hero-stats span {font-size:12px;color:var(--text-tertiary)}
+.os-frame .domain-hero-stats strong {font-size:24px;font-weight:500}
+.os-frame :is(.overview-destinations>button,.overview-signals>button,.recovery-glance>button) {border-radius:12px;background:var(--surface-1);border-color:var(--border-subtle);padding:22px;box-shadow:none}
+.os-frame .overview-destinations>button:hover {transform:none;background:var(--surface-2);border-color:var(--border-default)}
+.os-frame .overview-tile-icon {background:var(--surface-2);border:0;border-radius:10px;color:var(--stitch-primary)}
+.os-frame .overview-destinations small {font-size:13px}
+.os-frame :is(.overview-note,.sleep-hero,.recovery-snapshot,.pain-selector) {border-radius:12px;padding:24px;background:var(--surface-1);border:1px solid var(--border-subtle);box-shadow:none}
+.os-frame .overview-note>svg {opacity:.25}
+.os-frame .overview-signals strong {font-size:32px;font-weight:500}
+.os-frame :is(.flow-section-title h2,.health-panel-heading h2) {font-size:17px}
+.os-frame :is(.state-panel,.empty-state,.bio-empty,.page-empty,.signal-empty) {background:var(--surface-2);border-radius:10px;border-color:var(--border-default);padding:24px}
+.os-frame .state-symbol {border-radius:8px;color:var(--stitch-primary);background:var(--surface-1)}
+.os-frame :is(.health-calendar,.calendar-heading,.health-calendar-days) {border-radius:12px}
+.os-frame .calendar-date {border-radius:8px}
+.os-frame .calendar-date.is-selected {background:var(--stitch-primary);color:var(--stitch-on-primary)}
+.os-frame .signal-chart-readout {font-size:12px}
+.os-frame .signal-chart-axis {font-size:11px}
+
+/* Today: task first, then the day agenda; secondary summaries are collapsible. */
+.health-dashboard {display:flex;flex-direction:column;gap:24px}
+.os-frame .health-greeting {display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:0;background:none;min-height:0}
+.health-greeting h1 {font-size:30px!important;margin:4px 0 8px!important;line-height:1.35!important;letter-spacing:-.03em!important}
+.health-greeting h1>svg {display:none}
+.health-greeting p {font-size:14px;color:var(--text-secondary)}
+.os-frame .health-date-pill {border-radius:8px;background:var(--surface-1);border-color:var(--border-default);font-size:12px;min-height:38px;padding:8px 12px}
+.os-frame .visual-quick-actions {display:flex;flex-wrap:wrap;padding:0;border:0;background:none;gap:10px}
+.visual-quick-actions>span {font-size:10px;letter-spacing:.08em;margin-right:2px;color:var(--text-tertiary)}
+.os-frame .visual-quick-actions button {background:var(--surface-1);border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:8px;min-height:36px;font-size:12px;box-shadow:none}
+.os-frame .health-dashboard-layout {grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}
+.health-dashboard-center {display:flex;flex-direction:column;gap:24px;min-width:0}
+.os-frame .health-priority-row {display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+.os-frame .health-next-action {position:relative;background:var(--surface-1);border:1px solid var(--border-subtle);border-left:3px solid var(--stitch-primary);padding:24px;min-height:0}
+.health-panel-heading {gap:12px;align-items:center}
+.os-frame .health-next-action .health-panel-heading h2 {color:var(--stitch-primary);font-size:12px;font-family:var(--font);text-transform:uppercase;letter-spacing:.07em}
+.os-frame .health-next-action .health-panel-heading>span {font-size:11px;color:var(--text-tertiary)}
+.os-frame .health-next-body {margin:20px 0;gap:16px;min-height:0}
+.os-frame .health-next-icon {background:var(--accent-soft);border:0;color:var(--stitch-primary);width:44px;height:44px;border-radius:10px}
+.os-frame .health-next-body h3 {font:600 23px/1.35 var(--stitch-heading);letter-spacing:-.025em;margin:0 0 6px}
+.os-frame .health-next-body p {font-size:13px;line-height:1.6;max-width:60ch;color:var(--text-secondary)}
+.os-frame .health-next-buttons {margin:0;display:flex;justify-content:flex-start;gap:10px}
+.os-frame .health-next-buttons .health-next-primary {background:var(--stitch-primary);color:var(--stitch-on-primary);flex:none;min-width:180px}
+.os-frame .health-ready {padding:20px 24px;background:var(--surface-1);border-color:var(--border-subtle)}
+.os-frame .health-ready-content {display:grid;grid-template-columns:140px minmax(0,1fr);gap:20px;margin-top:12px;align-items:center}
+.os-frame .health-contributors {display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.os-frame .health-contributors>button {background:var(--surface-2);border:0;border-radius:8px;min-height:64px;gap:10px;padding:10px}
+.os-frame .health-contributors strong {font-size:19px;font-weight:500}
+.os-frame .health-contributors em {font-size:11px}
+.os-frame .health-icon-tile {background:var(--surface-1);border:0;color:var(--accent);border-radius:8px}
+.os-frame .health-readiness-caption {font-size:11px;margin-top:12px}
+.os-frame .health-dashboard-aside {display:flex;flex-direction:column;gap:20px;position:static}
+.os-frame .health-dashboard-aside .health-panel {padding:20px}
+.os-frame .health-dashboard-aside .health-panel h2 {font-size:14px}
+.os-frame .health-dashboard-aside .health-panel p {font-size:12px;line-height:1.6}
+.os-frame .health-calendar-days button.active {background:var(--stitch-primary);color:var(--stitch-on-primary);border-color:transparent}
+.os-frame .health-calendar-days button {border-radius:8px;min-height:64px}
+.os-frame .health-progress-items strong,.os-frame .health-week-stats {font-size:12px}
+.os-frame .health-health-note {background:var(--surface-2);border:0}
+.os-frame .health-bottom-grid {order:2;grid-template-columns:minmax(0,1fr);gap:24px}
+.os-frame .health-bottom-grid .health-metrics {display:block}
+.os-frame .health-timeline {padding:24px}
+.os-frame .health-timeline-list>button {padding:16px 0;background:none;border-radius:0;border-bottom:1px solid var(--border-subtle)}
+.os-frame .health-insights {order:4;padding:24px}
+.os-frame .health-insight-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px}
+.os-frame .health-insight-grid article {background:var(--surface-2);border:0;border-radius:10px;padding:18px}
+.os-frame .health-insight-grid article p {font-size:13px}
+.os-frame .health-insight-icon {color:var(--stitch-primary)}
+.os-frame .visual-workout-card {order:3;display:grid;grid-template-columns:minmax(0,1fr) 34%;min-height:190px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border-subtle);isolation:isolate;color:var(--text-primary);box-shadow:none;margin:0}
+.os-frame .visual-workout-card::after {background:linear-gradient(90deg,var(--surface-2) 46%,transparent)}
+.os-frame .visual-workout-card>img,.os-frame .visual-workout-card>.health-os-image {grid-column:2;grid-row:1;left:auto;right:0;width:100%;height:100%;opacity:.85}
+.os-frame .visual-workout-copy {grid-column:1;grid-row:1;padding:24px;max-width:none;position:relative;z-index:2}
+.os-frame .visual-workout-copy h2 {font-size:23px;color:var(--text-primary)}
+.os-frame .visual-workout-copy p,.os-frame .visual-workout-copy .bio-eyebrow {color:var(--text-secondary)}
+.stitch-domain-summary {order:5;border:1px solid var(--border-subtle);border-radius:12px;background:var(--surface-1)}
+.stitch-domain-summary>summary {list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:18px 22px;font-size:13px;font-weight:500;min-height:56px}
+.stitch-domain-summary>summary::-webkit-details-marker {display:none}
+.stitch-domain-summary>summary>span {display:flex;align-items:center;gap:10px}
+.stitch-domain-summary>summary>span:last-child {font-size:11px;color:var(--text-tertiary);font-weight:400}
+.stitch-domain-summary[open]>summary {border-bottom:1px solid var(--border-subtle)}
+.os-frame .health-domain-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px}
+.os-frame .health-domain-card {background:var(--surface-2);border:0;border-radius:10px;min-height:180px;box-shadow:none;padding:18px}
+.os-frame .health-domain-card::before,.os-frame .health-domain-card::after {content:none}
+.os-frame .health-domain-card h2 {font-size:15px}.os-frame .health-domain-value {font-size:22px;font-weight:500}
+.os-frame .health-domain-card p {font-size:12px}
+.os-frame .health-quick-capture {order:6;background:var(--surface-1);padding:20px;flex-wrap:wrap;border-radius:12px}
+.os-frame .health-capture-options button {border-radius:8px;background:var(--surface-2);border:1px solid transparent;min-height:56px;color:var(--text-secondary)}
+.os-frame .health-detail-section {order:7;border-radius:12px}
+.os-frame .health-detail-section>summary {padding:18px 22px;font-size:13px}
+.os-frame .health-detail-section>summary+* {margin-top:16px}
+.os-frame .health-empty {min-height:0;padding:24px 12px;color:var(--text-secondary)}
+.os-frame .health-panel-heading>button,.os-frame .health-panel-link,.os-frame .flow-text-button {color:var(--stitch-primary);font-size:12px}
+
+/* Active workout: a desktop queue and two-column exercise/logging console. */
+.os-frame .tracker-shell {max-width:none;margin:0;display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;align-items:start}
+.stitch-workout-heading {grid-column:1/-1;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.stitch-workout-heading .page-title {margin:5px 0 8px}.stitch-workout-heading p {margin:0}
+.stitch-session-plan {grid-column:1;grid-row:2/span 4;position:sticky;top:92px;min-width:0;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;padding:18px 14px}
+.stitch-session-plan h2 {font-size:15px;margin:6px 0 18px}
+.stitch-session-plan ol {list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.stitch-session-plan li {display:flex;gap:10px;padding:12px 8px;border-radius:8px;color:var(--text-secondary)}
+.stitch-session-plan li[aria-current=step] {background:var(--accent-soft);color:var(--stitch-primary)}
+.stitch-session-plan li.is-complete {color:var(--text-tertiary)}
+.stitch-session-plan li strong {display:block;font-size:12px;font-weight:500;overflow-wrap:anywhere}
+.stitch-session-plan li small {display:block;font-size:10px;color:var(--text-tertiary);margin-top:5px;overflow-wrap:anywhere}
+.stitch-exercise-index {font-size:11px;padding-top:2px;flex-shrink:0}
+.stitch-session-plan>p {font-size:11px;line-height:1.6;margin:20px 0 0}
+.os-frame .tracker-shell>.tracker-top,.os-frame .tracker-shell>.page-panel,.os-frame .tracker-shell>.sticky-actions {grid-column:2;min-width:0}
+.os-frame .tracker-top {position:static;background:var(--surface-1);border:1px solid var(--border-subtle);padding:16px;border-radius:10px;box-shadow:none;backdrop-filter:none}
+.os-frame .stitch-session-meta {grid-template-columns:minmax(0,1fr) minmax(0,1fr) 100px;gap:12px;align-items:center}
+.os-frame .stitch-session-meta .metric-light {padding:0;border:0;background:transparent}
+.os-frame .stitch-workout-console {display:grid;grid-template-columns:minmax(210px,.8fr) minmax(0,1.2fr);align-items:start;padding:0}
+.os-frame .tracker-exercise-hero {border:0;border-right:1px solid var(--border-subtle);border-radius:0;background:var(--surface-2);color:var(--text-primary);padding:20px;text-align:left;min-height:100%;box-shadow:none}
+.os-frame .tracker-current-image {max-height:150px!important;height:150px!important;border-radius:8px;object-fit:cover;min-height:0!important;margin-bottom:18px}
+.os-frame .tracker-exercise-hero .hero-title {font-size:24px!important;line-height:1.3;color:var(--text-primary)}
+.os-frame .tracker-exercise-hero .hero-sub {font-size:12px}
+.os-frame .tracker-exercise-hero .prev-banner,.os-frame .tracker-exercise-hero .suggest-banner {font-size:12px;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:8px;padding:12px;color:var(--text-secondary);line-height:1.6}
+.os-frame .stitch-set-workspace {padding:20px!important;gap:18px;min-width:0;display:flex;flex-direction:column}
+.os-frame .stitch-set-workspace>.flash-deck {order:1}
+.os-frame .stitch-set-workspace>.quick-row {order:0}
+.os-frame .stitch-set-workspace>.stitch-rest-control {order:2}
+.os-frame .stitch-set-workspace>textarea {order:3;min-height:70px}
+.os-frame .stitch-set-workspace>.row {order:4}
+.os-frame .stitch-set-workspace>details {order:5}
+.stitch-plate-tools {border:1px solid var(--border-subtle);border-radius:8px;background:var(--surface-1)}
+.stitch-plate-tools>summary {cursor:pointer;padding:12px 14px;font-size:12px;font-weight:500;color:var(--text-secondary)}
+.stitch-plate-tools>.card {border:0!important;box-shadow:none!important}
+.os-frame .stitch-set-workspace>.plate-calc {order:5}
+.os-frame .set-card {padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;border:1px solid var(--border-default);border-radius:10px;background:var(--surface-1);box-shadow:none}
+.os-frame .set-card .set-num {grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:none;border-bottom:1px solid var(--border-subtle);border-radius:0;padding:0 0 12px;color:var(--stitch-primary);font-size:16px;font-weight:600}
+.os-frame .set-card .set-num .subtle {font-size:10px;font-weight:400}
+.os-frame .set-card .input {font-size:16px;min-height:44px;border-radius:7px;font-weight:500}
+.os-frame .set-card .metric-label {font-size:11px;text-transform:none;letter-spacing:0;margin-bottom:6px}
+.os-frame .quick-btn {border-radius:6px;background:var(--surface-2);color:var(--text-secondary);border:1px solid var(--border-subtle);font-size:11px;padding:6px 9px;min-height:30px}
+.os-frame .flash-deck {background:none;border:0;border-radius:0;padding:0;box-shadow:none;min-width:0}
+.os-frame .flash-meta {font-size:11px;text-transform:none;letter-spacing:0;color:var(--text-tertiary)}
+.os-frame .flash-stack {perspective:none;min-height:0}
+.os-frame .flash-panel {transform:none!important;animation:none;background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+.os-frame .flash-panel[hidden] {display:none}
+.os-frame .flash-panel::before,.os-frame .flash-panel::after {content:none}
+.os-frame .flash-progress {margin:10px 0;height:3px}
+.os-frame .flash-progress .filled {background:var(--stitch-primary)}
+.os-frame .flash-navigation {margin-top:12px;gap:8px}.os-frame .flash-navigation>span {font-size:10px}
+.os-frame .stitch-rest-control .rest-timer {background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:8px;padding:12px;display:flex;flex-wrap:wrap;gap:12px;color:var(--text-primary);box-shadow:none}
+.os-frame .stitch-rest-control .rest-timer .btn {font-size:11px;min-height:30px;padding:6px 8px}
+.os-frame .tracker-shell>.sticky-actions {position:sticky;bottom:12px;z-index:10;padding:12px;background:var(--surface-1);border:1px solid var(--border-default);border-radius:10px;box-shadow:var(--shadow-md);gap:8px;display:flex;flex-wrap:wrap}
+.os-frame .tracker-shell>.sticky-actions .btn {flex:1;min-width:0}
+.os-frame .tracker-shell .tracker-pr-flash {grid-column:1/-1}
+
+/* Domain details reuse the same cards, tables, catalogs and form treatment. */
+.os-frame :is(.nutrition-overview,.nutrition-complete,.water-dashboard,.sleep-hero,.recovery-snapshot,.bio-hero,.care-profile-hero) {background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:none;color:var(--text-primary)}
+.os-frame :is(.nutrition-macros,.nutrient-grid,.bio-grid,.recovery-glance) {gap:18px}
+.os-frame :is(.nutrition-macros>div,.nutrient-grid>div,.sleep-summary>div,.bio-baseline) {background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:10px;padding:18px}
+.os-frame :is(.meal-slot,.food-card,.meal-plan-entry,.bio-record,.bio-search-result,.care-item,.care-product-card) {border:1px solid var(--border-subtle);background:var(--surface-1);border-radius:10px;box-shadow:none}
+.os-frame :is(.meal-slots,.food-library-grid) {gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.os-frame .meal-diary-entry {background:var(--surface-2);border:0;border-bottom:1px solid var(--border-subtle);border-radius:8px;padding:14px;gap:14px}
+.os-frame .meal-slot h2 {font-size:17px}.os-frame .meal-slot-symbol {background:var(--surface-2);border-radius:8px;color:var(--stitch-primary)}
+.stitch-diary-layout {display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}
+.stitch-diary-nutrition {grid-column:2;grid-row:1;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;padding:20px;position:sticky;top:96px;min-width:0}
+.stitch-diary-nutrition>h2 {font-size:17px;margin:0 0 20px}
+.os-frame .stitch-diary-layout>.meal-slots {grid-column:1;grid-row:1;grid-template-columns:1fr;gap:18px}
+.os-frame .stitch-diary-nutrition .nutrition-macros {display:flex;flex-direction:column;gap:12px}
+.os-frame .stitch-diary-nutrition .nutrition-macros>div {padding:14px}
+.os-frame .stitch-diary-layout .meal-slot {padding:20px}
+.os-frame .stitch-diary-layout .meal-slot>.flow-section-title {margin:0 0 14px}
+.os-frame .stitch-diary-layout .meal-empty-action {background:var(--surface-2);border:1px dashed var(--border-default);border-radius:8px;min-height:52px;font-size:12px;color:var(--text-secondary)}
+.os-frame .food-card img {border-radius:8px}
+.os-frame :is(.flow-start-card,.flow-management-row,.journey-day-summary) {background:var(--surface-1);border-color:var(--border-subtle);border-radius:10px;box-shadow:none}
+.os-frame .journey-day-summary {padding:14px 18px;min-height:0}
+.os-frame :is(.flow-choices button,.flow-toggle button,.flow-choices label) {border-radius:7px;box-shadow:none}
+.os-frame :is(.flow-choices button.active,.flow-choices button[aria-pressed=true],.flow-toggle button.active) {background:var(--accent-soft);color:var(--stitch-primary);border-color:var(--stitch-primary)}
+.os-frame .bio-contributor {padding:14px 0;border-color:var(--border-subtle);font-size:13px}
+.os-frame .bio-record-list {gap:12px}
+.os-frame .bio-record-meta {font-size:11px;color:var(--text-tertiary)}
+.os-frame .bio-timeline-dot {background:var(--stitch-primary);box-shadow:none}
+.os-frame .correlation-value {font-weight:500;color:var(--stitch-primary)}
+.os-frame :is(.bio-spark,.signal-chart) {color:var(--stitch-primary)}
+.os-frame .dash-hero,body.dark .os-frame .dash-hero {background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:none;color:var(--text-primary);padding:28px}
+.os-frame :is(.dash-hero-grid,.dash-hero-orbs,.winter-arc-snow) {display:none}
+.os-frame .dash-hero :is(.dash-title,.dash-mission-text,strong) {color:var(--text-primary)}
+.os-frame .dash-hero :is(.dash-kicker,.dash-sub,.dash-mission-label,.dash-chip,.subtle) {color:var(--text-secondary)}
+.os-frame :is(.dash-chip,.dash-meta-chip,.dash-status-row .pill) {background:var(--surface-2);border-color:var(--border-subtle);border-radius:6px}
+.os-frame .dash-panel {border-radius:12px;padding:24px}
+.os-frame .dash-panel h2 {font-size:18px}
+.os-frame .dash-ex-row {border-radius:8px;background:var(--surface-2);padding:14px}
+.os-frame .dash-ex-idx {background:var(--surface-1);color:var(--stitch-primary);border-radius:6px}
+.os-frame .dash-day-tab {border-radius:8px}.os-frame .dash-day-tab.active {background:var(--stitch-primary);color:var(--stitch-on-primary);box-shadow:none}
+.os-frame .dash-cta-primary {background:var(--stitch-primary);color:var(--stitch-on-primary);border-radius:8px;box-shadow:none}
+.os-frame .dash-signals {gap:16px}
+.os-frame .dash-signal {background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:10px}
+.os-frame .dash-signal-value {font-size:26px;font-weight:500}
+.os-frame .dash-hero-panel {background:var(--surface-2);border:1px solid var(--border-subtle);box-shadow:none;border-radius:10px}
+.os-frame .dash-dock {background:var(--surface-1);border-color:var(--border-subtle);border-radius:10px;box-shadow:none}
+.os-frame .dash-dock-item {color:var(--text-secondary)}
+.os-frame table {font-size:13px;border-collapse:collapse;width:100%}
+.os-frame th {background:var(--surface-2);font-size:11px;color:var(--text-tertiary);font-weight:500;text-transform:uppercase;letter-spacing:.04em;padding:12px 14px}
+.os-frame td {padding:14px;border-bottom:1px solid var(--border-subtle)}
+.os-frame .modal {background:var(--surface-1);border:1px solid var(--border-default);border-radius:16px;box-shadow:var(--shadow-lg)}
+.os-frame .modal-backdrop {background:rgb(15 29 20 / 48%);backdrop-filter:blur(3px)}
+.os-frame .modal-actions {background:var(--surface-1);border-color:var(--border-subtle)}
+.os-frame .health-capture-drawer {border-radius:16px}
+.unlock-screen {background:var(--bg-0)}
+.unlock-screen .unlock-card {background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-md);color:var(--text-primary)}
+.unlock-screen :is(h1,h2) {font-family:var(--stitch-heading)}
+
+@media(min-width:1440px) {
+  .os-frame .health-priority-row {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .os-frame .health-ready-content {grid-template-columns:120px minmax(0,1fr);gap:14px}
+  .os-frame .health-contributors {grid-template-columns:1fr}
+  .os-frame .health-contributors>button {min-height:40px;padding:7px 10px}
+  .os-frame .health-contributor-note {display:none}
+  .os-frame .health-next-action {display:flex;flex-direction:column}
+  .os-frame .health-next-body {flex:1}
+  .os-frame .health-bottom-grid {grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+  .os-frame .health-bottom-grid .health-metrics {display:block}
+}
+@media(min-width:1024px) and (max-width:1279px) {
+  .os-frame .os-topbar {padding-inline:24px;gap:14px}.os-frame .os-header-date {display:none}
+  .os-frame .os-content {padding-inline:24px}
+  .os-frame .health-dashboard-layout {grid-template-columns:minmax(0,1fr) 240px;gap:20px}
+  .os-frame .health-ready-content {grid-template-columns:1fr}.health-readiness-ring {justify-self:center}
+  .os-frame .tracker-shell {grid-template-columns:155px minmax(0,1fr);gap:16px}
+  .os-frame .stitch-workout-console {grid-template-columns:1fr}
+  .os-frame .tracker-exercise-hero {border-right:0;border-bottom:1px solid var(--border-subtle);min-height:0}
+  .os-frame .tracker-current-image {float:right;width:140px!important;margin-left:16px;max-height:100px!important;height:100px!important}
+}
+@media(max-width:1023px) {
+  .os-frame .os-drawer-scrim {display:block;position:fixed;inset:0 0 0 var(--stitch-sidebar-width);background:rgb(15 29 20 / 40%);backdrop-filter:blur(2px);border:0;z-index:83}
+  .os-frame .os-menu-toggle {display:inline-flex}
+  .os-frame .os-topbar {padding:12px 24px;height:68px;min-height:68px;gap:12px}
+  .os-frame .os-header-date {display:none}.os-frame .os-content {padding-inline:24px}
+  .os-frame .health-dashboard-layout {grid-template-columns:minmax(0,1fr) 240px;gap:20px}
+  .os-frame .health-ready-content {grid-template-columns:120px minmax(0,1fr);gap:14px}
+  .os-frame .health-contributors {grid-template-columns:1fr}
+  .os-frame .health-contributor-note {display:none}
+  .os-frame .tracker-shell {grid-template-columns:160px minmax(0,1fr);gap:16px}
+  .os-frame .stitch-workout-console {grid-template-columns:1fr}
+  .os-frame .tracker-exercise-hero {border-right:0;border-bottom:1px solid var(--border-subtle)}
+  .os-frame .tracker-current-image {float:right;width:150px!important;height:110px!important;margin-left:16px}
+  .stitch-skip-link {left:16px}
+}
+@media(max-width:767px) {
+  .os-frame[data-section] {--stitch-sidebar-width:56px}
+  .os-frame .os-rail {padding-inline:6px;gap:3px}
+  .os-frame .os-rail-item {width:40px;min-height:40px}
+  .stitch-diary-layout {grid-template-columns:1fr;gap:20px}
+  .stitch-diary-nutrition {grid-column:1;grid-row:1;position:static}
+  .os-frame .stitch-diary-layout>.meal-slots {grid-column:1;grid-row:2}
+  .os-frame .os-topbar {padding:10px 16px;gap:8px;flex-wrap:nowrap;height:64px;min-height:64px}
+  .os-frame .os-content {padding:0 16px 32px}
+  .os-frame .os-header-left {flex:1;gap:6px}
+  .os-frame .os-search-control {width:38px;height:38px;min-width:38px;max-width:38px;padding:9px;justify-content:center;border:0;background:none}
+  .os-search-control>span,.os-search-control>kbd {display:none}
+  .os-frame .os-all-pages-button,.os-frame .os-voice-button {display:none}
+  .os-frame .os-header-actions {gap:6px!important}.os-frame .os-avatar {width:32px;height:32px}
+  .os-frame .os-capture-button {padding:8px 10px;height:36px;min-height:36px}
+  .stitch-section-nav {min-height:52px;gap:20px}.stitch-section-nav button {min-height:52px;font-size:12px;padding:14px 0}
+  .primary-workspace {gap:20px!important}.os-frame .primary-view-tabs {gap:6px}
+  .os-frame .primary-view-tabs .page-tab {padding:8px 10px;min-height:40px;font-size:12px}
+  .os-frame .health-dashboard-layout {grid-template-columns:1fr;gap:24px}
+  .os-frame .health-dashboard-aside {display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .os-frame .health-dashboard-aside .health-panel {padding:18px}
+  .os-frame .health-greeting {align-items:flex-start;flex-direction:column;gap:10px}
+  .health-greeting h1 {font-size:26px!important}
+  .os-frame .health-date-pill {align-self:flex-start}
+  .os-frame .health-priority-row {gap:18px}
+  .os-frame .health-next-action {padding:20px}.os-frame .health-next-body h3 {font-size:21px}
+  .os-frame .health-ready {padding:20px}.os-frame .health-ready-content {grid-template-columns:120px minmax(0,1fr)}
+  .os-frame .health-contributors {grid-template-columns:1fr}.os-frame .health-contributors>button {min-height:44px}
+  .os-frame .health-domain-grid {padding:16px;gap:12px}
+  .stitch-domain-summary>summary {padding:16px}.stitch-domain-summary>summary>span:last-child {font-size:0}.stitch-domain-summary>summary>span:last-child svg {width:18px}
+  .os-frame .health-domain-card {padding:16px;min-height:180px}
+  .os-frame .visual-workout-copy {padding:20px;max-width:none}.os-frame .visual-workout-copy h2 {font-size:22px}
+  .os-frame .visual-workout-card {min-height:210px}
+  .os-frame .domain-hero {grid-template-columns:minmax(0,1fr);gap:20px}
+  .os-frame .domain-hero-metric {display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;width:100%;text-align:left}
+  .os-frame .stitch-summary-metric {align-items:flex-start;text-align:left}
+  .os-frame .domain-hero-stats {gap:12px;padding-top:16px}.os-frame .domain-hero-stats>div {padding-left:12px}
+  .os-frame .domain-hero-stats strong {font-size:20px}.os-frame .domain-hero-stats span {font-size:11px}
+  .os-frame .tracker-shell {display:flex;flex-direction:column;gap:18px;align-items:stretch}
+  .stitch-workout-heading {flex-wrap:wrap;gap:12px}.stitch-workout-heading .btn {min-height:40px}
+  .stitch-session-plan {position:static;padding:16px}.stitch-session-plan h2 {margin-bottom:12px}
+  .stitch-session-plan ol {flex-direction:row;overflow-x:auto;gap:8px}
+  .stitch-session-plan li {min-width:150px;max-width:200px;flex-shrink:0;padding:10px}
+  .stitch-session-plan>p {display:none}
+  .os-frame .stitch-session-meta {grid-template-columns:1fr 1fr}.os-frame .stitch-session-meta .metric-light {grid-column:1/-1}
+  .os-frame .stitch-workout-console {grid-template-columns:1fr}
+  .os-frame .tracker-exercise-hero {padding:18px}.os-frame .tracker-current-image {width:110px!important;height:90px!important;margin-left:12px}
+  .os-frame .tracker-exercise-hero .hero-title {font-size:22px!important}
+  .os-frame .stitch-set-workspace {padding:18px!important}
+  .os-frame .tracker-shell>.sticky-actions {bottom:8px;margin:0;gap:8px}
+  .os-frame .tracker-shell>.sticky-actions .btn {flex:1 1 calc(50% - 8px);font-size:12px}
+  .os-frame :is(.page-panel,.health-card,.flow-workspace>.card,.bio-os>.card) {padding:20px}
+  .os-frame .dash-hero {padding:22px}
+  .os-frame .dash-hero .dash-title {font-size:28px}
+  .os-frame .health-next-buttons .health-next-primary {min-width:0;flex:1}
+  .os-frame .btn {min-height:44px}
+}
+@media(max-width:479px) {
+  .os-frame .health-dashboard-aside {grid-template-columns:1fr}
+  .os-frame .health-ready-content {grid-template-columns:1fr}
+  .os-frame .health-readiness-ring {justify-self:center}
+  .os-frame .health-contributors {grid-template-columns:1fr 1fr}
+  .os-frame .health-contributors>button {gap:7px;padding:9px;min-height:56px}
+  .os-frame .health-contributors strong {font-size:18px}.os-frame .health-contributors .health-icon-tile {width:28px;height:28px}
+  .os-frame .health-domain-grid {grid-template-columns:1fr}
+  .os-frame .health-capture-options {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .os-frame .stitch-session-meta {grid-template-columns:1fr}
+  .os-frame .flash-navigation>span {display:none}
+  .os-frame .domain-hero-stats {gap:10px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .os-frame *,.os-frame *::before,.os-frame *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+/* Obsidian & Champagne: neutral glass surfaces with focused domain accents. */
+:root {
+  --stitch-primary:#202124;--stitch-primary-hover:#36373a;--stitch-on-primary:#fff;
+  --champagne:#c4ac7a;--champagne-ink:#806b40;--champagne-soft:rgb(196 172 122 / 14%);
+  --bg-0:#f6f5f2;--bg-1:#fff;--bg-2:#eeece7;--bg-elevated:#fff;--bg-inset:#f7f6f3;
+  --surface-1:rgb(255 255 255 / 76%);--surface-2:rgb(246 245 242 / 82%);--surface-3:#e8e5df;
+  --surface-hover:#eeece6;--surface-active:#e9e3d7;
+  --text-primary:#202124;--text-secondary:#686863;--text-tertiary:#73736c;--text-disabled:#9b9992;
+  --border-subtle:rgb(132 119 91 / 18%);--border-default:rgb(132 119 91 / 30%);--border-strong:#a4977c;
+  --today:var(--champagne-ink);--train:#c65d21;--train-ink:#ac501c;--eat:#24834b;--recover:#2675bb;--sleep:#7456b8;
+  --health:#b94d72;--body:#64748b;--care:#b94d72;--insights:#7456b8;--supplements:#946329;
+  --success:#24834b;--good:var(--success);--warning:#946329;--warn:var(--warning);--danger:#ba3038;--info:#2675bb;
+  --cyan:var(--recover);--water:var(--recover);--ai-purple:var(--insights);--ai-indigo:var(--insights);
+  --blue:var(--stitch-primary);--blue-bright:var(--champagne-ink);--signal:var(--stitch-primary);
+  --accent-soft:var(--champagne-soft);
+  --glass-edge:rgb(255 255 255 / 88%);--glass-blur:18px;
+  --shadow-sm:0 6px 24px rgb(32 33 36 / 4%),inset 0 1px 0 var(--glass-edge);
+  --shadow-md:0 14px 40px rgb(32 33 36 / 8%),inset 0 1px 0 var(--glass-edge);--shadow-lg:0 24px 70px rgb(32 33 36 / 14%);
+  --app-gradient:linear-gradient(120deg,#a68a54,#d8c69e 55%,#c4ac7a);--brand-gradient:var(--app-gradient);
+  --app-gradient-soft:linear-gradient(120deg,var(--champagne-soft),transparent);
+  --r-sm:11px;--r-md:16px;--r-lg:20px;--r-xl:24px;--card-radius:20px;--control-radius:11px;
+}
+body.dark {
+  --stitch-primary:#d3bd91;--stitch-primary-hover:#e1cea9;--stitch-on-primary:#202124;
+  --champagne:#d3bd91;--champagne-ink:#d3bd91;--champagne-soft:rgb(211 189 145 / 12%);
+  --bg-0:#111315;--bg-1:#1c1f22;--bg-2:#26292b;--bg-elevated:#26292b;--bg-inset:#181b1d;
+  --surface-1:rgb(28 31 34 / 82%);--surface-2:rgb(38 41 43 / 85%);--surface-3:#343638;
+  --surface-hover:#31312e;--surface-active:#3b372e;
+  --text-primary:#f2f1ed;--text-secondary:#c2beb5;--text-tertiary:#a49f95;--text-disabled:#77766f;--text-inv:#202124;
+  --border-subtle:rgb(211 189 145 / 15%);--border-default:rgb(211 189 145 / 27%);--border-strong:#8c7e63;
+  /* Lift the same domain hues for readable text and icons on obsidian. */
+  --today:var(--champagne-ink);--train:#f0a16c;--train-ink:var(--train);--eat:#77c997;--recover:#7eb8eb;--sleep:#b8a0e5;
+  --health:#e894b0;--body:#a9b8cc;--care:#e894b0;--insights:#b8a0e5;--supplements:#d9b578;
+  --success:#77c997;--good:var(--success);--warning:#e5bc79;--warn:var(--warning);--danger:#f59197;--info:#7eb8eb;
+  --cyan:var(--recover);--water:var(--recover);--ai-purple:var(--insights);--ai-indigo:var(--insights);
+  --blue:var(--stitch-primary);--blue-bright:var(--champagne-ink);--signal:var(--stitch-primary);
+  --accent-soft:var(--champagne-soft);--glass-edge:rgb(240 227 200 / 8%);
+  --shadow-sm:0 8px 28px rgb(0 0 0 / 16%),inset 0 1px 0 var(--glass-edge);
+  --shadow-md:0 16px 44px rgb(0 0 0 / 22%),inset 0 1px 0 var(--glass-edge);--shadow-lg:0 24px 70px rgb(0 0 0 / 38%);
+  --app-gradient:linear-gradient(120deg,#a68a54,#e1cea9 55%,#c4ac7a);--brand-gradient:var(--app-gradient);
+  --app-gradient-soft:linear-gradient(120deg,var(--champagne-soft),transparent);
+}
+/* Override the legacy shell's forced removal of ambient layers. */
+body::before {content:''!important;position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 8% 0%,rgb(196 172 122 / 17%),transparent 48%),radial-gradient(ellipse at 94% 28%,rgb(196 172 122 / 10%),transparent 44%),radial-gradient(ellipse at 48% 100%,rgb(132 119 91 / 7%),transparent 48%),var(--bg-0)!important}
+body {isolation:isolate}
+.os-frame {background:transparent}
+.os-frame,.os-frame[data-section] {--accent-soft:var(--champagne-soft)}
+.os-frame[data-section=Train] {--accent:var(--train)}
+.os-frame[data-section=Eat] {--accent:var(--eat)}
+.os-frame[data-section=Recover] {--accent:var(--recover)}
+.os-frame[data-section=Health] {--accent:var(--health)}
+.os-frame[data-section=Body] {--accent:var(--body)}
+.os-frame[data-section=Care] {--accent:var(--care)}
+.os-frame[data-section=Insights] {--accent:var(--insights)}
+.os-frame[data-section]:not([data-section=Today]) {--accent-soft:color-mix(in srgb,var(--accent) 10%,transparent)}
+.os-frame [data-domain] {--domain-color:var(--accent);--accent-soft:color-mix(in srgb,var(--accent) 10%,transparent)}
+.os-frame,.os-frame [data-domain] {--accent-text:var(--accent)}
+/* Orange remains exact on graphics; small labels use a deeper companion. */
+.os-frame[data-section=Train],.os-frame [data-domain=Train] {--accent-text:var(--train-ink)}
+.os-frame :is(.glass,.card,.page-panel,.health-card,.health-panel,.dash-panel,.metric-light,.bio-metric,.domain-hero-metric,.stitch-domain-summary,.stitch-session-plan,.stitch-workout-console,.overview-note,.overview-destinations>button,.overview-signals>button,.recovery-snapshot,.sleep-hero,.pain-selector,.health-domain-card,.tracker-top) {border:1px solid var(--border-subtle);border-radius:20px;background:var(--surface-1);box-shadow:var(--shadow-sm);backdrop-filter:blur(var(--glass-blur)) saturate(115%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(115%)}
+.os-frame[data-section] .os-rail {background:color-mix(in srgb,var(--bg-0) 68%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.os-frame[data-section] .os-sidebar {background:color-mix(in srgb,var(--bg-1) 87%,transparent);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:var(--shadow-lg)}
+.os-frame .os-topbar {background:color-mix(in srgb,var(--bg-0) 65%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom-color:var(--border-subtle)}
+.os-frame .os-rail-item[data-domain=Today] {color:var(--champagne-ink)}
+.os-frame .os-rail-item[data-domain=Train] {color:var(--train)}
+.os-frame .os-rail-item[data-domain=Eat] {color:var(--eat)}
+.os-frame .os-rail-item[data-domain=Recover] {color:var(--recover)}
+.os-frame .os-rail-item[data-domain=Health] {color:var(--health)}
+.os-frame .os-rail-item[data-domain=Body] {color:var(--body)}
+.os-frame .os-rail-item[data-domain=Care] {color:var(--care)}
+.os-frame .os-rail-item[data-domain=Insights] {color:var(--insights)}
+.os-frame .os-rail-item.selected {background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent)}
+.os-frame .os-rail-item.selected::before {background:var(--accent)}
+.os-frame :is(.overview-tile-icon,.health-next-icon,.stitch-summary-metric strong,.signal-chart,.bio-spark) {color:var(--accent)}
+.os-frame .stitch-section-nav button[aria-current=page] {color:var(--accent-text);border-bottom-color:var(--accent)}
+.os-frame .health-domain-footer {color:var(--accent-text)}
+.os-frame :is(.btn,.os-capture-button,.os-rail-item,.os-page-link,.overview-destinations>button,.health-domain-card,.visual-quick-actions button) {transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.os-frame[data-section] :is(.btn-hot,.os-capture-button) {background:var(--stitch-primary);color:var(--stitch-on-primary);border-radius:11px;border:1px solid transparent;box-shadow:0 4px 14px rgb(32 33 36 / 10%),inset 0 1px 0 rgb(255 255 255 / 10%)}
+.os-frame[data-section] :is(.btn-hot,.os-capture-button):hover {background:var(--stitch-primary-hover)}
+.os-frame :is(.btn-hot,.os-capture-button):hover {transform:translateY(-1px);box-shadow:0 7px 20px color-mix(in srgb,var(--stitch-primary) 28%,transparent)}
+.os-frame :is(.btn-hot,.os-capture-button):active {transform:translateY(0)}
+.os-frame :is(.overview-destinations>button,.health-domain-card):hover {transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--stitch-primary) 32%,var(--border-subtle))}
+.os-frame .health-next-action {background:linear-gradient(125deg,color-mix(in srgb,var(--champagne) 10%,var(--surface-1)),var(--surface-1));border-left-width:1px;position:relative;overflow:hidden}
+.os-frame .health-next-action::before {content:'';position:absolute;top:0;left:24px;right:24px;height:3px;background:var(--app-gradient);border-radius:0 0 4px 4px}
+.os-frame .health-ready {background:var(--surface-1)}
+.os-frame .health-insight-grid article {background:color-mix(in srgb,var(--insights) 7%,var(--bg-1));border:1px solid color-mix(in srgb,var(--insights) 12%,transparent);border-radius:14px}
+.os-frame .health-insight-grid article:nth-child(2) {background:color-mix(in srgb,var(--eat) 7%,var(--bg-1));border-color:color-mix(in srgb,var(--eat) 12%,transparent)}
+.os-frame .health-insight-grid article:nth-child(3) {background:color-mix(in srgb,var(--care) 7%,var(--bg-1));border-color:color-mix(in srgb,var(--care) 12%,transparent)}
+.os-frame .health-domain-card {background:linear-gradient(135deg,color-mix(in srgb,var(--domain-color,var(--stitch-primary)) 5%,var(--surface-1)),var(--surface-1))}
+.os-frame .visual-workout-card {border-radius:20px;background:color-mix(in srgb,var(--train) 8%,var(--bg-1));box-shadow:var(--shadow-sm)}
+.os-frame .visual-workout-card::after {background:linear-gradient(90deg,color-mix(in srgb,var(--train) 8%,var(--bg-1)) 46%,transparent)}
+/* Photo headers need a dark glass context in either page theme. */
+.os-frame .visual-training-hero {
+  --stitch-primary:#d3bd91;--stitch-primary-hover:#e1cea9;--stitch-on-primary:#202124;
+  --text-primary:#f2f1ed;--text-secondary:#d8d5ce;--text-tertiary:#c2beb5;
+  --text-0:var(--text-primary);--text-1:var(--text-secondary);--text-2:var(--text-tertiary);
+  --surface-1:rgb(28 31 34 / 82%);--surface-2:rgb(38 41 43 / 85%);
+  --border-subtle:rgb(211 189 145 / 20%);--border-default:rgb(211 189 145 / 32%);
+  border-radius:20px!important;
+}
+.os-frame .visual-training-hero::after {background:linear-gradient(90deg,rgb(17 19 21 / 94%),rgb(17 19 21 / 78%) 52%,rgb(17 19 21 / 35%))}
+.os-frame .visual-training-hero :is(.dash-title,.dash-mission-text,strong) {color:var(--text-primary)!important}
+.os-frame .visual-training-hero :is(.dash-kicker,.dash-sub,.dash-mission-label,.dash-chip,.subtle) {color:var(--text-secondary)!important}
+.os-frame .visual-training-hero .dash-hero-panel {background:var(--surface-1);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-color:var(--border-default)}
+.os-frame .visual-training-hero .dash-chip {background:var(--surface-1);border-color:var(--border-default)}
+.os-frame .primary-view-tabs .page-tab.active {background:var(--accent-soft);border-color:color-mix(in srgb,var(--stitch-primary) 20%,transparent);box-shadow:inset 0 1px 0 rgb(255 255 255 / 20%)}
+.os-frame .stitch-section-nav button[aria-current=page] {text-shadow:none}
+.os-frame .modal-backdrop {background:rgb(17 19 21 / 58%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.os-frame .modal {background:var(--bg-1)!important;border:1px solid var(--border-default);border-radius:24px;box-shadow:var(--shadow-lg)}
+.os-frame :is(.os-drawer-scrim) {background:rgb(17 19 21 / 40%)}
+.os-frame :is(input,select,textarea) {transition:border-color .18s ease,box-shadow .18s ease}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .os-frame[data-section] :is(.glass,.card,.page-panel,.health-card,.health-panel,.dash-panel,.metric-light,.bio-metric,.domain-hero-metric,.stitch-domain-summary,.stitch-session-plan,.stitch-workout-console,.overview-note,.overview-destinations>button,.overview-signals>button,.recovery-snapshot,.sleep-hero,.pain-selector,.health-domain-card,.tracker-top,.os-sidebar,.os-rail,.os-topbar,.health-next-action) {background:var(--bg-1)}
+}
+@media(prefers-reduced-transparency:reduce) {
+  :root,body.dark {--surface-1:var(--bg-1);--surface-2:var(--bg-2);--glass-blur:0px}
+  body::before {background:var(--bg-0)!important}
+  .os-frame[data-section] :is(.os-sidebar,.os-rail,.os-topbar) {background:var(--bg-1);backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+@media(prefers-reduced-motion:reduce) {
+  .os-frame *,.os-frame *::before,.os-frame *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

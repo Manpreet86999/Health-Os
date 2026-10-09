@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { addKnowledgeDocument, searchKnowledge } from './knowledge.js';
+test('knowledge retrieval returns a cited local source',()=>{const added=addKnowledgeDocument({title:'Shoulder plan',sourceRef:'page 4',content:'Use neutral grip pressing when shoulder soreness is present. Reduce overhead volume for two weeks.'});const hits=searchKnowledge('shoulder pressing');assert.ok(hits.some(hit=>hit.documentId===added.documentId&&hit.source==='page 4'));});

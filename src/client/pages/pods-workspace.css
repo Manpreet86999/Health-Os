@@ -1,0 +1,142 @@
+/* A quiet, personal space for two. Scoped to the Pods workspace. */
+html .pods-workspace { gap: 28px; }
+html .pods-workspace .pod-page-head { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:0; }
+html .pods-workspace .pod-page-head h1 { font-size:clamp(28px,3vw,42px); letter-spacing:-.045em; line-height:1.15; }
+html .pods-workspace .pod-page-head .subtle { margin-bottom:0; font-size:15px; }
+html .pods-workspace .pod-private-badge { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-default); border-radius:99px; padding:8px 12px; font-size:12px; color:var(--text-secondary); white-space:nowrap; background:var(--surface-1); }
+html .pods-workspace .pod-workspace-grid { display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:24px; align-items:start; }
+html .pods-workspace :is(.pod-main,.pod-sidebar) { display:grid; gap:20px; min-width:0; }
+html .pods-workspace .pod-panel { min-width:0; padding:26px; border:1px solid var(--border-default); border-radius:24px; background:var(--surface-1); box-shadow:var(--shadow-sm); }
+html .pods-workspace :is(h2,h3,p) { margin-top:0; }
+html .pods-workspace h2 { font-size:21px; line-height:1.25; letter-spacing:-.035em; margin-bottom:0; }
+html .pods-workspace h3 { font-size:15px; line-height:1.4; }
+html .pods-workspace .pod-kicker { display:inline-flex; align-items:center; gap:8px; font-size:10px; font-weight:650; letter-spacing:.12em; color:var(--text-secondary); }
+html .pods-workspace .pod-welcome { padding:35px 30px 24px; text-align:center; background:radial-gradient(ellipse at 50% 33%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 63%),var(--surface-1); overflow:hidden; }
+html .pods-workspace .pod-welcome > .pod-kicker { color:var(--accent); }
+html .pods-workspace .pod-connection { display:flex; justify-content:center; align-items:start; margin:40px auto 28px; max-width:420px; }
+html .pods-workspace .pod-person { display:grid; justify-items:center; gap:12px; width:145px; flex-shrink:0; font-size:12px; color:var(--text-secondary); }
+html .pods-workspace .pod-avatar { display:grid; place-items:center; width:86px; height:86px; border-radius:50%; background:color-mix(in srgb,var(--accent) 15%,var(--surface-1)); color:var(--accent); border:6px solid var(--surface-1); box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent),0 10px 28px #0000000c; }
+html .pods-workspace .pod-avatar svg { width:35px; height:35px; stroke-width:1.6; }
+html .pods-workspace .pod-avatar-partner { color:var(--secondary-accent); background:color-mix(in srgb,var(--secondary-accent) 15%,var(--surface-1)); }
+html .pods-workspace .pod-connection-thread { display:flex; align-items:center; gap:10px; height:86px; flex:1; min-width:45px; color:var(--accent); }
+html .pods-workspace .pod-connection-thread span { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--accent)); opacity:.5; }
+html .pods-workspace .pod-connection-thread span:last-child { transform:rotate(180deg); }
+html .pods-workspace .pod-welcome-copy h2 { font-size:clamp(28px,2.8vw,39px); line-height:1.15; letter-spacing:-.045em; margin:0 0 16px; }
+html .pods-workspace .pod-welcome-copy p { color:var(--text-secondary); font-size:14px; line-height:1.8; margin-bottom:32px; }
+html .pods-workspace .pod-welcome-actions { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:12px; margin:-8px 0 28px; }
+html .pods-workspace .pod-welcome-actions .btn { padding-inline:20px; }
+html .pods-workspace .pod-how { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid var(--border-default); padding-top:25px; gap:20px; }
+html .pods-workspace .pod-how > div > span { display:inline-grid; place-items:center; width:36px; height:36px; border-radius:12px; background:var(--surface-2); color:var(--accent); margin-bottom:12px; }
+html .pods-workspace .pod-how h3 { margin-bottom:5px; font-size:13px; }
+html .pods-workspace .pod-how p { font-size:12px; color:var(--text-secondary); line-height:1.6; margin-bottom:0; }
+html .pods-workspace .pod-empty-caption { font-size:12px; color:var(--text-secondary); margin:24px 0 0; }
+html .pods-workspace .pod-section-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+html .pods-workspace .pod-section-heading > div { min-width:0; }
+html .pods-workspace .pod-section-heading h2 { overflow-wrap:anywhere; }
+html .pods-workspace .pod-section-heading .pod-kicker { margin-bottom:8px; }
+html .pods-workspace .pod-mini-avatar { display:inline-grid; place-items:center; width:34px; height:34px; flex-shrink:0; background:var(--accent-soft); color:var(--accent); border-radius:50%; }
+html .pods-workspace .pod-form-intro { margin:26px 0 18px; }
+html .pods-workspace .pod-form-intro h3 { margin-bottom:5px; }
+html .pods-workspace .pod-form-intro p { font-size:12px; color:var(--text-secondary); margin:0; }
+html .pods-workspace .pod-form { display:grid; gap:14px; }
+html .pods-workspace label { display:grid; gap:8px; font-size:12px; color:var(--text-secondary); min-width:0; }
+html .pods-workspace .input { width:100%; min-width:0; box-sizing:border-box; min-height:46px; border-radius:12px; font-size:13px; padding:11px 13px; background:var(--bg-inset); }
+html .pods-workspace .input::placeholder { color:var(--text-secondary); opacity:.7; }
+html .pods-workspace .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:12px; font-size:13px; }
+html .pods-workspace .pod-form-divider { display:flex; align-items:center; gap:12px; margin:24px 0; font-size:11px; color:var(--text-secondary); }
+html .pods-workspace .pod-form-divider::before,html .pods-workspace .pod-form-divider::after { content:''; flex:1; height:1px; background:var(--border-default); }
+html .pods-workspace .pod-safe-note { display:flex; align-items:center; justify-content:center; gap:7px; font-size:10px; color:var(--text-secondary); margin:20px 0 0; }
+html .pods-workspace .pod-privacy { padding:20px 24px; box-shadow:none; background:transparent; }
+html .pods-workspace .pod-privacy summary { display:flex; align-items:center; gap:12px; cursor:pointer; font-size:13px; list-style:none; }
+html .pods-workspace .pod-privacy summary::-webkit-details-marker { display:none; }
+html .pods-workspace .pod-privacy summary > svg { color:var(--accent); flex-shrink:0; }
+html .pods-workspace .pod-privacy-expand { margin-left:auto; color:var(--text-secondary); font-size:11px; }
+html .pods-workspace .pod-privacy-expand::after { content:' +'; }
+html .pods-workspace .pod-privacy[open] .pod-privacy-expand::after { content:' −'; }
+html .pods-workspace .pod-privacy p { margin:16px 0 0; font-size:13px; color:var(--text-secondary); line-height:1.8; }
+html .pods-workspace .pod-together { background:linear-gradient(130deg,var(--accent-soft),var(--surface-1) 70%); }
+html .pods-workspace .pod-together .pod-connection { margin:24px auto 20px; }
+html .pods-workspace .pod-together > p { text-align:center; margin:0; color:var(--text-secondary); font-size:13px; line-height:1.7; }
+html .pods-workspace .pod-week-label { width:155px; flex-shrink:0; font-size:10px; }
+html .pods-workspace .pod-week-caption { margin:18px 0 24px; font-size:12px; color:var(--text-secondary); }
+html .pods-workspace .pod-goals-empty { padding:28px 18px; border:1px dashed var(--border-strong); border-radius:16px; text-align:center; margin-bottom:22px; }
+html .pods-workspace .pod-goals-empty > svg { color:var(--accent); margin-bottom:12px; }
+html .pods-workspace .pod-goals-empty h3 { margin-bottom:8px; }
+html .pods-workspace .pod-goals-empty p { font-size:12px; color:var(--text-secondary); margin:0; line-height:1.7; }
+html .pods-workspace .pod-goal { border:1px solid var(--border-default); padding:20px; border-radius:18px; margin-bottom:18px; }
+html .pods-workspace .pod-goal-heading { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+html .pods-workspace .pod-goal-heading h3 { margin:0; overflow-wrap:anywhere; }
+html .pods-workspace .pod-goal-icon { color:var(--accent); flex-shrink:0; }
+html .pods-workspace .pod-member-progress { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+html .pods-workspace .pod-progress-person > div { display:flex; align-items:center; gap:8px; font-size:12px; margin-bottom:10px; }
+html .pods-workspace progress { display:block; width:100%; height:6px; appearance:none; border:0; border-radius:99px; overflow:hidden; background:var(--surface-2); accent-color:var(--accent); }
+html .pods-workspace progress::-webkit-progress-bar { background:var(--surface-2); border-radius:99px; }
+html .pods-workspace progress::-webkit-progress-value { background:var(--accent); border-radius:99px; }
+html .pods-workspace progress::-moz-progress-bar { background:var(--accent); border-radius:99px; }
+html .pods-workspace .pod-checkin-label { margin:22px 0 10px; font-size:11px; color:var(--text-secondary); }
+html .pods-workspace .pod-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+html .pods-workspace .pod-day { display:grid; justify-items:center; gap:7px; background:var(--surface-2); border:1px solid transparent; border-radius:12px; padding:10px 2px; color:var(--text-secondary); font:inherit; cursor:pointer; min-height:65px; }
+html .pods-workspace .pod-day span { font-size:10px; }
+html .pods-workspace .pod-day strong { display:grid; place-items:center; min-height:20px; font-size:14px; color:var(--text-primary); }
+html .pods-workspace .pod-day.is-today { border-color:var(--accent); }
+html .pods-workspace .pod-day[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
+html .pods-workspace .pod-day[aria-pressed=true] strong { color:var(--accent); }
+html .pods-workspace .pod-day:disabled { opacity:.4; cursor:default; }
+html .pods-workspace .pod-add-goal { display:grid; grid-template-columns:minmax(0,1fr) 105px auto; align-items:end; gap:12px; border-top:1px solid var(--border-default); padding-top:22px; }
+html .pods-workspace .pod-list { display:grid; gap:8px; margin-top:20px; }
+html .pods-workspace .pod-list-item { width:100%; display:flex; align-items:center; gap:10px; border:1px solid var(--border-default); border-radius:12px; padding:12px; font:inherit; text-align:left; background:var(--surface-2); color:var(--text-primary); cursor:pointer; }
+html .pods-workspace .pod-list-item[aria-pressed=true] { border-color:var(--accent); background:var(--accent-soft); }
+html .pods-workspace .pod-list-item > span:nth-child(2) { flex:1; min-width:0; font-size:13px; overflow-wrap:anywhere; }
+html .pods-workspace :is(.pod-list-item small,.pod-member small) { display:block; font-size:10px; color:var(--text-secondary); margin-top:3px; }
+html .pods-workspace .pod-members h2 { font-size:17px; }
+html .pods-workspace .pod-member { display:flex; align-items:center; gap:10px; padding:18px 0; border-bottom:1px solid var(--border-default); }
+html .pods-workspace .pod-member > div { flex:1; font-size:13px; }
+html .pods-workspace .pod-member .btn { min-height:34px; padding:6px 8px; font-size:10px; }
+html .pods-workspace .pod-invite-actions { display:grid; gap:12px; margin-top:20px; }
+html .pods-workspace .pod-invite-actions p { font-size:12px; color:var(--text-secondary); margin:0; }
+html .pods-workspace .pod-text-button { background:none; border:0; padding:6px; font:inherit; font-size:11px; color:var(--text-secondary); cursor:pointer; min-height:32px; }
+html .pods-workspace .pod-text-button:disabled { opacity:.45; cursor:default; }
+html .pods-workspace .pod-disconnect { margin-top:20px; border-top:1px solid var(--border-default); padding-top:16px; width:100%; color:var(--danger); }
+html .pods-workspace .pod-invite-code { display:grid; gap:12px; background:var(--surface-2); border-radius:14px; padding:16px; margin-top:16px; }
+html .pods-workspace .pod-invite-code code { overflow-wrap:anywhere; font-size:13px; letter-spacing:.04em; }
+html .pods-workspace .pod-invite-code p { font-size:11px; line-height:1.7; color:var(--text-secondary); margin:0; }
+html .pods-workspace .pod-invite-code [role=status] { font-size:11px; color:var(--accent); }
+html .pods-workspace .pod-error { color:var(--danger); }
+html .pods-workspace :is(.pod-day,.pod-list-item,.pod-text-button):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+html .pods-workspace .pod-day:not(:disabled):hover,html .pods-workspace .pod-list-item:hover { border-color:var(--accent); }
+@media(max-width:1100px) {
+  html .pods-workspace .pod-workspace-grid { grid-template-columns:minmax(0,1fr) 310px; gap:18px; }
+  html .pods-workspace .pod-panel { padding:22px; }
+  html .pods-workspace .pod-add-goal { grid-template-columns:minmax(0,1fr) 95px; }
+  html .pods-workspace .pod-add-goal .btn { grid-column:1/-1; }
+  html .pods-workspace .pod-person { width:120px; }
+}
+@media(max-width:850px) {
+  html .pods-workspace .pod-workspace-grid { grid-template-columns:1fr; }
+  html .pods-workspace .pod-page-head { align-items:start; flex-direction:column; gap:14px; }
+  html .pods-workspace .pod-sidebar { grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); align-items:start; }
+}
+@media(max-width:480px) {
+  html .pods-workspace { gap:20px; }
+  html .pods-workspace .pod-panel { padding:20px 16px; border-radius:20px; }
+  html .pods-workspace .pod-welcome > .pod-kicker { font-size:9px; letter-spacing:.08em; }
+  html .pods-workspace .pod-avatar { width:70px; height:70px; border-width:4px; }
+  html .pods-workspace .pod-person { width:108px; font-size:10px; }
+  html .pods-workspace .pod-connection { margin:30px auto 24px; }
+  html .pods-workspace .pod-connection-thread { height:70px; gap:6px; min-width:30px; }
+  html .pods-workspace .pod-connection-thread svg { width:22px; flex-shrink:0; }
+  html .pods-workspace .pod-welcome-copy p { font-size:12px; }
+  html .pods-workspace .pod-desktop-break { display:none; }
+  html .pods-workspace .pod-how { gap:10px; }
+  html .pods-workspace .pod-how h3 { font-size:11px; }
+  html .pods-workspace .pod-how p { font-size:10px; }
+  html .pods-workspace .pod-privacy summary { flex-wrap:wrap; gap:8px; font-size:12px; }
+  html .pods-workspace .pod-privacy-expand { margin-left:27px; }
+  html .pods-workspace .pod-goals > .pod-section-heading { align-items:start; flex-direction:column; }
+  html .pods-workspace .pod-week-label { width:100%; }
+  html .pods-workspace .pod-goal { padding:14px 10px; }
+  html .pods-workspace .pod-member-progress { grid-template-columns:1fr; gap:14px; }
+  html .pods-workspace .pod-days { gap:4px; }
+  html .pods-workspace .pod-day { border-radius:8px; }
+  html .pods-workspace .pod-day span { font-size:9px; }
+}

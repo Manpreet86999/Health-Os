@@ -1,0 +1,16 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const root = process.cwd(), version = process.version;
+if (process.platform !== 'win32' || process.arch !== 'x64' || Number(version.slice(1).split('.')[0]) < 24) throw new Error('Build using official Node.js 24+ for Windows x64.');
+const checksums = await fetch(`https://nodejs.org/dist/${version}/SHASUMS256.txt`, { signal: AbortSignal.timeout(30000) });
+if (!checksums.ok) throw new Error('Unable to obtain official Node.js checksums.');
+const line = (await checksums.text()).split('\n').find(row => row.endsWith('  win-x64/node.exe'));
+const expected = line?.split(' ')[0], actual = crypto.createHash('sha256').update(await fs.readFile(process.execPath)).digest('hex');
+if (!expected || actual !== expected) throw new Error('Node.js does not match the official Windows x64 runtime.');
+const license = await fetch(`https://raw.githubusercontent.com/nodejs/node/${version}/LICENSE`, { signal: AbortSignal.timeout(30000) });
+if (!license.ok) throw new Error('Unable to obtain the runtime license.');
+const folder = path.join(root, '.build-tools/release-runtime'); await fs.mkdir(folder, { recursive: true });
+await fs.writeFile(path.join(folder, 'LICENSE'), await license.text());
+await fs.writeFile(path.join(folder, 'verification.json'), JSON.stringify({ version, sha256: actual, source: `https://nodejs.org/dist/${version}/win-x64/node.exe` }, null, 2));
+console.log(`Official Node.js ${version} runtime checksum verified.`);

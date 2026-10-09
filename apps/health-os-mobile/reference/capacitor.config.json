@@ -1,0 +1,37 @@
+{
+	"appId": "app.healthos.mobile",
+	"appName": "Health OS",
+	"webDir": "dist/client",
+	"backgroundColor": "#111214",
+	"loggingBehavior": "debug",
+	"android": {
+		"path": "apps/health-os-mobile/android",
+		"allowMixedContent": false,
+		"webContentsDebuggingEnabled": false,
+		"minWebViewVersion": 110
+	},
+	"server": {
+		"hostname": "localhost",
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchAutoHide": true,
+			"launchShowDuration": 500,
+			"backgroundColor": "#111214",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"overlaysWebView": false,
+			"backgroundColor": "#111214",
+			"style": "DARK"
+		},
+		"Keyboard": {
+			"resizeOnFullScreen": true
+		},
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_health",
+			"iconColor": "#8ce2c0"
+		}
+	}
+}

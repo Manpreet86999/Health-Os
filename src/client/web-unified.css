@@ -1,0 +1,174 @@
+/* Health OS: one mint identity in both themes. Values come from productThemes. */
+html body, html body.dark {
+  --bg-0:var(--hos-canvas); --bg-1:var(--hos-secondary); --bg-2:var(--hos-raised);
+  --surface-1:var(--hos-surface); --surface-2:var(--hos-raised); --surface-3:var(--hos-hover);
+  --surface-hover:var(--hos-hover); --surface-active:var(--hos-hover);
+  --bg-elevated:var(--hos-raised); --bg-inset:var(--hos-secondary);
+  --text-primary:var(--hos-text); --text-secondary:var(--hos-secondary-text);
+  /* Small metadata remains readable; the quieter muted token is for disabled/decorative UI. */
+  --text-tertiary:var(--hos-secondary-text); --text-muted:var(--hos-muted); --text-disabled:var(--hos-muted);
+  --text-0:var(--text-primary); --text-1:var(--text-secondary); --text-2:var(--text-tertiary);
+  --text:var(--text-primary); --muted:var(--text-secondary); --text-inv:var(--hos-primary-ink);
+  --border-subtle:var(--hos-border); --border-default:var(--hos-border); --border-strong:var(--hos-divider);
+  --line:var(--border-subtle); --line-strong:var(--border-strong);
+  --accent:var(--hos-primary); --accent-ink:var(--hos-primary-ink); --accent-dim:var(--hos-primary-hover);
+  --accent-soft:color-mix(in srgb,var(--hos-primary) 10%,var(--hos-surface)); --brand:var(--hos-primary);
+  --stitch-primary:var(--hos-primary); --stitch-primary-hover:var(--hos-primary-hover); --stitch-on-primary:var(--hos-primary-ink);
+  --app-gradient:linear-gradient(135deg,var(--hos-primary),var(--hos-primary-hover)); --brand-gradient:var(--app-gradient);
+  --app-gradient-soft:linear-gradient(135deg,var(--hos-secondary),var(--hos-canvas));
+  --today:var(--hos-primary); --train:var(--hos-train); --eat:var(--hos-nutrition); --eat-food:var(--hos-energy);
+  --recover:var(--hos-recovery); --sleep:var(--hos-sleep); --water:var(--hos-hydration); --cyan:var(--hos-hydration);
+  --health:var(--hos-health); --medical:var(--hos-medical); --body:var(--hos-body); --care:var(--hos-care); --insights:var(--hos-insights);
+  --ai-purple:var(--hos-secondary-accent); --ai-indigo:var(--hos-secondary-accent); --secondary-accent:var(--hos-secondary-accent);
+  --blue:var(--hos-medical); --blue-bright:var(--hos-medical);
+  --success:var(--hos-success); --good:var(--hos-success); --warning:var(--hos-warning); --warn:var(--hos-warning);
+  --danger:var(--hos-critical); --critical:var(--hos-critical); --info:var(--hos-medical); --supplements:var(--hos-energy);
+  --signal:var(--hos-primary); --domain-color:var(--hos-primary);
+  --r-sm:10px; --r-md:18px; --r-lg:24px; --r-xl:28px;
+  --shadow-sm:0 6px 18px #00000008; --shadow-md:0 12px 36px #0000000c;
+}
+html body:not(.dark) {--surface-2:var(--hos-secondary);}
+html body.dark {--shadow-sm:0 6px 18px #0002; --shadow-md:0 12px 36px #0003;}
+html {background:#F7F8F6;}
+html:has(body.dark) {background:#101311;}
+html .os-content {max-width:1920px;margin-inline:auto;width:100%;box-sizing:border-box;}
+html :is(h1,h2,h3,.health-domain-value) {text-wrap:balance;}
+html :is(.metric-value,.health-domain-value,.web-baseline-number) {font-variant-numeric:tabular-nums;letter-spacing:-.04em;}
+html .btn-hot {background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+html .btn-hot:hover {background:var(--hos-primary-hover);}
+html :is(button,a,input,select,textarea,summary):focus-visible {outline:3px solid var(--accent);outline-offset:3px;}
+html .health-panel {border:1px solid var(--border-subtle);border-radius:var(--r-lg);background:var(--surface-1);}
+html .web-today-answer {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:28px;padding:28px;margin-bottom:20px;background:linear-gradient(125deg,var(--surface-2),var(--surface-1));}
+html .web-today-answer h2 {font-size:clamp(28px,3vw,44px);line-height:1.12;margin:14px 0;letter-spacing:-.045em;}
+html .web-today-answer details {margin-top:16px;color:var(--text-secondary);font-size:13px;}
+html .web-today-guidance {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;margin-bottom:20px;align-items:stretch;}
+html .web-today-guidance > .health-panel {margin:0;padding:20px;min-width:0;}
+html .web-today-guidance .web-today-answer-compact {grid-template-columns:minmax(0,1fr) 104px;gap:16px;align-items:start;}
+html .web-today-answer-compact .bio-eyebrow {font-size:11px;margin:0 0 10px;letter-spacing:.08em;}
+html .web-today-answer-compact .chip {font-size:11px;padding:4px 8px;}
+html .web-today-answer-compact h2 {font-size:clamp(22px,2vw,28px);line-height:1.15;letter-spacing:-.035em;margin:10px 0;}
+html .web-today-answer-compact p:not(.bio-eyebrow) {font-size:13px;line-height:1.5;margin:8px 0 12px;}
+html .web-today-answer-compact .btn {min-height:38px;padding:8px 14px;font-size:13px;}
+html .web-today-answer-compact details {margin-top:10px;font-size:12px;}
+html .web-today-answer-compact .metric-ring {margin-top:36px;}
+html .web-today-answer-compact .metric-ring-caption strong {font-size:28px;}
+html .web-today-answer-compact .metric-ring-caption span {font-size:11px;}
+html .web-next-log {display:flex;flex-direction:column;gap:14px;}
+html .web-next-log-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;}
+html .web-next-log-heading h2 {font-size:17px;letter-spacing:-.025em;margin:0;}
+html .web-next-log-heading > span {font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+html .web-next-log-primary {display:flex;gap:12px;align-items:center;}
+html .web-next-log-icon {display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border-radius:12px;background:var(--surface-2);color:var(--domain-color);}
+html .web-next-log-primary > div {flex:1;min-width:0;}
+html .web-next-log h3 {font-size:15px;margin:0 0 5px;}
+html .web-next-log-primary p,html .web-next-log-complete p {font-size:12px;line-height:1.5;color:var(--text-secondary);margin:0;}
+html .web-next-log-primary .btn {font-size:12px;min-height:36px;padding:8px 12px;white-space:nowrap;}
+html .web-next-log-list {display:grid;gap:0;border-top:1px solid var(--border-default);}
+html .web-next-log-list button {display:flex;align-items:center;gap:10px;width:100%;padding:10px 0;background:transparent;border:0;border-bottom:1px solid var(--border-default);color:var(--text-primary);text-align:left;font-size:12px;cursor:pointer;}
+html .web-next-log-list button > svg:first-child {color:var(--domain-color);}
+html .web-next-log-list button > span {flex:1;}
+html .web-next-log-list button:hover {color:var(--accent);background:var(--surface-2);}
+html .web-next-log-caption {font-size:11px;color:var(--text-secondary);margin:auto 0 0;line-height:1.5;}
+html .web-next-log-complete {display:flex;gap:12px;align-items:start;}
+html .web-next-log-complete > svg {color:var(--accent);flex-shrink:0;}
+html .web-next-log-complete .btn {margin-top:12px;}
+@media(max-width:1100px){html .web-today-guidance{grid-template-columns:1fr;}html .web-today-answer-compact{grid-template-columns:minmax(0,1fr) 104px;}}
+@media(max-width:480px){html .web-today-guidance > .health-panel{padding:16px;}html .web-today-guidance .web-today-answer-compact{grid-template-columns:minmax(0,1fr) 80px;gap:10px;}html .web-today-answer-compact .metric-ring{--ring-size:80px!important;}html .web-today-answer-compact .metric-ring-caption strong{font-size:23px;}html .web-next-log-primary{display:grid;grid-template-columns:38px minmax(0,1fr);}html .web-next-log-primary .btn{grid-column:2;justify-self:start;}}
+html .web-command-center {width:min(680px,calc(100vw - 32px));max-height:85dvh;overflow:auto;}
+html .web-command-results {display:grid;max-height:45dvh;overflow:auto;margin-block:12px;gap:4px;}
+html .web-command-results button {display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:10px;padding:14px;min-height:48px;}
+html .web-command-results button:hover {background:var(--surface-hover);}
+html .web-command-results span {font-size:12px;color:var(--text-secondary);}
+html .web-log-picker {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0;}
+html .web-log-picker button {display:grid;justify-items:center;gap:10px;min-height:84px;border:1px solid var(--border-default);border-radius:16px;background:var(--surface-2);color:var(--text-primary);font:inherit;cursor:pointer;}
+html .and-capture-text {margin:16px 0;padding:14px;border:1px solid var(--border-subtle);border-radius:12px;}
+html .web-evidence-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px;}
+html .web-evidence-grid article {padding:20px;min-width:0;}
+html .web-baseline-number {font-size:26px;line-height:1.25;display:block;margin:14px 0;}
+html .web-baseline-number small {font-size:13px;color:var(--text-secondary);}
+html .web-trend-meaning {display:grid;gap:6px;padding-block:12px;}
+html .web-trend-meaning strong {font-size:24px;}
+html .web-trend-meaning span {font-size:13px;color:var(--text-secondary);}
+html .web-train-modes {display:flex;gap:8px;flex-wrap:wrap;padding-bottom:12px;}
+html .web-train-modes button {flex:1;min-height:48px;}
+html .web-pods-layout {display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);gap:24px;}
+@media(min-width:1600px){html .os-content{padding:32px 48px;}html .web-evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:900px){html .web-pods-layout{grid-template-columns:1fr;}html .web-today-answer{padding:20px;gap:12px;}}
+@media(max-width:600px){html .web-today-answer{grid-template-columns:1fr;}html .web-log-picker{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(prefers-reduced-motion:reduce){html *,html *::before,html *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+html .web-day-evidence{padding:16px 20px;margin-bottom:16px;}
+html .web-day-evidence[open] .health-priority-row{margin-top:16px;}
+
+html .stitch-diary-layout{grid-template-columns:minmax(0,1fr) 320px;}
+html .stitch-diary-nutrition .nutrition-overview{padding:0;border:0;box-shadow:none;}
+html .stitch-diary-nutrition .flow-section-title{flex-direction:column;align-items:flex-start;gap:12px;}
+html .stitch-diary-nutrition .today-energy{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;}
+html .stitch-diary-nutrition .today-energy small{display:block;}
+html .stitch-diary-nutrition .nutrition-macros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+@media(max-width:1100px){html .stitch-diary-layout{grid-template-columns:minmax(0,1fr);}html .stitch-diary-nutrition{grid-column:1;grid-row:auto;position:static;}html .stitch-diary-layout>.meal-slots{grid-row:auto;}}
+
+
+
+html .health-calendar-days button.active :is(span,strong){color:var(--accent-ink);}
+
+/* Domain context never changes the brand color of primary actions. */
+html .os-frame[data-section], html [data-domain], html .health-dashboard {
+  --accent:var(--hos-primary); --accent-ink:var(--hos-primary-ink); --accent-dim:var(--hos-primary-hover);
+  --stitch-primary:var(--hos-primary); --stitch-primary-hover:var(--hos-primary-hover); --stitch-on-primary:var(--hos-primary-ink);
+  --accent-soft:color-mix(in srgb,var(--hos-primary) 10%,var(--hos-surface));
+  --bio-accent:var(--domain-color); --bio-dim:color-mix(in srgb,var(--domain-color) 10%,var(--hos-surface));
+}
+html :is([data-section="Train"],[data-domain="Train"]) {--domain-color:var(--train);}
+html :is([data-section="Eat"],[data-domain="Eat"],[data-domain="Nutrition"]) {--domain-color:var(--eat);}
+html :is([data-section="Recover"],[data-domain="Recover"],[data-domain="Recovery"]) {--domain-color:var(--recover);}
+html [data-domain="Sleep"] {--domain-color:var(--sleep);}
+html :is([data-domain="Hydration"],[data-domain="Water"]) {--domain-color:var(--water);}
+html :is([data-section="Health"],[data-domain="Medical"]) {--domain-color:var(--medical);}
+html :is([data-domain="Health"],[data-domain="Vitals"],[data-domain="HRV"]) {--domain-color:var(--health);}
+html :is([data-section="Body"],[data-domain="Body"]) {--domain-color:var(--body);}
+html :is([data-section="Care"],[data-domain="Care"]) {--domain-color:var(--care);}
+html [data-section="Insights"] {--domain-color:var(--hos-primary);}
+html .os-frame .btn-hot {background:var(--hos-primary);color:var(--hos-primary-ink);}
+html .os-frame .btn-hot:hover {background:var(--hos-primary-hover);}
+html .os-frame :is(.signal-chart,.bio-spark,.overview-tile-icon,.stitch-summary-metric strong) {color:var(--domain-color);}
+html .os-frame .domain-hero-ring {background:conic-gradient(var(--domain-color) var(--ring-progress),var(--surface-3) 0);}
+html .os-frame :is(.today-energy strong,.nutrition-macros strong,.meal-slot-symbol) {color:var(--eat);}
+html .os-frame .water-dashboard {--domain-color:var(--water);}
+html .os-frame .water-dashboard :is(strong,.bio-spark) {color:var(--water);}
+
+/* Resolve legacy theme aliases and photo-header action overrides. */
+html body, html body.dark {
+  --accent-text:var(--hos-primary); --champagne:var(--hos-primary); --champagne-ink:var(--hos-primary); --train-ink:var(--hos-train); --champagne-soft:var(--accent-soft);
+  --mint:var(--hos-primary); --mint-soft:var(--accent-soft); --signal:var(--hos-primary);
+}
+html body::before {background:var(--hos-canvas)!important;}
+html .os-frame .visual-training-hero {--stitch-primary:var(--hos-primary);--stitch-primary-hover:var(--hos-primary-hover);--stitch-on-primary:var(--hos-primary-ink);}
+html .os-frame .domain-hero .metric-ring {--accent:var(--domain-color);}
+
+html .os-frame [data-domain="Train"] {--domain-color:var(--hos-train);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Eat"] {--domain-color:var(--hos-nutrition);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Nutrition"] {--domain-color:var(--hos-nutrition);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Recover"] {--domain-color:var(--hos-recovery);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Recovery"] {--domain-color:var(--hos-recovery);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Sleep"] {--domain-color:var(--hos-sleep);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Water"] {--domain-color:var(--hos-hydration);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Hydration"] {--domain-color:var(--hos-hydration);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Health"] {--domain-color:var(--hos-health);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Vitals"] {--domain-color:var(--hos-health);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="HRV"] {--domain-color:var(--hos-health);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Medical"] {--domain-color:var(--hos-medical);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Body"] {--domain-color:var(--hos-body);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Care"] {--domain-color:var(--hos-care);--accent-text:var(--hos-primary);}
+html .os-frame [data-domain="Insights"] {--domain-color:var(--hos-insights);--accent-text:var(--hos-primary);}
+html .os-frame .nutrition-macros progress {accent-color:var(--eat);}
+html .os-frame .nutrition-macros progress::-webkit-progress-value {background:var(--eat);}
+html .os-frame .nutrition-macros progress::-moz-progress-bar {background:var(--eat);}
+
+html .os-frame, html .health-dashboard {--champagne-ink:var(--hos-primary);--blue-bright:var(--hos-primary);--accent-text:var(--hos-primary);}
+html .os-frame .os-rail-item[data-domain="Today"] {color:var(--hos-primary);}
+html .os-frame .health-segment button[aria-pressed="true"], html .os-frame .health-insight-grid article>button {
+  background:var(--accent-soft); color:var(--hos-primary); border-color:var(--hos-border);
+}
+/* Deep mint keeps small evidence links readable on a tinted light card. */
+html body:not(.dark) .health-insight-grid .visual-why summary {color:var(--hos-primary-hover);}

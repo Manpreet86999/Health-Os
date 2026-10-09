@@ -1,0 +1,28 @@
+import {test,expect} from '@playwright/test';
+import {setup} from '../../../tests/web/cloud-fixture';
+import {nativeFixture} from './native-fixture';
+test('Android workout alternates confirmed sets and persistent rest cards without logging suggested sets',async({page})=>{
+ const cloud=await setup(page,true,true);await nativeFixture(page);await page.setViewportSize({width:360,height:744});
+ cloud.records.find(r=>r.entity_type==='week')!.payload.days.forEach((day:any)=>day.exercises[0].vol='3 x 5');
+ await page.goto('/#Dashboard');await page.getByRole('button',{name:'Start session',exact:true}).click();
+ await expect(page.locator('.and-workout-timers')).toHaveCount(0);await expect(page.locator('.and-workout-rest')).toHaveCount(0);
+ await page.getByRole('spinbutton',{name:'Set 1 load',exact:true}).fill('60');await page.getByRole('spinbutton',{name:'Set 1 reps',exact:true}).fill('5');
+ await page.getByRole('button',{name:'Complete Set',exact:true}).click();
+ const rest=page.getByRole('region',{name:'Rest between sets',exact:true});await expect(rest).toBeVisible();
+ await expect(page.getByRole('spinbutton',{name:'Set 2 load',exact:true})).toHaveCount(0);
+ await expect.poll(()=>cloud.records.find(r=>r.entity_type==='workoutDraft')?.payload.draft?.currentEntry?.completedSets?.length).toBe(1);
+ await rest.getByRole('button',{name:'Pause rest',exact:true}).click();
+ await expect.poll(()=>cloud.records.find(r=>r.entity_type==='workoutDraft')?.payload.draft?.restTimer?.running).toBe(false);
+ await page.reload();await expect(rest).toBeVisible();await expect(rest.getByRole('button',{name:'Resume rest',exact:true})).toBeVisible();
+ await page.screenshot({path:'outputs/apk-refinement/screenshots/workout-rest-card.png',fullPage:true});
+ await rest.getByRole('button',{name:'Skip rest · continue',exact:true}).click();
+ await expect(page.getByRole('spinbutton',{name:'Set 2 load',exact:true})).toBeVisible();
+ await page.getByRole('spinbutton',{name:'Set 2 load',exact:true}).fill('60');await page.getByRole('spinbutton',{name:'Set 2 reps',exact:true}).fill('5');
+ await page.clock.install();await page.getByRole('button',{name:'Complete Set',exact:true}).click();await expect(rest).toBeVisible();await page.clock.fastForward(91000);
+ await expect(rest).toHaveCount(0);await expect(page.getByRole('spinbutton',{name:'Set 3 load',exact:true})).toBeVisible();await page.clock.resume();
+ await page.getByRole('spinbutton',{name:'Set 3 load',exact:true}).fill('60');await page.getByRole('spinbutton',{name:'Set 3 reps',exact:true}).fill('5');
+ await page.getByRole('button',{name:'Complete Set',exact:true}).click();await rest.getByRole('button',{name:'Skip rest · continue',exact:true}).click();
+ await page.getByRole('button',{name:'Review workout',exact:true}).click();await page.getByRole('button',{name:'Save workout',exact:true}).click();
+ await expect.poll(()=>cloud.records.filter(r=>r.entity_type==='session').length).toBe(1);
+ expect(cloud.records.find(r=>r.entity_type==='session')?.payload.logs[0].sets).toHaveLength(3);
+});

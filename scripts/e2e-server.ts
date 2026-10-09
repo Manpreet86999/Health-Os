@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+fs.mkdirSync(path.resolve('scratch'),{recursive:true});
+const root=fs.mkdtempSync(path.resolve('scratch/e2e-'));
+process.env.BODY_OS_DATA_DIR=path.join(root,'data');
+process.env.BODY_OS_BACKUP_DIR=path.join(root,'backups');
+const {getDb}=await import('../src/server/db/connection.js');
+const {migrate}=await import('../src/server/db/migrate.js');
+const repo=await import('../src/server/db/repository.js');
+const {createApp}=await import('../src/server/app.js');
+migrate(getDb());
+repo.saveSettings({isActivated:true,hasSeenFeatureGuide:true,autoCheckUpdates:false,aiProvider:'local',senderEmail:'',appPassword:'',recipients:[]});
+repo.upsertWeek({id:'e2e-week',name:'Release test',missionObjective:'Verify reliable workout saving',weekNumber:1,days:[{key:'Mon',type:'push',title:'Test workout',subtitle:'',muscles:['Chest'],exercises:[{name:'Bench Press',target:'Chest',vol:'1 x 8',cue:'Controlled reps',trackingMode:'weight_reps'}]}]},true);
+const app=createApp();
+app.post('/__test/shutdown',(_req,res)=>{
+  res.json({ok:true});
+  server.close(()=>process.exit(0));
+  setTimeout(()=>{server.closeAllConnections();process.exit(0);},1000).unref();
+});
+const server=app.listen(10091,'127.0.0.1',()=>console.log('Isolated release test server ready'));

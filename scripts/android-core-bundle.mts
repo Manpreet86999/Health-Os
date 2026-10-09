@@ -1,0 +1,11 @@
+import { build } from 'esbuild';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const dir = 'apps/android-native/app/src/main/assets';
+mkdirSync(dir, { recursive: true });
+const result = await build({entryPoints:['scripts/android-core-entry.mts'], bundle:true, write:false, format:'iife',globalName:'HealthOSCore',platform:'neutral',target:'es2020',minify:true,legalComments:'inline',metafile:true});
+const source = result.outputFiles[0].text;
+writeFileSync(`${dir}/health-os-core.js`, source);
+const inputs = Object.keys(result.metafile!.inputs).sort();
+writeFileSync(`${dir}/health-os-core-provenance.json`, JSON.stringify({ bundleSha256:createHash('sha256').update(source).digest('hex'), inputs: inputs.map(path=>({path,sha256:createHash('sha256').update(readFileSync(path)).digest('hex')})) },null,2));
+console.log(`Bundled ${inputs.length} Core sources; ${source.length} bytes. No presentation code.`);

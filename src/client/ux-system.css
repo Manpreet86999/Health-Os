@@ -1,0 +1,141 @@
+/* Shared interaction layer: existing domain components retain their data and actions. */
+:root{--ux-space-1:4px;--ux-space-2:8px;--ux-space-3:12px;--ux-space-4:16px;--ux-space-6:24px;--ux-space-8:32px;--ux-space-12:48px;--ux-focus:var(--accent-text,var(--stitch-primary));}
+body{font-size:16px;line-height:1.55}
+.os-frame .os-content{padding-top:24px}
+.os-frame :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px;min-height:48px}
+.os-frame :is(.subtle,.page-sub,.form-field>small,.flow-field>small,.health-panel p,.bio-record p){font-size:14px;line-height:1.6}
+.os-frame :is(.btn,.os-page-link,.page-tab,.os-search-control){min-height:44px;font-size:14px}
+.os-frame :is(.bio-record,.flow-modal,.health-card,.health-panel,.page-panel,.stitch-workout-console,.bio-form-grid,.flow-field-grid){backdrop-filter:none;-webkit-backdrop-filter:none}
+.os-frame :is(.bio-record,.health-card,.health-panel,.page-panel,.stitch-workout-console){background:var(--bg-1)}
+.os-frame :is(input,textarea,select,button,a,[tabindex]):focus-visible,.modal :is(input,textarea,select,button,a,[tabindex]):focus-visible{outline:3px solid var(--ux-focus);outline-offset:3px}
+.os-frame :is(h1,h2)[tabindex="-1"]:focus{outline:none}
+html{scroll-padding-top:100px}
+:is(button,input,textarea,select,a,[tabindex]){scroll-margin-block:100px 110px}
+.ux-sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.ux-mobile-nav{display:none}
+.ux-pin{padding:6px 10px!important;min-height:36px!important;font-size:14px!important}
+.ux-fieldset{border:0;padding:0;margin:0;min-width:0}
+.ux-page-heading{display:flex;align-items:start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.ux-page-heading h1{margin:16px 0 8px}
+.ux-form-footer,.ux-save-status{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ux-form-footer{border-top:1px solid var(--border-default);padding-top:24px;margin-top:16px}
+.ux-save-status{font-size:14px;min-height:24px;overflow-wrap:anywhere}
+.ux-save-failed,.ux-save-conflict{color:var(--danger);padding:16px;background:var(--bg-1);border:1px solid var(--danger);border-radius:12px}
+.ux-save-synced{color:var(--success)}
+.ux-agenda-row{display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;width:100%;padding:16px;background:var(--bg-1);color:var(--text-primary);border:1px solid var(--border-default);border-radius:12px}
+.ux-agenda-row small,.ux-selection-row small,.ux-followup-row small{display:block;font-size:14px;color:var(--text-secondary);margin-top:4px}
+.ux-agenda-row strong{font-size:16px}
+.ux-appointment-agenda{display:grid;gap:12px}
+.ux-appointment-agenda h2{margin:0}
+.ux-selection-row{display:flex;align-items:start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle);overflow-wrap:anywhere}
+.ux-selection-row input,.ux-appointments input[type=checkbox]{flex:0 0 auto;width:22px;height:22px;margin-right:8px;accent-color:var(--stitch-primary)}
+.ux-followup-row{padding:16px 0;border-bottom:1px solid var(--border-default);display:grid;gap:12px}
+.ux-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.ux-comparison>div{background:var(--bg-inset);padding:16px;border-radius:12px;overflow-wrap:anywhere}
+.ux-appointments textarea{resize:vertical;min-height:120px}
+.ux-appointments details{border:1px solid var(--border-default);border-radius:12px;padding:16px}
+.ux-appointments summary{cursor:pointer;font-weight:600;min-height:32px}
+.ux-summary-preview{width:min(960px,94vw);max-width:94vw}
+.ux-summary-document{border:1px solid var(--border-default);padding:24px;max-height:50vh;overflow:auto;font-size:14px;background:var(--bg-1);color:var(--text-primary)}
+.ux-summary-document table{border-collapse:collapse;width:100%;font-size:14px}
+.ux-summary-document :is(th,td){padding:8px;border-bottom:1px solid var(--border-default);text-align:left;overflow-wrap:anywhere}
+.ux-summary-document p{white-space:pre-wrap;overflow-wrap:anywhere}
+.modal{font-size:16px;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;background:var(--bg-1);color:var(--text-primary)}
+.modal :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px;min-height:48px}
+.modal .btn{min-height:44px}
+.modal :is(.subtle,small){font-size:14px}
+.modal-backdrop:has(.modal[inert]){pointer-events:none}
+.signal-data-table{overflow-x:auto;margin-top:16px}
+.signal-data-table table{width:100%;border-collapse:collapse;font-size:14px}
+.signal-data-table :is(th,td){padding:10px 12px;text-align:left;border-bottom:1px solid var(--border-default)}
+.overview-signals{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important}
+.overview-signals article strong{font-size:20px!important;line-height:1.4!important;overflow-wrap:anywhere}
+.health-dashboard-center{display:flex!important;flex-direction:column;gap:24px}
+.health-priority-row{order:0}.ux-appointment-agenda{order:1}.health-bottom-grid{order:2}.health-quick-capture{order:3}.ux-home-summaries{order:4}.health-insights{order:5}.health-dashboard-center>.visual-workout-card{order:6}.stitch-domain-summary{order:7}.health-dashboard-center>details:not(.stitch-domain-summary){order:8}
+.health-bottom-grid{grid-template-columns:1fr!important}
+.health-bottom-grid>.health-metrics{display:none}
+.health-next-action{min-height:240px!important}
+.ux-home-summaries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.ux-home-summary{display:flex;flex-direction:column;align-items:start;gap:8px;text-align:left;padding:20px;border:1px solid var(--border-default);border-radius:16px;background:var(--bg-1);color:var(--text-primary)}
+.ux-home-summary strong{font-size:24px;font-variant-numeric:tabular-nums}
+.ux-home-summary small{font-size:14px;color:var(--text-secondary)}
+.ux-setup{padding:20px;border:1px solid var(--border-default);border-radius:16px;background:var(--bg-1)}
+.ux-setup li{margin:8px 0}.ux-setup .row{margin-top:16px}
+.ux-personalize-button{margin:12px 0}
+.ux-inline-error{color:var(--danger);font-size:14px}
+@media(min-width:1280px){
+ .os-frame:has(.os-navigation[data-pinned="true"]) .os-main{margin-left:328px}
+ .os-frame:has(.os-navigation[data-pinned="true"]) .stitch-section-nav{display:none}
+ .os-navigation[data-pinned="true"] .os-sidebar-close{display:none}
+}
+@media(min-width:1024px) and (max-width:1279px){.ux-pin{display:none}}
+@media(max-width:1023px){
+ .os-frame .os-rail{display:none!important}.os-frame .os-main{margin-left:0!important}
+ .os-frame .os-sidebar{left:0!important;width:min(340px,90vw)}
+ .os-frame .os-content{padding:16px 16px 120px!important}
+ .os-frame .os-topbar{padding:12px 16px!important;min-height:64px;height:auto;gap:12px}
+ .os-frame .os-topbar :is(.os-capture-button,.os-voice-button,.os-all-pages-button,.os-header-date){display:none}
+ .os-frame .os-search-control{min-width:0;max-width:100%;font-size:14px}
+ .os-frame .os-search-control kbd{display:none}
+ .ux-mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--bg-1);border-top:1px solid var(--border-default);box-shadow:0 -4px 24px #0000000a}
+ .ux-mobile-nav button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--text-secondary);background:transparent;border:0;border-radius:12px;font-size:14px}
+ .ux-mobile-nav button[aria-current=page]{background:var(--accent-soft);color:var(--accent-text,var(--text-primary));font-weight:700}
+ .ux-mobile-nav .ux-mobile-log{background:var(--stitch-primary);color:var(--stitch-on-primary)}
+ body:has([aria-modal="true"]) .ux-mobile-nav{visibility:hidden}
+ .os-frame .os-workout-region{position:fixed;bottom:88px;left:12px;right:12px;z-index:75;padding:8px 12px;background:var(--bg-1);border:1px solid var(--border-default);border-radius:12px;display:flex;align-items:center;gap:8px}
+ .os-frame .os-workout-region .subtle{display:none}
+ .os-frame .os-workout-region .btn{width:100%}
+ .os-frame .stitch-section-nav{gap:20px;min-height:48px}
+ .os-frame .stitch-section-nav button{min-height:48px}
+ .ux-home-summaries{grid-template-columns:1fr}
+ .ux-home-summary{display:grid;grid-template-columns:1fr auto}.ux-home-summary small{grid-column:1/-1}
+ .ux-comparison{grid-template-columns:1fr}
+ .ux-pin{display:none}
+ .os-frame :is(.btn,.icon-btn,.page-tab,.os-page-link,.journey-date-nav button,.calendar-date){min-height:48px}
+ .modal-backdrop{padding:8px}.modal{width:100%;max-width:100%;max-height:calc(100dvh - 16px);border-radius:20px;padding:20px}
+ .ux-form-footer{position:sticky;bottom:-20px;padding:16px 0;background:var(--bg-1);z-index:2}
+ .toast-host{bottom:100px!important;max-width:calc(100vw - 24px)}
+ .ux-summary-document{padding:12px}.ux-summary-preview{max-width:100%;width:100%}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(prefers-reduced-transparency:reduce){.os-frame :is(.glass,.os-topbar,.os-sidebar,.os-rail){background:var(--bg-1)!important;backdrop-filter:none!important}}
+
+.os-frame .stitch-section-nav{display:none}
+.form-field>label{font-size:14px;font-weight:600}
+.ux-appointments .field-error{color:var(--danger)}
+
+.ux-appointments .ux-form-footer{position:static;padding:24px 0 0}
+
+.health-greeting{position:relative;padding-right:64px!important}
+.health-greeting .ux-personalize-corner{position:absolute;right:0;top:0;display:grid;place-items:center;width:48px;height:48px;min-width:48px;min-height:48px;border:1px solid var(--border-default);border-radius:50%;background:var(--bg-1);color:var(--text-secondary);box-shadow:none}
+.health-greeting .ux-personalize-corner:hover{color:var(--text-primary);background:var(--bg-2)}
+
+.os-frame .health-priority-row{order:0}
+.os-frame .health-bottom-grid{order:2;grid-template-columns:1fr!important}
+.os-frame .health-bottom-grid>.health-metrics{display:none}
+.os-frame .health-quick-capture{order:3}
+.os-frame .health-insights{order:5}
+.os-frame .health-dashboard-center>.visual-workout-card{order:6}
+.os-frame .health-dashboard-center>.ux-setup{order:-1}
+
+.os-frame :is(small,.subtle){font-size:14px!important}
+@media(max-width:1023px){.modal :is(.btn,.icon-btn){min-height:48px}}
+
+/* Stable contrast for supporting text, with room for sticky mobile controls. */
+body:not(.dark){--text-tertiary:#5f5f59;--text-secondary:#52524d;--text-1:var(--text-secondary);--text-2:var(--text-tertiary);--muted:var(--text-tertiary);--champagne-ink:#6e592e}
+body:not(.dark) .os-frame :is(.page-day-chip .sub,.dash-ex-vol,.page-empty,.page-section-label,.dash-day-summary span){color:var(--text-tertiary)}
+body:not(.dark) .os-frame .meal-plan-week h3{color:var(--eat)}
+body:not(.dark) .os-frame .care-day-chip.selected{color:var(--care)}
+body:not(.dark) .os-frame .overview-signals .bio-eyebrow{color:var(--text-secondary)}
+body:not(.dark) .os-frame .active>span{color:inherit}
+.os-frame :is(.bio-eyebrow,.page-section-label,.health-overline,.visual-quick-actions>span,.dash-ex-vol,.dash-day-summary span,.health-segment button,.health-insight-grid article>button){font-size:14px}
+body:not(.dark) .os-frame .health-segment button[aria-pressed='true'],body:not(.dark) .os-frame .health-insight-grid article>button{color:var(--hos-primary);background:var(--hos-surface)}
+body:not(.dark) .os-frame .page-day-chip .sub{color:#5f5f59;opacity:1;font-size:14px}
+body:not(.dark) .os-frame .page-day-chip.active .sub{color:#fff}
+.os-content :is(input,select,textarea,button,a,summary,[tabindex]){scroll-margin-top:96px;scroll-margin-bottom:110px}
+.ux-draft-feedback{width:100%;font-size:14px}
+.ux-mobile-nav[data-focused-logging="true"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ux-chart-data{max-width:100%;overflow:auto}
+.ux-chart-data table{width:100%;border-collapse:collapse}
+.ux-chart-data :is(th,td){padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-default);font-size:14px}
+.ux-chart-data caption{text-align:left;padding:12px 0;font-weight:600}

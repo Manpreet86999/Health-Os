@@ -1,0 +1,6 @@
+{
+  "compilerOptions": { "strict": true },
+  "nodeModulesDir": "none",
+  "imports": { "nodemailer": "npm:nodemailer@6.10.1" }
+}
+

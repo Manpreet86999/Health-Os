@@ -1,0 +1,6 @@
+# Body OS desktop release requirements
+# This file is embedded inside BodyOS-Setup.exe for every release.
+body-os-requirements=1
+node>=24
+npm>=10
+install=npm-install

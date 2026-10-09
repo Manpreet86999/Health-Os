@@ -1,0 +1,37 @@
+{
+  "license": "https://www.pexels.com/license/",
+  "retrieved": "2026-10-02",
+  "usage": "Category reference imagery. Does not depict the user, prescribe technique or imply endorsement.",
+  "photos": [
+    {
+      "asset": "train-lower",
+      "pexelsId": 5327530,
+      "source": "https://www.pexels.com/photo/a-man-doing-squats-5327530/"
+    },
+    {
+      "asset": "train-push",
+      "pexelsId": 3837743,
+      "source": "https://www.pexels.com/photo/strong-sportsman-doing-bench-press-during-workout-in-modern-gym-3837743/"
+    },
+    {
+      "asset": "train-pull",
+      "pexelsId": 6551055,
+      "source": "https://www.pexels.com/photo/strong-man-training-with-gym-equipment-6551055/"
+    },
+    {
+      "asset": "train-cardio",
+      "pexelsId": 4944978,
+      "source": "https://www.pexels.com/photo/woman-running-on-a-treadmill-4944978/"
+    },
+    {
+      "asset": "food-oats",
+      "pexelsId": 6529611,
+      "source": "https://www.pexels.com/photo/a-bowl-of-oats-with-dried-fruits-toppings-6529611/"
+    },
+    {
+      "asset": "food-roti",
+      "pexelsId": 5434693,
+      "source": "https://www.pexels.com/photo/close-up-photo-of-roti-5434693/"
+    }
+  ]
+}

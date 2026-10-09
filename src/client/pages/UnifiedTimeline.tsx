@@ -1,0 +1,54 @@
+import { useEffect } from 'react';
+import { AppointmentAgenda } from '../components/AppointmentAgenda';
+import { HealthOsImage } from '../components/HealthOsImage';
+import { recordVisual } from '../lib/visual-assets';
+import { useAutomations } from '../state/AutomationContext';
+import { MedicalActionCenter } from '../components/MedicalActionCenter';
+import { useMemo, useState } from 'react';
+import { BIO_DOMAINS, dateOf, nutrition, type BioDomain } from '../../shared/biology';
+import { buildTimeline, shiftDay, type TimelineEvent } from '../../shared/biological-intelligence';
+import { useBiologicalData } from '../lib/use-biological-data';
+import { useTimelineActions } from '../lib/use-timeline-actions';
+import { QuickActions, useQuickLog } from '../components/QuickLog';
+import { OSIcon } from '../components/OSIcon';
+
+export function UnifiedTimeline({compact=false,healthOnly=false}:{compact?:boolean;healthOnly?:boolean}){
+  const {state}=useAutomations();
+  const {app,bio,records}=useBiologicalData(),quick=useQuickLog(),actions=useTimelineActions();
+  const today=dateOf(new Date().toISOString()),[date,setDate]=useState(today),[domain,setDomain]=useState<BioDomain|'All'>(healthOnly?'Health':'All'),[filter,setFilter]=useState<'Everything'|'Logged'|'Upcoming'|'Completed'|'Skipped'|'Overdue'>(()=>sessionStorage.getItem('health-os-plan-open')==='1'?'Upcoming':'Everything'),[query,setQuery]=useState(''),[expanded,setExpanded]=useState(''),[deleted,setDeleted]=useState<TimelineEvent|null>(null);
+  const [range,setRange]=useState<'Day'|'Week'>('Day');
+  useEffect(()=>{const plan=()=>{setFilter('Upcoming');sessionStorage.removeItem('health-os-plan-open');};window.addEventListener('health-os-plan-open',plan);if(sessionStorage.getItem('health-os-plan-open'))plan();return()=>window.removeEventListener('health-os-plan-open',plan);},[]);
+  const events=useMemo(()=>{
+    const dates=range==='Day'?[date]:Array.from({length:7},(_,index)=>shiftDay(date,index-((new Date(`${date}T12:00:00`).getDay()+6)%7)));
+    const events=dates.flatMap(day=>buildTimeline(records,app.db!,app.skin,day));
+    for(const d of Object.values(state.derived).filter(d=>d.kind==='habit'&&dates.includes(d.date))){
+      const p=d.value as {name:string;recordId:string;met:boolean;value:number|null;target:number};
+      const existing=events.find(e=>e.targetId===p.recordId&&e.type==='habit');
+      if(existing){existing.status=p.met?'done':'planned';existing.summary=p.met?'Verified from linked evidence':'Waiting for linked evidence';existing.details=[d.evidence.explanation];}
+      else if(p.met)events.push({id:d.id,domain:'Today',type:'habit',title:p.name,timestamp:new Date(`${d.date}T12:00:00`).toISOString(),summary:'Verified from linked evidence',status:'done',page:'Habits',details:[d.evidence.explanation]});
+    }
+    return events.sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  },[records,app.db,app.skin,date,state.derived,range]);
+  const view=events.filter(e=>(domain==='All'||e.domain===domain)&&(filter==='Everything'||(filter==='Upcoming'?e.status==='planned':filter==='Completed'?e.status==='done':filter==='Skipped'?e.status==='skipped':filter==='Overdue'?e.status==='planned'&&Date.parse(e.timestamp)<Date.now():e.status==='logged'||e.status==='done'))&&`${e.title} ${e.summary}`.toLowerCase().includes(query.toLowerCase()));
+  const counts={logged:events.filter(e=>e.status!=='planned').length,upcoming:events.filter(e=>e.status==='planned').length};
+  const food=nutrition(records,date),water=events.filter(e=>e.type==='water').reduce((n,e)=>n+(e.record?.value||0),0);
+  const dayName=(d:string)=>d===today?'Today':d===shiftDay(today,-1)?'Yesterday':new Date(`${d}T12:00:00`).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+  const period=(e:TimelineEvent)=>{if(range==='Week')return new Date(e.timestamp).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'});const h=new Date(e.timestamp).getHours();return h<12?'Morning':h<17?'Afternoon':'Evening';};
+  const shown=compact?view.filter(e=>e.status==='planned'||Date.parse(e.timestamp)>=Date.now()-6*3600000).slice(0,6):view;
+  return <section className={`journey ${compact?'journey-compact':''}`} aria-label="Unified timeline">
+    {!compact&&<details className="flow-details"><summary>Medical chronology and around-event exploration</summary><MedicalActionCenter view="timeline"/></details>}
+    <header className="journey-heading"><div><p className="bio-eyebrow">YOUR DAY, CONNECTED</p>{compact?<h2>The rest of your day<span>.</span></h2>:<h1>Your timeline<span>.</span></h1>}<p className="subtle">{counts.logged} moments logged · {counts.upcoming} things planned</p></div>{compact?<button className="btn btn-soft" onClick={()=>app.setPage('Timeline')}>Full timeline ↗</button>:<div className="journey-date-nav"><button aria-label="Previous day" onClick={()=>setDate(shiftDay(date,-1))}>‹</button><label>{dayName(date)}<input type="date" aria-label="Timeline date" value={date} onChange={e=>e.target.value&&setDate(e.target.value)}/></label><button aria-label="Next day" onClick={()=>setDate(shiftDay(date,1))}>›</button></div>}</header>
+    {!compact&&<><div className="journey-days" role="group" aria-label="Timeline week">{Array.from({length:7},(_,i)=>shiftDay(date,i-3)).map(d=><button key={d} aria-pressed={d===date} onClick={()=>setDate(d)}><span>{new Date(`${d}T12:00:00`).toLocaleDateString(undefined,{weekday:'short'})}</span><strong>{new Date(`${d}T12:00:00`).getDate()}</strong><i className={d===today?'is-today':''}/></button>)}</div><QuickActions date={date}/><div className="journey-toolbar"><div className="journey-segment" role="group" aria-label="Timeline status">{(['Everything','Logged','Upcoming','Completed','Skipped','Overdue'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f}</button>)}</div><input className="input" aria-label="Search timeline" placeholder="Find a moment…" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="journey-filters" role="group" aria-label="Timeline domains">{(['All',...BIO_DOMAINS] as const).map(d=><button key={d} aria-pressed={domain===d} onClick={()=>setDomain(d)}>{d!=='All'&&<OSIcon name={d} size={14}/>} {d}</button>)}</div><div className="journey-day-summary"><span><strong>{food.calories.toLocaleString()}</strong> kcal</span><span><strong>{food.protein}</strong> g protein</span><span><strong>{(water/1000).toLocaleString()}</strong> L water</span><span><strong>{events.filter(e=>e.type==='workout').length}</strong> workouts</span></div></>}
+    {deleted&&<div className="journey-undo" role="status"><span>{deleted.title} removed</span><button onClick={()=>void actions.run(deleted.id,async()=>{await bio.restore(deleted.record!);setDeleted(null);})}>Undo</button></div>}
+    {!compact&&<><div className="page-tabs" aria-label="Timeline range">{(['Day','Week'] as const).map(label=><button className="page-tab" key={label} aria-pressed={range===label} onClick={()=>setRange(label)}>{label}</button>)}</div><AppointmentAgenda date={date} week={range==='Week'}/></>}
+    <div className="journey-stream">{shown.map((event,i)=>{
+      const isExpanded=expanded===event.id,time=new Date(event.timestamp),due=event.status==='planned'&&Date.parse(event.timestamp)<=Date.now(),editable=event.record&&!event.record.id.startsWith('legacy-')&&event.status!=='planned';
+      return <div className="journey-event-group" key={event.id}>{(i===0||period(shown[i-1])!==period(event))&&<div className="journey-period"><span>{period(event)}</span><i/></div>}<article className={`journey-event ${event.status==='planned'?'planned':''} ${due?'due':''}`} data-domain={event.domain}><time dateTime={event.timestamp}>{time.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}<small>{event.status==='planned'?due?'Overdue':'Planned':event.status==='skipped'?'Skipped':event.status==='done'?'Done':'Logged'}</small></time><div className="journey-node"><OSIcon name={event.domain} size={18}/></div><div className="journey-event-card glass"><button className="journey-event-title" aria-expanded={isExpanded} onClick={()=>setExpanded(isExpanded?'':event.id)}>{event.record&&['meal','food','recipe'].includes(event.record.type)&&<HealthOsImage context={recordVisual(event.record)} alt={event.title}/>}<div><span className="bio-eyebrow">{event.domain}{event.record?.quality==='estimated'?' · ESTIMATE':''}</span><h3>{event.title}</h3><p>{event.summary}</p></div><span className="journey-expand">{isExpanded?'−':'＋'}</span></button>
+        {event.status==='planned'&&<div className="journey-event-actions">{['supplement','medication','careTask','habit','mealPlan'].includes(event.type)?<><button className="journey-primary" disabled={Boolean(actions.busy)} onClick={()=>void actions.perform(event)}>{['supplement','medication'].includes(event.type)?'Taken':event.type==='mealPlan'?'Log this meal':'Complete'} <span>✓</span></button>{['supplement','medication','careTask'].includes(event.type)&&<button className="journey-secondary" disabled={Boolean(actions.busy)} onClick={()=>void actions.perform(event,'skipped')}>Skip</button>}</>:<button className="journey-primary" onClick={()=>void actions.perform(event)}>{event.type==='plannedWorkout'?'Open workout':event.type==='automation'?'Open action':'Open'} ↗</button>}</div>}
+        {isExpanded&&<div className="journey-event-detail">{event.details?.filter(Boolean).map((line,index)=><p key={index}>{line}</p>)}{event.record?.metadata.notes&&<p>{String(event.record.metadata.notes)}</p>}<div className="journey-event-actions">{editable&&<button onClick={()=>quick.open(event.record!.type,event.record,date)}>Edit entry</button>}{event.type==='meal'&&event.record&&<button onClick={()=>void actions.run(event.id,()=>quick.repeat(event.record!,date))}>Repeat meal</button>}<button onClick={()=>app.setPage(event.page)}>Open {event.domain} ↗</button>{editable&&<button className="journey-delete" onClick={()=>void actions.run(event.id,async()=>{await bio.remove(event.record!);setDeleted(event);})}>Remove entry</button>}</div></div>}
+      </div></article></div>;
+    })}</div>
+    {!shown.length&&<div className="journey-empty"><div><OSIcon name="Today" size={32}/></div><h3>{filter==='Upcoming'?'A little room in your day':query?'No matching moments':'Your day starts here'}</h3><p>{query?'Try another word or domain.':'Log something small, or add a routine to see your day come together.'}</p><button className="btn btn-hot" onClick={()=>quick.open('meal',undefined,date)}>Log a meal</button><button className="btn btn-soft" onClick={()=>app.setPage('Nudges')}>Build a routine</button></div>}
+    {actions.error&&<p role="alert" className="bio-error">{actions.error}</p>}
+  </section>;
+}

@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const [version, code] = process.argv.slice(2);
+if (!/^\d+\.\d+\.\d+$/.test(version || '') || !/^\d+$/.test(code || '') || Number(code) > 2100000000) throw new Error('Usage: node scripts/set-release-version.mjs 0.1.1 ANDROID_VERSION_CODE');
+const root = process.cwd(), read = name => fs.readFileSync(path.join(root, name), 'utf8'), write = (name, value) => fs.writeFileSync(path.join(root, name), value);
+const oldConfig = read('src/client/public/release-config.js'), oldCode = Number(/androidVersionCode:\s*(\d+)/.exec(oldConfig)?.[1]);
+if (Number(code) <= oldCode) throw new Error('Android version code must increase for in-place updates.');
+const pkg = JSON.parse(read('package.json'));
+const remote = version.split('.').map(Number), local = pkg.version.split('.').map(Number);
+const changed = remote.findIndex((number,index) => number !== local[index]);
+if (changed < 0 || remote[changed] < local[changed]) throw new Error('Release version must increase.');
+pkg.version = version; pkg.scripts['build:apk'] = `powershell -NoProfile -ExecutionPolicy Bypass -File apps/health-os-mobile/scripts/build-review.ps1 -VersionCode ${code} -VersionName ${version}`;
+write('package.json', JSON.stringify(pkg, null, 2)+'\n'); const lock = JSON.parse(read('package-lock.json')); lock.version = version; lock.packages[''].version = version; write('package-lock.json', JSON.stringify(lock, null, 2)+'\n');
+write('src/shared/version.ts', read('src/shared/version.ts').replace(/APP_VERSION = '[^']+'/, `APP_VERSION = '${version}'`));
+write('src/client/public/release-config.js', oldConfig.replace(/version: '[^']+'/, `version: '${version}'`).replace(/androidVersionCode:\s*\d+/, `androidVersionCode: ${code}`));
+write('VERSION.txt', `Health Os v${version}\nWindows web app and Android\nRelease channel: https://github.com/Manpreet86999/Health-Os\n`);
+write('github-updates.json', JSON.stringify({repo:'Manpreet86999/Health-Os',version},null,2)+'\n');
+console.log(`Release version set to v${version}; Android version code ${code}.`);

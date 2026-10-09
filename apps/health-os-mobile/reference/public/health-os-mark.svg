@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <radialGradient id="slateBg" cx="30%" cy="20%" r="90%">
+      <stop offset="0%" stop-color="#111c24"/>
+      <stop offset="50%" stop-color="#0a1218"/>
+      <stop offset="100%" stop-color="#05080c"/>
+    </radialGradient>
+
+    <linearGradient id="ribbonGradA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="40%" stop-color="#10b981"/>
+      <stop offset="80%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <linearGradient id="ribbonGradB" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="35%" stop-color="#38bdf8"/>
+      <stop offset="70%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#a3e635"/>
+    </linearGradient>
+
+    <linearGradient id="goldZenith" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+
+    <filter id="softAura" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#020406" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Container: Chamfered Clinical Squircle -->
+  <rect x="32" y="32" width="448" height="448" rx="108" fill="url(#slateBg)" filter="url(#cardShadow)"/>
+  <rect x="33" y="33" width="446" height="446" rx="107" stroke="#2dd4bf" stroke-opacity="0.3" stroke-width="1.5"/>
+
+  <!-- Concentric Medical Telemetry Grid Lines -->
+  <circle cx="256" cy="256" r="172" stroke="#2dd4bf" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="3 6"/>
+  <circle cx="256" cy="256" r="124" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+
+  <!-- Background Ambient Glow behind Infinity Mark -->
+  <circle cx="256" cy="256" r="80" fill="#10b981" fill-opacity="0.12" filter="url(#softAura)"/>
+
+  <!-- Infinity Ribbon Loop Loop Left Petal / Left Pillar of 'H' -->
+  <path d="M 256 256 C 210 200 160 170 120 210 C 75 255 85 325 140 345 C 190 360 230 300 256 256 Z" fill="url(#ribbonGradA)" fill-opacity="0.75"/>
+
+  <!-- Infinity Ribbon Loop Right Petal / Right Pillar of 'H' -->
+  <path d="M 256 256 C 302 312 352 342 392 302 C 437 257 427 187 372 167 C 322 152 282 212 256 256 Z" fill="url(#ribbonGradA)" fill-opacity="0.75"/>
+
+  <!-- Overlapping Foreground Continuous Wave Ribbon (The Dynamic Biometric Arterial Loop) -->
+  <path d="M 130 320 C 95 285 95 225 135 195 C 180 160 220 220 256 256 C 292 292 332 352 377 317 C 417 287 417 227 382 192 C 342 152 292 195 256 256 C 220 317 170 360 130 320 Z" stroke="url(#ribbonGradB)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#softAura)"/>
+
+  <!-- Super-Crisp Surgical White Biometric Core Stroke -->
+  <path d="M 130 320 C 95 285 95 225 135 195 C 180 160 220 220 256 256 C 292 292 332 352 377 317 C 417 287 417 227 382 192 C 342 152 292 195 256 256 C 220 317 170 360 130 320 Z" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Integrated Systolic Pulse Crest Spike ('H' Cross-bridge) -->
+  <path d="M 216 256 L 236 256 L 246 284 L 256 160 L 266 330 L 276 256 L 296 256" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#softAura)"/>
+  <path d="M 216 256 L 236 256 L 246 284 L 256 160 L 266 330 L 276 256 L 296 256" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Systolic Peak Zenith Telemetry Node (Vitality & Energy Crest) -->
+  <circle cx="256" cy="160" r="13" fill="url(#goldZenith)" filter="url(#softAura)"/>
+  <circle cx="256" cy="160" r="6" fill="#ffffff"/>
+
+  <!-- Diastolic Recovery Node -->
+  <circle cx="266" cy="330" r="9" fill="#2dd4bf"/>
+  <circle cx="266" cy="330" r="4.5" fill="#ffffff"/>
+
+  <!-- Sovereign Security Sensor Anchors -->
+  <circle cx="135" cy="195" r="7" fill="#38bdf8"/>
+  <circle cx="377" cy="317" r="7" fill="#38bdf8"/>
+
+  <!-- Typographic Mark -->
+  
+</svg>

@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Health OS session transfer</title>
+<script>
+// The only sender allowed is this same app's alternate loopback address.
+if (location.origin === 'http://localhost:10000' && window.parent !== window) {
+  window.addEventListener('message', event => {
+    if (event.origin !== 'http://127.0.0.1:10000' || event.source !== window.parent || event.data?.type !== 'health-os-carry-session') return;
+    try {
+      const key = 'body-os-supabase-session-v1';
+      const incoming = JSON.parse(event.data.session);
+      if (!incoming || typeof incoming.uid !== 'string' || typeof incoming.accessToken !== 'string' || typeof incoming.refreshToken !== 'string' || !Number.isFinite(incoming.expiresAt) || typeof incoming.config?.url !== 'string' || typeof incoming.config?.publishableKey !== 'string') return;
+      // Prefer the canonical session: its refresh token may already have rotated.
+      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(incoming));
+      event.source.postMessage({ type: 'health-os-session-carried' }, event.origin);
+    } catch { /* Storage restrictions leave the normal sign-in screen available. */ }
+  });
+}
+</script></html>

@@ -1,0 +1,15 @@
+.health-brand img{display:block;flex:none;object-fit:contain}
+.brand-mark{animation:none!important;background:none!important;box-shadow:none!important;width:64px;height:64px}
+.brand-mark::after{display:none}
+.brand-mark .health-brand img{width:64px;height:64px;animation:none!important}
+.health-loader{display:grid;place-items:center;margin:8px auto 24px;width:64px;height:64px}
+.health-buffer-ring{display:block;width:48px;height:48px;border:4px solid var(--border-subtle,#d7dee7);border-top-color:var(--accent,#14b8a6);border-right-color:var(--recover,#14b8a6);border-radius:50%;animation:health-buffer-spin .85s linear infinite}
+@keyframes health-buffer-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:no-preference){.health-loader .health-buffer-ring{animation:health-buffer-spin .85s linear infinite!important}}
+.health-loader.is-compact{margin:0}
+.health-loader.is-compact{width:32px;height:32px}
+.health-loader.is-compact .health-buffer-ring{width:24px;height:24px;border-width:3px}
+@media(prefers-reduced-motion:reduce){.health-buffer-ring{animation:none}}
+.health-loading-view{display:flex;align-items:center;justify-content:center;gap:12px;min-height:120px}
+.stitch-brand-symbol:has(.health-brand){background:transparent}
+.stitch-brand-symbol .health-brand img{width:40px;height:40px}

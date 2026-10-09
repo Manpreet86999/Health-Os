@@ -1,0 +1,13 @@
+/* Keep the ring inside its own grid track at every viewport size. */
+.os-frame .health-ready-content{grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:20px;align-items:center}
+.os-frame .health-readiness-ring{width:100%;max-width:160px;height:auto;aspect-ratio:1;min-width:0}
+.os-frame .health-readiness-ring .metric-ring{width:100%;height:100%;aspect-ratio:1}
+.os-frame .health-readiness-ring .metric-ring>svg{display:block;width:100%;height:100%}
+.os-frame .health-readiness-ring .metric-ring-caption{inset:12%;gap:3px;text-align:center}
+.os-frame .health-contributors{min-width:0;grid-template-columns:1fr}
+.os-frame .health-contributors>button{min-height:48px}
+.health-date-pill input{font:inherit;color:inherit;background:transparent;border:0;min-width:0;color-scheme:light dark}
+.os-frame .health-greeting .health-date-pill{display:inline-flex;align-items:center;gap:8px;max-width:100%}
+.recovery-date-selector{display:flex;align-items:center;gap:12px;align-self:flex-end;font-size:13px;color:var(--text-secondary)}
+.recovery-date-selector input{width:auto}
+@media(max-width:600px){.os-frame .health-ready-content{grid-template-columns:1fr;gap:16px}.os-frame .health-readiness-ring{justify-self:center;max-width:144px}.os-frame .health-contributors{grid-template-columns:1fr 1fr}.os-frame .health-contributors>button>span:nth-child(2){flex-direction:column;align-items:flex-start;gap:2px}.os-frame .health-panel-heading{flex-wrap:wrap;gap:8px}}

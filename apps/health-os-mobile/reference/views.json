@@ -1,0 +1,810 @@
+[
+  {
+    "domain": "Today",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Today",
+    "panel": "",
+    "hash": "#Today/Overview"
+  },
+  {
+    "domain": "Today",
+    "parent": "Timeline",
+    "label": "Timeline",
+    "page": "Timeline",
+    "panel": "",
+    "hash": "#Today/Timeline"
+  },
+  {
+    "domain": "Today",
+    "parent": "Goals & Habits",
+    "label": "Goals",
+    "page": "Targets",
+    "panel": "",
+    "hash": "#Today/Goals%20%26%20Habits?tab=Goals"
+  },
+  {
+    "domain": "Today",
+    "parent": "Goals & Habits",
+    "label": "Habits",
+    "page": "Habits",
+    "panel": "",
+    "hash": "#Today/Goals%20%26%20Habits?tab=Habits"
+  },
+  {
+    "domain": "Today",
+    "parent": "Routines & Reminders",
+    "label": "Routines & Reminders",
+    "page": "Nudges",
+    "panel": "",
+    "hash": "#Today/Routines%20%26%20Reminders"
+  },
+  {
+    "domain": "Today",
+    "parent": "Weekly Review",
+    "label": "Weekly Review",
+    "page": "Habits",
+    "panel": "Weekly Review",
+    "hash": "#Today/Weekly%20Review"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training",
+    "label": "Today",
+    "page": "Dashboard",
+    "panel": "",
+    "hash": "#Dashboard/Training?tab=Today"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training",
+    "label": "Active Workout",
+    "page": "Tracker",
+    "panel": "",
+    "hash": "#Dashboard/Training?tab=Active%20Workout"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training",
+    "label": "Flexible",
+    "page": "Dashboard",
+    "panel": "Flexible",
+    "hash": "#Dashboard/Training?tab=Flexible"
+  },
+  {
+    "domain": "Train",
+    "parent": "Planner",
+    "label": "Planner",
+    "page": "Planner",
+    "panel": "",
+    "hash": "#Dashboard/Planner"
+  },
+  {
+    "domain": "Train",
+    "parent": "Programs & Calendar",
+    "label": "Programs",
+    "page": "Programs",
+    "panel": "",
+    "hash": "#Dashboard/Programs%20%26%20Calendar?tab=Programs"
+  },
+  {
+    "domain": "Train",
+    "parent": "Programs & Calendar",
+    "label": "Splits",
+    "page": "Library",
+    "panel": "Splits",
+    "hash": "#Dashboard/Programs%20%26%20Calendar?tab=Splits"
+  },
+  {
+    "domain": "Train",
+    "parent": "Programs & Calendar",
+    "label": "Calendar",
+    "page": "Calendar",
+    "panel": "",
+    "hash": "#Dashboard/Programs%20%26%20Calendar?tab=Calendar"
+  },
+  {
+    "domain": "Train",
+    "parent": "Programs & Calendar",
+    "label": "Saved Plans",
+    "page": "Library",
+    "panel": "Plans",
+    "hash": "#Dashboard/Programs%20%26%20Calendar?tab=Saved%20Plans"
+  },
+  {
+    "domain": "Train",
+    "parent": "Exercise Library",
+    "label": "Exercise Library",
+    "page": "Library",
+    "panel": "",
+    "hash": "#Dashboard/Exercise%20Library"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training History",
+    "label": "Workouts",
+    "page": "Records",
+    "panel": "",
+    "hash": "#Dashboard/Training%20History?tab=Workouts"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training History",
+    "label": "Lifts",
+    "page": "ExerciseHistory",
+    "panel": "",
+    "hash": "#Dashboard/Training%20History?tab=Lifts"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training History",
+    "label": "PRs",
+    "page": "Analyzer",
+    "panel": "PRs",
+    "hash": "#Dashboard/Training%20History?tab=PRs"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training History",
+    "label": "Cardio",
+    "page": "Recover",
+    "panel": "Cardio",
+    "hash": "#Dashboard/Training%20History?tab=Cardio"
+  },
+  {
+    "domain": "Train",
+    "parent": "Training History",
+    "label": "Coach",
+    "page": "Coach",
+    "panel": "",
+    "hash": "#Dashboard/Training%20History?tab=Coach"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Eat",
+    "panel": "",
+    "hash": "#Eat/Overview"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Food Diary",
+    "label": "Food Diary",
+    "page": "Eat",
+    "panel": "Food Diary",
+    "hash": "#Eat/Food%20Diary"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Log Food",
+    "label": "Search",
+    "page": "Eat",
+    "panel": "Search Food",
+    "hash": "#Eat/Log%20Food?tab=Search"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Log Food",
+    "label": "Barcode",
+    "page": "Eat",
+    "panel": "Scan Barcode",
+    "hash": "#Eat/Log%20Food?tab=Barcode"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Log Food",
+    "label": "Describe",
+    "page": "Eat",
+    "panel": "Describe Meal",
+    "hash": "#Eat/Log%20Food?tab=Describe"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Log Food",
+    "label": "Photo",
+    "page": "Eat",
+    "panel": "Snap Meal",
+    "hash": "#Eat/Log%20Food?tab=Photo"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Log Food",
+    "label": "Quick Add",
+    "page": "Eat",
+    "panel": "Quick Add",
+    "hash": "#Eat/Log%20Food?tab=Quick%20Add"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Food Library",
+    "label": "Foods",
+    "page": "Eat",
+    "panel": "My Foods",
+    "hash": "#Eat/Food%20Library?tab=Foods"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Food Library",
+    "label": "Saved Meals",
+    "page": "Eat",
+    "panel": "Saved Meals",
+    "hash": "#Eat/Food%20Library?tab=Saved%20Meals"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Food Library",
+    "label": "Recipes",
+    "page": "Eat",
+    "panel": "Recipes",
+    "hash": "#Eat/Food%20Library?tab=Recipes"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Food Library",
+    "label": "Favorites",
+    "page": "Eat",
+    "panel": "Favorites",
+    "hash": "#Eat/Food%20Library?tab=Favorites"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "Nutrition",
+    "page": "Eat",
+    "panel": "Macros",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=Nutrition"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "Micronutrients",
+    "page": "Eat",
+    "panel": "Micronutrients",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=Micronutrients"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "Water",
+    "page": "Eat",
+    "panel": "Water",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=Water"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "Planner",
+    "page": "Eat",
+    "panel": "Meal Planner",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=Planner"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "Targets",
+    "page": "Eat",
+    "panel": "Targets",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=Targets"
+  },
+  {
+    "domain": "Eat",
+    "parent": "Nutrition & Planning",
+    "label": "TDEE",
+    "page": "Eat",
+    "panel": "Adaptive TDEE",
+    "hash": "#Eat/Nutrition%20%26%20Planning?tab=TDEE"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Recover",
+    "panel": "",
+    "hash": "#Recover/Overview"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Check-in",
+    "label": "Check-in",
+    "page": "Recover",
+    "panel": "Daily Check-in",
+    "hash": "#Recover/Check-in?tab=Check-in"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Check-in",
+    "label": "Notes",
+    "page": "Recover",
+    "panel": "Recovery Notes",
+    "hash": "#Recover/Check-in?tab=Notes"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Sleep",
+    "label": "Sleep",
+    "page": "Recover",
+    "panel": "Sleep",
+    "hash": "#Recover/Sleep"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Pain & Recovery",
+    "label": "Pain & Recovery",
+    "page": "Recover",
+    "panel": "Pain & Injury",
+    "hash": "#Recover/Pain%20%26%20Recovery"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Recovery Analysis",
+    "label": "Readiness",
+    "page": "Recover",
+    "panel": "Readiness History",
+    "hash": "#Recover/Recovery%20Analysis?tab=Readiness"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Recovery Analysis",
+    "label": "Load",
+    "page": "Recover",
+    "panel": "Training Load",
+    "hash": "#Recover/Recovery%20Analysis?tab=Load"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Recovery Analysis",
+    "label": "Fatigue",
+    "page": "Recover",
+    "panel": "Fatigue",
+    "hash": "#Recover/Recovery%20Analysis?tab=Fatigue"
+  },
+  {
+    "domain": "Recover",
+    "parent": "Recovery Analysis",
+    "label": "Trends",
+    "page": "Recover",
+    "panel": "Recovery Trends",
+    "hash": "#Recover/Recovery%20Analysis?tab=Trends"
+  },
+  {
+    "domain": "Health",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Health",
+    "panel": "",
+    "hash": "#Health/Overview"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Heart",
+    "page": "Health",
+    "panel": "Heart",
+    "hash": "#Health/Vitals?tab=Heart"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Activity",
+    "page": "Health",
+    "panel": "Activity",
+    "hash": "#Health/Vitals?tab=Activity"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "BP",
+    "page": "Health",
+    "panel": "Blood Pressure",
+    "hash": "#Health/Vitals?tab=BP"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Glucose",
+    "page": "Health",
+    "panel": "Blood Glucose",
+    "hash": "#Health/Vitals?tab=Glucose"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Oxygen",
+    "page": "Health",
+    "panel": "Oxygen",
+    "hash": "#Health/Vitals?tab=Oxygen"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Temperature",
+    "page": "Health",
+    "panel": "Temperature",
+    "hash": "#Health/Vitals?tab=Temperature"
+  },
+  {
+    "domain": "Health",
+    "parent": "Vitals",
+    "label": "Respiration",
+    "page": "Health",
+    "panel": "Respiration",
+    "hash": "#Health/Vitals?tab=Respiration"
+  },
+  {
+    "domain": "Health",
+    "parent": "Symptoms & Illness",
+    "label": "Symptoms",
+    "page": "Health",
+    "panel": "Symptoms",
+    "hash": "#Health/Symptoms%20%26%20Illness?tab=Symptoms"
+  },
+  {
+    "domain": "Health",
+    "parent": "Symptoms & Illness",
+    "label": "Illness",
+    "page": "Health",
+    "panel": "Illness Events",
+    "hash": "#Health/Symptoms%20%26%20Illness?tab=Illness"
+  },
+  {
+    "domain": "Health",
+    "parent": "Medications & Supplements",
+    "label": "Medications",
+    "page": "Health",
+    "panel": "Medications",
+    "hash": "#Health/Medications%20%26%20Supplements?tab=Medications"
+  },
+  {
+    "domain": "Health",
+    "parent": "Medications & Supplements",
+    "label": "Supplements",
+    "page": "Health",
+    "panel": "Supplements",
+    "hash": "#Health/Medications%20%26%20Supplements?tab=Supplements"
+  },
+  {
+    "domain": "Health",
+    "parent": "Health Data",
+    "label": "Readings",
+    "page": "Health",
+    "panel": "Manual Readings",
+    "hash": "#Health/Health%20Data?tab=Readings"
+  },
+  {
+    "domain": "Health",
+    "parent": "Health Data",
+    "label": "Sources",
+    "page": "Health",
+    "panel": "Connected Sources",
+    "hash": "#Health/Health%20Data?tab=Sources"
+  },
+  {
+    "domain": "Health",
+    "parent": "Health Data",
+    "label": "Priority",
+    "page": "Health",
+    "panel": "Source Priority",
+    "hash": "#Health/Health%20Data?tab=Priority"
+  },
+  {
+    "domain": "Health",
+    "parent": "Health Data",
+    "label": "Data Quality",
+    "page": "Health",
+    "panel": "Data Quality",
+    "hash": "#Health/Health%20Data?tab=Data%20Quality"
+  },
+  {
+    "domain": "Health",
+    "parent": "Health Data",
+    "label": "Medical Intelligence",
+    "page": "Health",
+    "panel": "Medical Intelligence",
+    "hash": "#Health/Health%20Data?tab=Medical%20Intelligence"
+  },
+  {
+    "domain": "Body",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Body",
+    "panel": "",
+    "hash": "#Body/Overview"
+  },
+  {
+    "domain": "Body",
+    "parent": "Weight",
+    "label": "Weight",
+    "page": "Body",
+    "panel": "Weight",
+    "hash": "#Body/Weight"
+  },
+  {
+    "domain": "Body",
+    "parent": "Measurements",
+    "label": "Measurements",
+    "page": "Body",
+    "panel": "Measurements",
+    "hash": "#Body/Measurements"
+  },
+  {
+    "domain": "Body",
+    "parent": "Body Composition",
+    "label": "Body Composition",
+    "page": "Body",
+    "panel": "Body Composition",
+    "hash": "#Body/Body%20Composition"
+  },
+  {
+    "domain": "Body",
+    "parent": "Body History",
+    "label": "Body History",
+    "page": "Body",
+    "panel": "Measurement History",
+    "hash": "#Body/Body%20History"
+  },
+  {
+    "domain": "Care",
+    "parent": "Today",
+    "label": "Today",
+    "page": "SkinOverview",
+    "panel": "",
+    "hash": "#SkinOverview/Today"
+  },
+  {
+    "domain": "Care",
+    "parent": "Profile & Goals",
+    "label": "Profile",
+    "page": "SkinProfile",
+    "panel": "",
+    "hash": "#SkinOverview/Profile%20%26%20Goals?tab=Profile"
+  },
+  {
+    "domain": "Care",
+    "parent": "Profile & Goals",
+    "label": "Goals",
+    "page": "SkinGoals",
+    "panel": "",
+    "hash": "#SkinOverview/Profile%20%26%20Goals?tab=Goals"
+  },
+  {
+    "domain": "Care",
+    "parent": "Care Plan",
+    "label": "Care Plan",
+    "page": "SkinRoutine",
+    "panel": "",
+    "hash": "#SkinOverview/Care%20Plan"
+  },
+  {
+    "domain": "Care",
+    "parent": "Progress",
+    "label": "Observations",
+    "page": "SkinCheckIn",
+    "panel": "",
+    "hash": "#SkinOverview/Progress?tab=Observations"
+  },
+  {
+    "domain": "Care",
+    "parent": "Progress",
+    "label": "Calendar",
+    "page": "SkinCalendar",
+    "panel": "",
+    "hash": "#SkinOverview/Progress?tab=Calendar"
+  },
+  {
+    "domain": "Care",
+    "parent": "Progress",
+    "label": "Progress",
+    "page": "SkinProgress",
+    "panel": "",
+    "hash": "#SkinOverview/Progress?tab=Progress"
+  },
+  {
+    "domain": "Care",
+    "parent": "Progress",
+    "label": "Photos",
+    "page": "SkinProgress",
+    "panel": "Photos",
+    "hash": "#SkinOverview/Progress?tab=Photos"
+  },
+  {
+    "domain": "Care",
+    "parent": "Products & Coach",
+    "label": "Products",
+    "page": "SkinProducts",
+    "panel": "",
+    "hash": "#SkinOverview/Products%20%26%20Coach?tab=Products"
+  },
+  {
+    "domain": "Care",
+    "parent": "Products & Coach",
+    "label": "Research",
+    "page": "SkinAi",
+    "panel": "Research",
+    "hash": "#SkinOverview/Products%20%26%20Coach?tab=Research"
+  },
+  {
+    "domain": "Care",
+    "parent": "Products & Coach",
+    "label": "Coach",
+    "page": "SkinAi",
+    "panel": "",
+    "hash": "#SkinOverview/Products%20%26%20Coach?tab=Coach"
+  },
+  {
+    "domain": "Care",
+    "parent": "Products & Coach",
+    "label": "Reviews",
+    "page": "SkinReviews",
+    "panel": "",
+    "hash": "#SkinOverview/Products%20%26%20Coach?tab=Reviews"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Overview",
+    "label": "Overview",
+    "page": "Insights",
+    "panel": "",
+    "hash": "#Insights/Overview"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Training",
+    "page": "Analyzer",
+    "panel": "",
+    "hash": "#Insights/Analytics?tab=Training"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Nutrition",
+    "page": "Insights",
+    "panel": "Analytics Nutrition",
+    "hash": "#Insights/Analytics?tab=Nutrition"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Recovery",
+    "page": "Insights",
+    "panel": "Analytics Recovery",
+    "hash": "#Insights/Analytics?tab=Recovery"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Sleep",
+    "page": "Insights",
+    "panel": "Analytics Sleep",
+    "hash": "#Insights/Analytics?tab=Sleep"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Body",
+    "page": "Insights",
+    "panel": "Analytics Body",
+    "hash": "#Insights/Analytics?tab=Body"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Analytics",
+    "label": "Care",
+    "page": "Insights",
+    "panel": "Analytics Care",
+    "hash": "#Insights/Analytics?tab=Care"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Trends & Baselines",
+    "label": "Trends",
+    "page": "Insights",
+    "panel": "Trends",
+    "hash": "#Insights/Trends%20%26%20Baselines?tab=Trends"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Trends & Baselines",
+    "label": "Baselines",
+    "page": "Insights",
+    "panel": "Personal Baselines",
+    "hash": "#Insights/Trends%20%26%20Baselines?tab=Baselines"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Correlations & Experiments",
+    "label": "Correlations",
+    "page": "Insights",
+    "panel": "Correlations",
+    "hash": "#Insights/Correlations%20%26%20Experiments?tab=Correlations"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Correlations & Experiments",
+    "label": "Anomalies",
+    "page": "Insights",
+    "panel": "Anomalies",
+    "hash": "#Insights/Correlations%20%26%20Experiments?tab=Anomalies"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Correlations & Experiments",
+    "label": "Experiments",
+    "page": "Experiments",
+    "panel": "",
+    "hash": "#Insights/Correlations%20%26%20Experiments?tab=Experiments"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Coach & Reports",
+    "label": "Coach",
+    "page": "BodyCoach",
+    "panel": "",
+    "hash": "#Insights/Coach%20%26%20Reports?tab=Coach"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Coach & Reports",
+    "label": "Health Reports",
+    "page": "Reports",
+    "panel": "",
+    "hash": "#Insights/Coach%20%26%20Reports?tab=Health%20Reports"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Coach & Reports",
+    "label": "Workout Reports",
+    "page": "Reports",
+    "panel": "Workout Reports",
+    "hash": "#Insights/Coach%20%26%20Reports?tab=Workout%20Reports"
+  },
+  {
+    "domain": "Insights",
+    "parent": "Coach & Reports",
+    "label": "Research",
+    "page": "Research",
+    "panel": "",
+    "hash": "#Insights/Coach%20%26%20Reports?tab=Research"
+  },
+  {
+    "domain": "Search",
+    "parent": "Universal Search",
+    "label": "Universal Search",
+    "page": "Search",
+    "panel": "",
+    "hash": "#Search/Universal%20Search"
+  },
+  {
+    "domain": "Sync",
+    "parent": "Sync & Backup",
+    "label": "Sync & Backup",
+    "page": "Sync",
+    "panel": "",
+    "hash": "#Sync/Sync%20%26%20Backup"
+  },
+  {
+    "domain": "Settings",
+    "parent": "Settings",
+    "label": "Settings",
+    "page": "Settings",
+    "panel": "",
+    "hash": "#Settings/Settings?tab=Settings"
+  },
+  {
+    "domain": "Settings",
+    "parent": "Settings",
+    "label": "Privacy",
+    "page": "Permissions",
+    "panel": "",
+    "hash": "#Settings/Settings?tab=Privacy"
+  },
+  {
+    "domain": "Profile",
+    "parent": "Profile",
+    "label": "Profile",
+    "page": "Profile",
+    "panel": "",
+    "hash": "#Profile/Profile"
+  }
+]
