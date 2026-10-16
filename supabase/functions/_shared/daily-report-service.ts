@@ -17,19 +17,23 @@ export function dailyReports(db:Db,records:(owner:string,type:string,filter?:str
     const loaded=await Promise.all(types.map(type=>records(owner,type)));
     const byType=Object.fromEntries(types.map((type,index)=>[type,loaded[index].map(row=>row.payload)]));
     const bio:BioRecord[]=[];
+    // Filter in Postgres: an owner may have years of per-minute device samples.
+    // A broad calendar window covers every timestamp offset; exact IST cutoff stays below.
+    const from=new Date(Date.parse(date+'T00:00:00Z')-86400000).toISOString().slice(0,10);
+    const until=new Date(Date.parse(date+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+    const relevant=`or=(payload->>type.in.(nutritionTarget,sourcePriority),and(payload->>timestamp.gte.${from},payload->>timestamp.lt.${until},or(payload->>type.in.(meal,water,nutritionDay,checkIn,dose),and(payload->>type.eq.vital,payload->metadata->>metric.eq.Steps))))`;
     for(let offset=0;;offset+=500){
-      const rows=await db(`health_os_biological_records?user_id=eq.${encodeURIComponent(owner)}&select=payload&order=record_id&limit=500&offset=${offset}`);
+      const rows=await db(`health_os_biological_records?user_id=eq.${encodeURIComponent(owner)}&${relevant}&select=payload&order=record_id&limit=500&offset=${offset}`);
       bio.push(...rows.map((r:Row)=>r.payload));if(rows.length<500)break;
     }
     const visible=bio.filter(r=>!r.deletedAt&&(r.metadata.requiresConfirmation!==true||r.metadata.confirmed===true)&&Date.parse(r.timestamp)<=cutoffMs&&Date.parse(r.updatedAt)<=cutoffMs);
     const dayBio=visible.filter(r=>istDate(new Date(r.timestamp))===date);
-    // Canonical nutrition helpers operate on local dates: normalize timestamps to the IST day.
-    const normalized=visible.map(r=>({...r,timestamp:istDate(new Date(r.timestamp))+'T12:00:00Z'}));
-    const nutrition:Row=dailyNutrition(normalized,date);
+    // Canonical helpers use IST themselves; retain sample times for source selection.
+    const nutrition:Row=dailyNutrition(dayBio,date);
     const workouts=byType.session.filter((r:Row)=>r.date===date&&['finished','completed'].includes(r.status)&&Date.parse(r.endedAt||r.createdAt||cutoff)<=cutoffMs);
     const readiness=mergeDailyReadiness(byType.readiness.filter((r:Row)=>Date.parse(r.updatedAt||r.createdAt||cutoff)<=cutoffMs),dayBio.filter(r=>r.type==='checkIn')).find(r=>r.date===date)||workouts.at(-1)?.readiness||null;
     const merged=readiness?{...readiness}:null;
-    const steps=preferredVitals(normalized,'Steps').find(r=>istDate(new Date(r.timestamp))===date);
+    const steps=preferredVitals(visible,'Steps').find(r=>istDate(new Date(r.timestamp))===date);
     if(steps&&merged)merged.steps=steps.value;
     const week=byType.week.find((w:Row)=>w.id===workouts.at(-1)?.weekId)||byType.week.filter((w:Row)=>validReportDate(w.startDate)&&w.startDate<=date&&date<=String(w.flexibleEndDate||new Date(Date.parse(w.startDate+'T00:00:00Z')+6*86400000).toISOString().slice(0,10))).sort((a:Row,b:Row)=>b.startDate.localeCompare(a.startDate))[0];
     const target=visible.filter(r=>r.type==='nutritionTarget').sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))[0];

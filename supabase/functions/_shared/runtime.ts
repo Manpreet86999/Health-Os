@@ -213,6 +213,10 @@ export const dependencies: EmailDependencies = {
       if (!result.accepted?.length) {
         throw new EmailError("EMAIL_DELIVERY_FAILED");
       }
+    } catch(error) {
+      const detail=error as {code?:unknown;responseCode?:unknown;command?:unknown};
+      console.error(JSON.stringify({code:'SMTP_DELIVERY_FAILED',smtpCode:typeof detail.code==='string'&&/^[A-Z0-9_]{1,40}$/.test(detail.code)?detail.code:'unknown',responseCode:typeof detail.responseCode==='number'?detail.responseCode:null,command:typeof detail.command==='string'&&/^[A-Z ]{1,30}$/.test(detail.command)?detail.command:'unknown'}));
+      throw error;
     } finally {
       transporter.close();
     }

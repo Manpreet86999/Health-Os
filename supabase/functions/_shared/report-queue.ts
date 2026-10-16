@@ -15,7 +15,10 @@ export interface QueueDependencies {
 /** One initial attempt and two immediate retries, then durable delayed retry. */
 export async function processReportJob(job: ReportJob, deps: QueueDependencies) {
   let code = 'EMAIL_DELIVERY_FAILED';
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // Daily AI already retries within a bounded model request. Three such requests
+  // can outlive an Edge worker and leave a delivery lease stuck in "sending".
+  const maximumAttempts=job.report_type==='daily'?1:3;
+  for (let attempt = 0; attempt < maximumAttempts; attempt++) {
     try {
       const result = await sendAccountEmail(await deps.user(job.user_id), job.report_type === 'test'
         ? { reportType: 'test' } : { reportType: job.report_type, reportId: job.report_id }, deps.email, job.automatic,
@@ -25,11 +28,11 @@ export async function processReportJob(job: ReportJob, deps: QueueDependencies) 
     } catch (error) {
       code = error instanceof EmailError ? error.code : 'EMAIL_DELIVERY_FAILED';
       deps.email.log({ code, userId: job.user_id });
-      if (attempt < 2) await deps.sleep(500 * (attempt + 1));
+      if (attempt < maximumAttempts-1) await deps.sleep(500 * (attempt + 1));
     }
   }
-  const attempts = job.attempts + 2;
-  const delay = Math.min(3600, 60 * 2 ** Math.min(6, Math.floor(attempts / 3) - 1));
+  const attempts = job.attempts + maximumAttempts-1;
+  const delay = job.report_type==='daily'?120:Math.min(3600, 60 * 2 ** Math.min(6, Math.floor(attempts / 3) - 1));
   await deps.finish(job, 'queued', attempts, code, new Date(Date.now() + delay * 1000).toISOString());
   return { ok: true, status: 'queued' as const, sentTo: [], error: code };
 }
