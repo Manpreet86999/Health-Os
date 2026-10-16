@@ -1,5 +1,6 @@
 /** Health OS glass-inspired reports, with email-safe solid fallbacks and inline PNG assets. */
 import { REPORT_EMAIL_ASSETS } from './report-email-assets.js';
+import {DAILY_REPORT_ASSETS} from './daily-report-assets.js';
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row => value && typeof value === 'object' && !Array.isArray(value) ? value as Row : {};
 const rows = (value: unknown): Row[] => Array.isArray(value) ? value.filter(item => item && typeof item === 'object' && !Array.isArray(item)) as Row[] : [];
@@ -25,7 +26,8 @@ export type ReportEmailAttachment = { filename: string; content: string; encodin
 /** PNGs become MIME inline attachments, not blocked base64 or remote image URLs. */
 export function prepareReportEmailImages(html: string): { html: string; attachments: ReportEmailAttachment[] } {
   const attachments: ReportEmailAttachment[] = [];
-  for (const [name, content] of Object.entries(assets)) {
+  const inlineAssets={...assets,...Object.fromEntries(Object.values(DAILY_REPORT_ASSETS).map((data,index)=>['daily-'+index,data]))};
+  for (const [name, content] of Object.entries(inlineAssets)) {
     const uri = 'data:image/png;base64,' + content;
     if (!html.includes(uri)) continue;
     const cid = 'body-os-report-' + name;
@@ -54,7 +56,7 @@ function metrics(logs: Row[]) {
   }, 0), 0);
   return { done: completed.length, skipped: logs.filter(log => log.status === 'skipped').length, sets: sets.length, tonnage };
 }
-function stats(logs: Row[], units = 'kg') {
+export function stats(logs: Row[], units = 'kg') {
   const m = metrics(logs);
   const volume = m.tonnage >= 1000 ? (m.tonnage / 1000).toFixed(1) + 'k ' + units : Math.round(m.tonnage) + ' ' + units;
   return table('<tr class="report-stats-row">' + [['Done', m.done, primary], ['Skipped', m.skipped, '#b94d72'], ['Sets', m.sets, ink], ['Volume', volume, ink]].map(([label, value, color], index) => '<td class="report-stat-column" width="25%" valign="top" style="padding:0 ' + (index === 3 ? '0' : '7px') + ' 22px ' + (index === 0 ? '0' : '7px') + '">' + table('<tr><td class="report-stat" style="padding:18px 20px"><p style="margin:0 0 5px;color:' + muted + ';font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">' + e(label) + '</p><strong class="report-stat-value" style="font-size:28px;line-height:1.15;white-space:nowrap;color:' + color + '">' + e(value) + '</strong></td></tr>', cardStyle) + '</td>').join('') + '</tr>');
@@ -67,7 +69,7 @@ function indicatorGrid(indicators: Indicator[]) {
     return '<td class="indicator-column" width="25%" valign="top" style="padding:5px 5px"><table data-indicator="' + e(item.key) + '" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e3e0d9;border-radius:12px;background:#f7f6f3"><tr><td class="indicator-cell" style="padding:10px 8px">' + table('<tr><td width="28" valign="middle">' + image(item.icon, 28, '', 'display:block;') .replace('style="', 'class="indicator-icon" style="') + '</td><td class="indicator-gap" width="8"></td><td valign="middle"><span class="indicator-label" style="display:block;font-size:9px;color:' + muted + ';font-weight:bold;letter-spacing:.4px;text-transform:uppercase;line-height:1.3">' + e(item.label) + '</span><strong class="indicator-value" style="display:block;font-size:14px;line-height:1.3;color:' + ink + '">' + e(item.value) + '</strong></td></tr>', 'table-layout:fixed;') + '</td></tr></table></td>';
   }).join('') + '</tr>').join(''), 'table-layout:fixed;margin:6px -5px 0;');
 }
-function readinessCard(value: unknown) {
+export function readinessCard(value: unknown, exclude: string[] = []) {
   const r = row(value);
   if (!Object.keys(r).length) return block(heading(image('readiness', 22) + ' Readiness') + '<p style="margin:0;color:' + muted + '">No readiness check-in was logged for this workout.</p>');
   const score = logged(r.score) && Number.isFinite(Number(r.score)) && Number(r.score) >= 0 && Number(r.score) <= 100 ? Math.round(Number(r.score)) : null;
@@ -87,7 +89,7 @@ function readinessCard(value: unknown) {
   if (logged(r.restingHeartRate)) indicators.push({key:'restingHeartRate',label:'Resting HR',value:display(r.restingHeartRate,' bpm'),icon:'heart'});
   if (r.painFlag === true) indicators.push({key:'painFlag',label:'Pain flagged',value:'Yes',icon:'pain'});
   const gauge = table('<tr><td align="center" style="padding:18px;background:#f4eee1;border:1px solid #e3e0d9;border-radius:15px"><p style="margin:0 0 8px;font-size:9px;font-weight:bold;color:' + muted + ';letter-spacing:1px;text-transform:uppercase">Overall score</p>' + (score !== null ? image('score'+score, 96, 'Readiness score '+score+' of 100 — '+band, 'display:block;') : '<span style="display:inline-block;padding:18px 26px;border:6px solid #e3e0d9;border-radius:50%;font-size:30px">—</span>') + '</td></tr>');
-  return block(heading(image('readiness', 22) + ' Readiness') + gauge + indicatorGrid(indicators) + (r.recommendation ? '<p style="margin:16px 0 0;color:'+muted+';font-size:14px">'+paragraph(r.recommendation)+'</p>' : '') + (r.notes ? '<p style="margin:14px 0 0;font-size:14px">' + paragraph(r.notes) + '</p>' : ''));
+  return block(heading(image('readiness', 22) + ' Readiness') + gauge + indicatorGrid(indicators.filter(item=>!exclude.includes(item.key))) + (r.recommendation ? '<p style="margin:16px 0 0;color:'+muted+';font-size:14px">'+paragraph(r.recommendation)+'</p>' : '') + (r.notes ? '<p style="margin:14px 0 0;font-size:14px">' + paragraph(r.notes) + '</p>' : ''));
 }
 function setLabel(set: Row, log: Row, units = 'kg') {
   const mode = set.trackingMode || log.trackingMode;
@@ -96,7 +98,7 @@ function setLabel(set: Row, log: Row, units = 'kg') {
   if (mode === 'reps' || mode === 'reps_only') return value(set.r) + ' reps';
   return value(set.w) + ' ' + units + ' × ' + value(set.r);
 }
-function exerciseCard(log: Row, index: number, units = 'kg') {
+export function exerciseCard(log: Row, index: number, units = 'kg') {
   const skipped = log.status === 'skipped', sets = rows(log.sets).slice(0,50);
   const status = skipped ? 'Skipped' : String(log.status||'Logged');
   const header = '<p style="margin:0 0 6px;font-size:11px;font-weight:bold;color:' + (skipped ? '#73736c' : primary) + ';text-transform:uppercase">' + image(skipped?'skipped':'completed', 13) + ' ' + e(status) + (log.target?' | '+e(log.target):'') + '</p><h3 style="margin:0 0 18px;font-size:21px;line-height:1.3;color:' + (skipped?'#686863':ink) + '">' + (index+1) + '. ' + e(log.name||'Exercise') + '</h3>';
@@ -104,7 +106,7 @@ function exerciseCard(log: Row, index: number, units = 'kg') {
   const coach = log.aiCoachComment ? table('<tr><td width="24" valign="top" style="padding:16px 0 16px 16px">'+image('coach',22)+'</td><td style="padding:16px 16px 16px 10px"><p style="margin:0 0 5px;color:#7456b8;font-size:11px;font-weight:bold;text-transform:uppercase">AI Coach</p><p style="margin:0;font-size:14px;line-height:1.6;color:#58437f">'+paragraph(log.aiCoachComment)+'</p></td></tr>', 'margin-top:18px;background:#f3f0f8;border:1px solid #e2d9ee;border-radius:12px;') : '';
   return block(header + (skipped && !sets.length ? '<p style="margin:0;color:#686863;font-size:14px;font-style:italic">No sets recorded.</p>' : setTable) + (log.journal?'<p style="font-size:14px">'+paragraph(log.journal)+'</p>':'') + coach, skipped?'background:#f6f5f2;':'', 'border-left:8px solid '+(skipped?'#d6d2ca':primary)+';');
 }
-function sessionIndicators(record: Row, logs: Row[]) {
+export function sessionIndicators(record: Row, logs: Row[]) {
   const items: Indicator[] = [];
   if (logged(record.durationMinutes) && Number(record.durationMinutes) > 0) items.push({key:'durationMinutes',label:'Duration',value:display(record.durationMinutes,' min'),icon:'duration'});
   if (record.mode === 'planned' || record.mode === 'flexible') items.push({key:'mode',label:'Session',value:record.mode === 'planned' ? 'Planned' : 'Flexible',icon:'routine'});

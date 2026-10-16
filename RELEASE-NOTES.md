@@ -1,30 +1,24 @@
-# Health Os v0.1.0
-
-Health Os is here — a connected workspace for training, nutrition, recovery, health records, body progress, personal care, insights, Pods and automations.
-
-## Corrected Windows package
-
-The original Windows installer and portable ZIP were withdrawn and rebuilt to include `start.bat`, `requirement.txt` and `requirements.txt`. The version remains v0.1.0 as requested. Download the rebuilt Windows package and use the updated `SHA256SUMS.txt`; older copies do not include this launcher. Android is unchanged. This same-version replacement does not trigger an update notification in an existing v0.1.0 installation.
+# Health OS v1.4.0 — Final Android & Web Release
 
 ## Downloads
+- Health-OS-v1.4.0.apk — signed Android app, Android 12+, build 2026101605.
+- Health-OS-Web-v1.4.0.zip — production web app with a local Node.js server and hosting instructions.
+- SHA256SUMS.txt — SHA-256 checksums for both downloads.
 
-- **Windows 10/11 x64:** `Health-OS-Setup-v0.1.0.exe`. Includes the compiled web app and official verified Node.js runtime. Includes `start.bat` and `requirement.txt`. Double-click `start.bat` in your installation folder, or use the Health Os Start menu shortcut. No developer-tool installation is required. The normal installer always asks for an installation folder, including updates.
-- **Android 12+:** `Health-OS-v0.1.0.apk` (`app.healthos.mobile`, version code `2026100908`). Open the downloaded APK and approve installation in Android.
-- **Browser build:** `Health-OS-Web-v0.1.0.zip`, ready to serve on a web server.
-- **Windows portable files:** `Health-OS-Windows-Portable-v0.1.0.zip`. Extract to your chosen folder and double-click `start.bat`; the browser app and runtime are included.
-- **Integrity:** compare downloads with `SHA256SUMS.txt`.
+## Included
+- The approved daily report design, with body measurements at the bottom.
+- Required calorie, protein, carbohydrate, fat, fiber and water goals when importing a new training week.
+- Automatic daily report generation and email at 23:00 IST, with retry support.
+- Manual daily report requests from Reports, eligible only at/after 23:00 IST on that report's date.
+- IST calendar days from 00:00 through 23:59; the report clearly states its 23:00 data cutoff.
+- Next-day full-report dialog with acknowledgment enabled after scrolling to the bottom.
+- Current training, nutrition totals, recovery, body, insights, account sync and retained Android interface fixes.
 
-## New release experience
+## Installation
+Android package: app.healthos.review. The APK uses the same signing certificate as the current 1.4 builds. The former public v0.1.0 APK used app.healthos.mobile, so v1.4.0 installs alongside that older package; sign in with the same cloud account to access synced records. Verify your records before removing an older installation.
 
-- A colourful “Health Os is here” welcome dialog with interactive cards for all 11 workspace groups.
-- The tour appears on first use and after each installed version; replay it in Settings → Data & account.
-- Future stable releases on this repository open an update dialog. Windows installations download and verify the installer before opening it; hosted browsers and Android provide the appropriate download.
-- Normal Windows updates keep the location chooser visible. Cloud records and the browser’s session/offline queue remain in place.
+For web use, extract the ZIP and follow README.txt inside. It requires Node.js 24+ for the included local server, or an HTTPS static host for dist/client. Opening index.html directly is unsupported.
 
-## Installation notes
+Daily email requires a verified account email, enabled daily reports, and the deployed AI/email services. Reports use saved records through 23:00 IST; unlogged values are not assumed. No extra report email was sent merely to validate this release.
 
-Use your own Health Os cloud account. Internet is required for sign-in and cloud services. Optional AI, email, research, workers and hardware integrations depend on their configuration and permissions.
-
-This Android release uses the existing local distribution/review certificate. It can update the recent review builds with that certificate. It cannot update the supplied original APK because its signing certificate differs; preserve that installation and its records. The Windows installer is not commercially Authenticode signed. On the build PC, Windows Application Control blocked the temporary setup engine (error 4551), so installation could not be completed under that policy. Such PCs need trusted code signing or administrator approval. A Windows portable ZIP with the same bundled app/runtime is also included; local policy remains authoritative.
-
-Automated browser checks use synthetic records and mocked native/cloud services; full hardware and external-service coverage is separate from this initial release.
+This final release supersedes v0.1.0 and contains Android and web packages.

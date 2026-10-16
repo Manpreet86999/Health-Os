@@ -1,0 +1,3 @@
+import {defineConfig} from '@playwright/test';
+const reference=process.env.HOS_ANDROID_REFERENCE==='1',port=reference?10152:10151;
+export default defineConfig({testDir:'./tests/web',testMatch:'original-android.spec.ts',outputDir:'output/android-original-ui/'+(reference?'baseline-tests':'tests'),workers:1,timeout:180000,use:{baseURL:`http://127.0.0.1:${port}`,channel:'msedge',headless:true,viewport:{width:393,height:852},screenshot:'only-on-failure'},webServer:{command:'node scripts/serve-original-android.mjs',url:`http://127.0.0.1:${port}`,reuseExistingServer:false,timeout:30000,env:{PORT:String(port),HOS_ANDROID_REFERENCE:reference?'1':'0'}}});

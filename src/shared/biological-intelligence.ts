@@ -1,3 +1,4 @@
+import {dailyNutrition} from './biology.js';
 import { sleepDurationHours } from './biology.js';
 import { isFinishedSession } from './training.js';
 import { epley1rm } from './training.js';
@@ -84,11 +85,11 @@ export function daySeries(records:BioRecord[],db:AppDb,skin:SkinState,end:string
     const val=(metric:string)=>{const record=dailyVitals.get(metric)?.get(date);return record?.value===undefined?null:metric==='Weight'&&record.unit==='lb'?record.value/2.2046226218:record.value;};
     const sleepRecord=today.filter(r=>r.type==='sleep'&&!r.metadata.nap).sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).at(-1);
     const sleep=sleepRecord?sleepDurationHours(sleepRecord):null;
-    const checks=today.filter(r=>r.type==='checkIn').sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).at(-1),food=today.some(r=>r.type==='meal')?nutrition(today,date):null;
-    const nutrient=(key:'protein'|'calories'|'carbs')=>today.some(r=>r.type==='meal'&&num(r,key)!==null)?food?.[key]??null:null;
+    const checks=today.filter(r=>r.type==='checkIn').sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).at(-1),food=dailyNutrition(today,date);
+    const nutrient=(key:'protein'|'calories'|'carbs'|'fat'|'fibre'|'water')=>food[key];
     const observations=skin.care.checkIns.filter(c=>c.date===date&&c.severity!==null);
     const environment=today.filter(r=>r.type==='environment').at(-1);
-    series.push({date,Sleep:sleep,Readiness:readiness(rows,date,{entries:today,vitals}).score,Energy:checks?num(checks,'energy'):null,Stress:checks?num(checks,'stress'):null,Protein:nutrient('protein'),Calories:nutrient('calories'),Carbohydrates:nutrient('carbs'),HRV:val('HRV'),'Resting HR':val('Resting HR'),Steps:val('Steps'),Weight:val('Weight'),Volume:sessions.length?sessions.reduce((s,r)=>s+workingVolume(r),0):null,Strength:mean(sessions.flatMap(s=>s.logs.flatMap(l=>{const values=l.sets.filter(set=>set.type!=='warmup').map(set=>epley1rm(Number(set.w),Number(set.r))).filter(v=>v>0);return values.length?[Math.max(...values)]:[]}))),'Care severity':mean(observations.map(c=>c.severity!)),Humidity:environment?num(environment,'humidity'):null});
+    series.push({date,Sleep:sleep,Readiness:readiness(rows,date,{entries:today,vitals}).score,Energy:checks?num(checks,'energy'):null,Stress:checks?num(checks,'stress'):null,Protein:nutrient('protein'),Calories:nutrient('calories'),Carbohydrates:nutrient('carbs'),Fat:nutrient('fat'),Fibre:nutrient('fibre'),Water:nutrient('water'),HRV:val('HRV'),'Resting HR':val('Resting HR'),Steps:val('Steps'),Weight:val('Weight'),Volume:sessions.length?sessions.reduce((s,r)=>s+workingVolume(r),0):null,Strength:mean(sessions.flatMap(s=>s.logs.flatMap(l=>{const values=l.sets.filter(set=>set.type!=='warmup').map(set=>epley1rm(Number(set.w),Number(set.r))).filter(v=>v>0);return values.length?[Math.max(...values)]:[]}))),'Care severity':mean(observations.map(c=>c.severity!)),Humidity:environment?num(environment,'humidity'):null});
   }
   return series;
 }

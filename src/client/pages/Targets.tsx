@@ -1,7 +1,5 @@
 import { useDraftState } from '../lib/use-draft';
 import { DraftFeedback } from '../components/DraftFeedback';
-import { AutomaticProgress } from '../components/AutomationCenter';
-import { LinkedRuleEditor } from '../components/AutomationSettings';
 import { useMemo, useState } from 'react';
 
 import { useToast } from '../components/Toast';
@@ -137,8 +135,6 @@ export function Targets() {
 
   return (
     <div className="fade page-shell">
-      <AutomaticProgress kind="goal"/>
-      <details className="glass card"><summary>Link a goal to your records</summary><LinkedRuleEditor kind="goal"/></details>
       <header className="page-hero">
         <div>
           <span className="page-eyebrow">Targets</span>

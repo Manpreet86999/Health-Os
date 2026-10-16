@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import fs from 'node:fs';
+import {actionDefinitions,mcpVersion,retainedActionIds} from '../src/shared/mcp-contracts';
+import {cloudSupports} from '../src/shared/mcp-execution';
+const origin='https://health-os-mcp.health-os-manpr-dc3fa7.workers.dev';
+const live=await (await fetch(origin+'/health')).json() as any;
+assert.equal(live.version,mcpVersion);assert.equal(live.toolCount,retainedActionIds().length);assert.equal(live.cloudSupportedTools,retainedActionIds().filter(cloudSupports).length);
+const denied=await fetch(origin+'/mcp');assert.equal(denied.status,401);assert.match(denied.headers.get('www-authenticate')||'',/oauth-protected-resource/);
+const resource=await (await fetch(origin+'/.well-known/oauth-protected-resource/mcp')).json() as any;assert.equal(resource.resource,origin+'/mcp');
+const meta=await (await fetch(origin+'/.well-known/oauth-authorization-server')).json() as any;
+assert.equal(meta.authorization_endpoint,origin+'/authorize');assert.ok(meta.code_challenge_methods_supported.includes('S256'));assert.ok(meta.grant_types_supported.includes('refresh_token'));
+assert.ok(!meta.scopes_supported.some((s:string)=>/^(medical|care|intelligence)\./.test(s)));
+for(const appOrigin of ['http://localhost:10000','http://127.0.0.1:10000','https://localhost']){const r=await fetch(origin+'/control/status',{method:'OPTIONS',headers:{Origin:appOrigin,'Access-Control-Request-Method':'POST'}});assert.equal(r.status,204);assert.equal(r.headers.get('Access-Control-Allow-Origin'),appOrigin);}
+assert.equal((await fetch(origin+'/control/status',{method:'OPTIONS',headers:{Origin:'https://untrusted.example','Access-Control-Request-Method':'POST'}})).status,403);
+assert.notEqual((await fetch(origin+'/control/status',{method:'POST',headers:{Origin:'https://localhost','Content-Type':'application/json'},body:'{}'})).status,200);
+const query=new URLSearchParams({response_type:'code',client_id:'https://chatgpt.com/oauth/client.json',redirect_uri:'https://chatgpt.com/connector_platform_oauth_redirect',scope:'health.read',state:'retained-catalog-check',code_challenge:createHash('sha256').update('retained-catalog-verifier-01234567890123456789').digest('base64url'),code_challenge_method:'S256',resource:origin+'/mcp'});
+const consent=await fetch(origin+'/authorize?'+query,{redirect:'manual'});assert.equal(consent.status,200);const html=await consent.text();assert.match(html,/ChatGPT/);const handle=html.match(/name="handle" value="([^"]+)"/)?.[1];assert.ok(handle);
+const cookie=consent.headers.getSetCookie().map(v=>v.split(';')[0]).join('; ');
+const cancel=await fetch(origin+'/authorize',{method:'POST',redirect:'manual',headers:{Origin:origin,Cookie:cookie,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({handle,decision:'deny'})});assert.equal(cancel.status,302);assert.equal(new URL(cancel.headers.get('Location')!).hostname,'chatgpt.com');
+const report={...live,androidOriginAllowed:true,unauthenticatedRequestsDenied:true,untrustedOriginsDenied:true,chatgptClientMetadata:true,chatgptConsentCancel:true,refreshTokensAdvertised:true,catalog:retainedActionIds().map(id=>({name:id,scope:actionDefinitions[id].scope})),recordWritesPerformed:false};
+fs.mkdirSync('output/android-original-ui',{recursive:true});fs.writeFileSync('output/android-original-ui/mcp-live-verification.json',JSON.stringify(report,null,2));
+console.log(`HEOS MCP ${live.version}: ${live.toolCount} retained tools, ${live.cloudSupportedTools} cloud tools; Android origin, authentication boundaries and ChatGPT OAuth checks passed.`);

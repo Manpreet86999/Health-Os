@@ -12,18 +12,18 @@ test('large cloud workspace loads all history and resolves exercise references',
     add('healthReading',`synthetic-health-${i}`,{kind:'Steps',value:5,unit:'steps',date:start.toISOString().slice(0,10),startTime:start.toISOString(),endTime:end.toISOString(),source:'Synthetic watch',sourceRecordId:`synthetic-${i}`,importedAt:end.toISOString()});
   }
   for(let i=0;i<2520;i++)add('exercise',`30000000-0000-4000-8000-${String(i).padStart(12,'0')}`,{});
-  let active=0,maximum=0,resolved=0;
+  let active=0,maximum=0;const resolved=new Set<string>();
   await page.route(`${base}/rest/v1/body_os_exercises?*`,async route=>{
     active++;maximum=Math.max(maximum,active);
     const query=new URL(route.request().url()).searchParams;
     const ids=query.has('id')?query.get('id')!.slice(4,-1).split(','):Array.from({length:2520},(_,i)=>`30000000-0000-4000-8000-${String(i).padStart(12,'0')}`).slice(Number(query.get('offset')||0),Number(query.get('offset')||0)+Number(query.get('limit')||1000));
     await new Promise(resolve=>setTimeout(resolve,20));
     await route.fulfill({json:ids.map(id=>({id,name:`Synthetic exercise ${id}`,muscles:['Chest'],equipment:[],source_payload:{}}))});
-    active--;resolved+=ids.length;
+    active--;for(const id of ids)resolved.add(id);
   });
   await page.goto('/',{waitUntil:'domcontentloaded'});
   await expect(page.getByRole('navigation',{name:'Health OS domains'})).toBeVisible({timeout:60000});
-  expect(resolved).toBe(2520);expect(maximum).toBeGreaterThanOrEqual(1);expect(maximum).toBeLessThanOrEqual(4);
+  await expect.poll(()=>resolved.size,{timeout:30000}).toBe(2520);expect(maximum).toBeGreaterThanOrEqual(1);expect(maximum).toBeLessThanOrEqual(4);
 });
 
 test('stalled cloud loading times out and can retry without clearing account data',async({page})=>{
@@ -57,8 +57,8 @@ test('workout UI retains cloud draft recovery and failed-save retry',async({page
   await page.getByRole('button',{name:'Start session',exact:true}).click();await page.getByRole('spinbutton',{name:'Set 1 load',exact:true}).fill('60');await page.getByRole('spinbutton',{name:'Set 1 reps',exact:true}).fill('5');
   await expect.poll(()=>records.find(r=>r.entity_type==='workoutDraft'&&!r.deleted_at)?.payload.draft?.currentEntry?.weights?.[0]).toBe('60');
   await page.reload();await ready(page);await expect(page.getByRole('spinbutton',{name:'Set 1 load',exact:true})).toHaveValue('60');
-  await page.getByRole('button',{name:'Complete Set',exact:true}).click();await page.getByRole('button',{name:'Skip rest · continue',exact:true}).click();await page.getByRole('button',{name:'Save & next',exact:true}).click();rejectSession(true);await page.getByRole('button',{name:'Save workout',exact:true}).click();await expect(page.getByText(/Supabase save failed/)).toBeVisible();expect(records.filter(r=>r.entity_type==='session')).toHaveLength(0);
-  rejectSession(false);await page.getByRole('button',{name:'Save workout',exact:true}).click();await expect.poll(()=>records.filter(r=>r.entity_type==='session').length).toBe(1);expect(originApi).toEqual([]);
+  await page.getByRole('button',{name:'Complete Set',exact:true}).click();await page.getByRole('button',{name:'Skip rest · continue',exact:true}).click();await page.getByRole('button',{name:'Save & next',exact:true}).click();rejectSession(true);await page.getByRole('button',{name:'Save & send AI report',exact:true}).click();await expect(page.getByText(/Supabase save failed/)).toBeVisible();expect(records.filter(r=>r.entity_type==='session')).toHaveLength(0);
+  rejectSession(false);await page.getByRole('button',{name:'Save & send AI report',exact:true}).click();await expect.poll(()=>records.filter(r=>r.entity_type==='session').length).toBe(1);expect(originApi).toEqual([]);
 });
 
 test('nutrition and health records use Supabase and survive browser reload',async({page})=>{
@@ -88,7 +88,7 @@ test('mobile Health OS fits the viewport',async({page})=>{await page.setViewport
 
 test('personal worker shows offline jobs and allows cancellation',async({page})=>{
   const {jobs,originApi}=await setup(page);await page.goto('/#Settings');await ready(page);
-  await page.getByRole('tab',{name:'Connections',exact:true}).click();
+  await page.getByRole('tab',{name:'Connected services',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Local worker',exact:true})).toBeVisible();
   await expect(page.getByRole('status').filter({hasText:'Your worker is offline'})).toBeVisible();
   await page.getByRole('button',{name:'Run synthetic connection check'}).click();

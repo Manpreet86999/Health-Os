@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests/web',testMatch:['release-v014.spec.ts','intelligence.spec.ts'],workers:1,timeout:60000,retries:0,reporter:[['line'],['json',{outputFile:'outputs/releases/health-os-v0.1.4/evidence/browser-smoke.json'}]],outputDir:'outputs/releases/health-os-v0.1.4/evidence/browser',use:{baseURL:'http://localhost:10000',headless:true,channel:'msedge',serviceWorkers:'block',screenshot:'only-on-failure'}});

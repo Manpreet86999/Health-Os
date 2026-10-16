@@ -1,4 +1,6 @@
+import {istDate} from '../../shared/daily-report-policy';
 import type { Readiness, Week } from './types';
+import {prescriptionSetCount} from '../../shared/workout-prescription';
 
 export function esc(v: unknown): string {
   return String(v ?? '').replace(/[&<>"']/g, (c) =>
@@ -12,7 +14,7 @@ export function today(): string {
 }
 
 export function localDayKey(): string {
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+  return new Intl.DateTimeFormat('en', {weekday:'short',timeZone:'Asia/Kolkata'}).format(new Date());
 }
 
 export function greeting(): string {
@@ -49,7 +51,7 @@ export function weekStatus(week: Week, sessions: Array<{ weekId: string; dayKey:
 }
 
 export function parseSetCount(vol: string): number {
-  return Math.max(1, parseInt(String(vol).split(/x/i)[0], 10) || 3);
+  return prescriptionSetCount(vol);
 }
 
 export const PAGES = [

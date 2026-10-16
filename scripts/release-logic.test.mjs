@@ -14,3 +14,9 @@ test('only the exact trusted release asset for the chosen platform is accepted',
   assert.equal(releaseAsset({...release,prerelease:true}),null);assert.equal(releaseAsset({...release,draft:true}),null);
   assert.equal(releaseAsset({...release,assets:[{...windows,browser_download_url:'https://example.com/a.exe'}]}),null);
 });
+test('web-only releases offer their trusted web ZIP without accepting another host',()=>{
+ const tag_name='v1.4.0',asset={name:'Health-OS-Web-v1.4.0.zip',size:42,browser_download_url:'https://github.com/Manpreet86999/Health-Os/releases/download/v1.4.0/Health-OS-Web-v1.4.0.zip'};
+ assert.equal(releaseAsset({tag_name,assets:[asset]}),asset);
+ assert.equal(releaseAsset({tag_name,assets:[{...asset,browser_download_url:'https://example.com/app.zip'}]}),null);
+ assert.equal(releaseAsset({tag_name,assets:[asset]},true),null);
+});

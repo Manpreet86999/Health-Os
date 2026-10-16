@@ -1,4 +1,5 @@
 import { catalogExercise } from '../../shared/global-exercises';
+import { exerciseForDisplay } from './exercise-display';
 import { isCompletedWorkout } from './completed-workout';
 import { uxPreferencesSchema } from '../../shared/ux';
 import { ensureLibraryExercise, ensureLibraryMedia } from './exercise-library-media';
@@ -16,12 +17,10 @@ import { localCoach } from '../../shared/local-coach';
 import { normalizeReadiness, readinessModifier } from '../../shared/readiness';
 import { sessionInputSchema, measurementInputSchema } from '../../shared/schemas';
 import { buildProgressionRules, buildDeloadWeekDays, sessionsToCsv, csvEscape, workSets, logTonnage, bestSetE1rm } from '../../shared/training';
-import { careRecords, CARE_SYNC_TYPES } from '../../shared/care-sync';
-import { emptySkinProfile, SKIN_PRODUCT_TEMPLATE, localLogReview } from '../../shared/skin';
 import { syncRecordsFromDb, type SyncEntityType } from '../../shared/sync';
-import { validateCareProposal } from '../../shared/care-proposal';
 import { localDateKey } from '../../shared/evidence';
 import { EMAIL_MESSAGES } from '../../shared/email-contract';
+import {weekNeedsGoals} from '../../shared/daily-report-policy';
 import type { AppDb, PublicSettings, Session, Week } from '../../shared/types';
 
 type Data = Record<string, any>;
@@ -54,7 +53,19 @@ export class CloudWorkspace {
   constructor(public records: CloudRecord[], public session: Awaited<ReturnType<typeof activeSession>>) {}
   catalog = new Map<string, Data>();
   catalogCheckedAt = 0;
-  db(): AppDb { const db = snapshotFromRecords(this.records); db.meta.storage = 'supabase'; if (!this.get('trainingConfig') && !db.weeks.length) db.trainingConfig.preplannedWeekMode = false; db.exercises = Array.from(new Map([...db.exercises.map(e => [e.id, e] as const), ...Array.from(this.catalog, ([id, e]) => [id, { ...db.exercises.find(p => p.id === id), ...e, id }] as const)]).values()).filter(e => typeof e.name === 'string' && e.name.trim()).map(e => ({ ...e, name: e.name!, aliases: e.aliases || [], muscles: e.muscles || [], equipment: e.equipment || '', movementPattern: e.movementPattern || '', substitutions: e.substitutions || [] })); return db; }
+  private snapshot?: { records: CloudRecord[]; catalog: Map<string, Data>; db: AppDb };
+  db(): AppDb {
+    if (this.snapshot?.records === this.records && this.snapshot.catalog === this.catalog) return { ...this.snapshot.db };
+    const db = snapshotFromRecords(this.records);
+    db.meta.storage = 'supabase';
+    if (!this.get('trainingConfig') && !db.weeks.length) db.trainingConfig.preplannedWeekMode = false;
+    const exercises = new Map(db.exercises.map(e => [e.id, e]));
+    for (const [id, entry] of this.catalog) exercises.set(id, { ...exercises.get(id), ...entry, id } as AppDb['exercises'][number]);
+    db.exercises = [...exercises.values()].map(exerciseForDisplay).filter(e => e.name.trim());
+    this.snapshot = { records: this.records, catalog: this.catalog, db };
+    // Routes may filter top-level collections without changing the shared snapshot.
+    return { ...db };
+  }
   get(type: SyncEntityType, id?: string) { return this.records.find(r => !r.deletedAt && r.entityType === type && (!id || r.id === id)); }
   async save(type: SyncEntityType, payload: Data, id = String(payload.id || crypto.randomUUID())) {
     const previous = this.records.find(r => r.entityType === type && r.id === id);
@@ -75,9 +86,9 @@ export class CloudWorkspace {
     const prefs = (this.get('sharedPreferences', 'shared-preferences')?.payload || {}) as Data;
     const profile = this.db().profile;
     const { aiApiKey, openRouterApiKey, nvidiaNimApiKey, tavilyApiKey, braveSearchApiKey, giphyApiKey, youtubeApiKey, ...publicPrefs } = prefs;
-    return { ...publicPrefs, senderName: 'Health OS', streakStartDate: '', aiProvider: prefs.aiProvider || 'openrouter', aiModel: prefs.aiModel || 'openrouter/free', reportSchedule: prefs.reportSchedule || 'Sunday 20:00', profileName: profile.displayName, height: profile.height, units: profile.units || prefs.units || 'kg',
+    return { ...publicPrefs, senderName: 'Health OS', streakStartDate: '', aiProvider: prefs.aiProvider || 'openrouter', aiModel: prefs.aiModel || '', reportSchedule: prefs.reportSchedule || 'Sunday 20:00', profileName: profile.displayName, height: profile.height, units: profile.units || prefs.units || 'kg',
       isActivated: true, hasSeenFeatureGuide: true, userEmail: this.session.email, senderEmail: this.session.email, recipients: [this.session.email], hasAppPassword: true,
-      hasPin: false, hasAiApiKey: Boolean(prefs.aiApiKey || prefs.openRouterApiKey || prefs.nvidiaNimApiKey), hasOpenRouterApiKey: Boolean(prefs.openRouterApiKey), hasNvidiaNimApiKey: Boolean(prefs.nvidiaNimApiKey),
+      hasPin: false, hasAiApiKey: Boolean(prefs.hasOpenRouterApiKey || prefs.aiApiKey || prefs.openRouterApiKey || prefs.nvidiaNimApiKey), hasOpenRouterApiKey: Boolean(prefs.hasOpenRouterApiKey || prefs.openRouterApiKey), hasNvidiaNimApiKey: Boolean(prefs.nvidiaNimApiKey),
       hasTelegramBot: Boolean(prefs.telegramEnabled), hasBraveSearchApiKey: Boolean(prefs.braveSearchApiKey), hasTavilyApiKey: Boolean(prefs.tavilyApiKey), hasYoutubeApiKey: Boolean(prefs.youtubeApiKey?.trim()), hasGdrive: false,
     };
   }
@@ -94,6 +105,7 @@ export class CloudWorkspace {
     const date = input.date || localDateKey();
     if (db.sessions.some(s => s.weekId === input.weekId && s.dayKey === input.dayKey && s.date === date && ['completed', 'finished'].includes(s.status))) fail('This day already has a saved workout. Open Records to edit it.', 409);
     const week = db.weeks.find(w => w.id === input.weekId);
+    if(weekNeedsGoals(week))fail('Set all six daily nutrition goals before starting this week.');
     const readiness = db.readiness.find(r => r.date === date && r.weekId === input.weekId && r.dayKey === input.dayKey) || db.readiness.find(r => r.date === date) || input.readiness || null;
     const session = await this.save('session', { ...input, units: db.profile.units, status: 'finished', date, createdAt: now(), updatedAt: now(),
       weekId: input.weekId || db.meta.activeWeekId, weekName: week?.name || input.weekName || '', weekNumber: week?.weekNumber || input.weekNumber || '',
@@ -116,9 +128,59 @@ export class CloudWorkspace {
 
 let cached: { owner: string; workspace: CloudWorkspace; cursor: number; checkedAt: number } | null = null;
 let invalidationVersion=0;
-export function invalidateCloudWorkspace(){invalidationVersion++;if(cached){cached.checkedAt=0;cached.workspace.catalogCheckedAt=0;}}
+export function invalidateCloudWorkspace(){invalidationVersion++;if(cached)cached.checkedAt=0;}
 let loading: Promise<CloudWorkspace> | null = null;
 let loadController: AbortController | null = null;
+let openingCache: Promise<void> | null = null;
+let backgroundRefresh: Promise<void> | null = null;
+export const WORKSPACE_UPDATED = 'health-os-workspace-updated';
+function notifyWorkspace(owner: string) {
+  if (storedSession() && workspaceScope(storedSession()!) === owner) window.dispatchEvent(new Event(WORKSPACE_UPDATED));
+}
+function refreshInBackground() {
+  if (backgroundRefresh) return;
+  const previousRecords = cached?.workspace.records;
+  const owner = cached?.owner;
+  backgroundRefresh = loadWorkspace().then(ws => {
+    if (owner && ws.records !== previousRecords) notifyWorkspace(owner);
+  }).catch(() => { /* Keep the account-scoped saved workspace usable while offline. */ })
+    .finally(() => { backgroundRefresh = null; });
+}
+async function readWorkspace() {
+  const session = navigator.onLine?await activeSession():storedSession();
+  if(!session)throw Object.assign(new Error('Sign in to open your saved workspace.'),{status:401});
+  const owner = workspaceScope(session);
+  if (!cached && !loading) {
+    if (!openingCache) openingCache = readWorkspaceCache(session).then(saved => {
+      if (saved && !cached && storedSession() && workspaceScope(storedSession()!) === owner) {
+        const workspace = new CloudWorkspace(saved.records, session);
+        workspace.catalog = new Map(saved.catalog.map(entry => [entry.id, entry]));
+        cached = { owner, workspace, cursor: saved.cursor, checkedAt: 0 };
+      }
+    }).finally(() => { openingCache = null; });
+    await openingCache;
+  }
+  if (cached?.owner === owner) {
+    cached.workspace.session = session;
+    if (navigator.onLine&&Date.now() - cached.checkedAt >= 5000) refreshInBackground();
+    return cached.workspace;
+  }
+  return loadWorkspace();
+}
+// Explicit refreshes and mutations still wait for authoritative cloud updates.
+export const refreshCloudWorkspace = () => loadWorkspace();
+const catalogLoads = new WeakSet<CloudWorkspace>();
+function refreshCatalog(workspace: CloudWorkspace) {
+  if (catalogLoads.has(workspace) || Date.now() - workspace.catalogCheckedAt < 60000) return;
+  catalogLoads.add(workspace);
+  const owner = workspaceScope(workspace.session);
+  void fillMissingCatalog(workspace, new AbortController()).then(async added => {
+    if (!storedSession() || workspaceScope(storedSession()!) !== owner || cached?.workspace !== workspace) return;
+    await writeWorkspaceCache(workspace.session, [], added);
+    notifyWorkspace(owner);
+  }).catch(() => { /* The optional shared catalog must never block the workspace. */ })
+    .finally(() => catalogLoads.delete(workspace));
+}
 const loadProgress = (message:string) => window.dispatchEvent(new CustomEvent('health-os-workspace-progress',{detail:message}));
 window.addEventListener('body-os-cloud-refresh', invalidateCloudWorkspace);
 window.addEventListener('body-os-account-changed', () => { loadController?.abort(); cached = null; loading = null; });
@@ -129,7 +191,7 @@ async function fillMissingCatalog(workspace: CloudWorkspace, controller: AbortCo
   for (let offset = 0; ; offset += 1000) {
     const response = await fetch(`${session.config.url}/rest/v1/body_os_exercises?catalog_status=neq.disabled&select=*,body_os_exercise_media!body_os_exercise_media_exercise_id_fkey(*)&order=id&limit=1000&offset=${offset}`, {
       headers: { apikey: session.config.publishableKey, Authorization: `Bearer ${session.accessToken}` },
-      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)])
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60000)])
     });
     if (!response.ok) fail('Could not load the shared exercise library.', response.status);
     const rows = await response.json();
@@ -183,19 +245,18 @@ async function loadWorkspace() {
           const key = `${record.entityType}:${record.id}`, old = values.get(key);
           if (!old || (record.changeVersion || 0) >= (old.changeVersion || 0)) values.set(key, record);
         }
-        current.workspace.records = [...values.values()]; current.cursor = delta.cursor; more = delta.hasMore;
+        if (delta.records.length) current.workspace.records = [...values.values()];
+        current.cursor = delta.cursor; more = delta.hasMore;
         if (delta.records.length || delta.cursor !== previousCursor) await writeWorkspaceCache(session, delta.records, [], delta.cursor, false, previousCursor);
       }
-      const added = await fillMissingCatalog(current.workspace, controller);
       checkAccount();
-      if (added.length) await writeWorkspaceCache(session, [], added, current.cursor, false, current.cursor);
+      refreshCatalog(current.workspace);
       current.checkedAt = taskVersion===invalidationVersion?Date.now():0;
       return current.workspace;
     }
     loadProgress('Downloading your cloud records…');
     const records = await readCloud(session.config, session,{keyset:true,signal:controller.signal,onProgress:count=>loadProgress(`Loaded ${count.toLocaleString()} cloud records…`)});
     const workspace = new CloudWorkspace(records, session);
-    await fillMissingCatalog(workspace, controller);
     checkAccount();
     loadProgress('Opening your workspace…');
     const cursor = records.reduce((value, record) => Math.max(value, record.changeVersion || 0), 0);
@@ -204,6 +265,7 @@ async function loadWorkspace() {
     // Its cursor and rows still commit atomically; failure falls back to cloud.
     void writeWorkspaceCache(session, records, [...workspace.catalog.values()] as (Data & {id:string})[], cursor, true);
     cached = { owner, workspace, cursor, checkedAt: taskVersion===invalidationVersion?Date.now():0 };
+    refreshCatalog(workspace);
     return workspace;
   })();
   loading = task;
@@ -233,10 +295,11 @@ async function route(url: URL, method: string, body: any, signal?:AbortSignal|nu
   if (path === '/send-dummy-email') return json(await email('test'));
   if (path === '/feedback') return json(await invokeCloud('body-os-email', { reportType: 'feedback', category: body.category, message: body.message }));
   if (path === '/send-report') return json(await email('workout', body.sessionId));
-  if (path.startsWith('/ai/') || path === '/ai-coach') return json(await invokeCloud('body-os-ai', { action: path, ...body }));
   if (path.startsWith('/updates/')) return json({ updateAvailable: false, currentVersion: '5.1.0', latestVersion: '5.1.0', notice: null, phase: 'idle', message: 'Your web app updates automatically.' });
   if (path === '/queue/pending') return json([]);
-  const ws = await loadWorkspace();
+  const expectedOwner=body.expectedOwnerId;const ws = await (method === 'GET' ? readWorkspace() : loadWorkspace());
+  if(expectedOwner&&ws.session.uid!==expectedOwner)return json({error:'Account changed. Review this action again.'},403);
+  delete body.expectedOwnerId;
   let db = ws.db();
   if (path === '/exercise-catalog/media' && method === 'POST') return json(await ensureLibraryMedia(ws, body));
   if(path.startsWith('/visuals/')){
@@ -251,14 +314,12 @@ async function route(url: URL, method: string, body: any, signal?:AbortSignal|nu
     if(!body.state||typeof body.state!=='object'||JSON.stringify(body.state).length>10000000)fail('Invalid automation state.');
     await ws.save('automationState',{state:body.state},'health-os-automations');return json({ok:true});
   }
-  if(path.startsWith('/medical/')) {
-    const {medicalCloudRoute}=await import('./medical-cloud');return medicalCloudRoute(path,method,body,ws);
-  }
-  if(path==='/biology/foods')return json(await invokeCloud('body-os-integrations',{action:path,query:url.searchParams.get('q'),barcode:url.searchParams.get('barcode')==='true'}));
-  if(path.startsWith('/biology/'))return json(await invokeCloud('body-os-ai',{action:path,...body}));
   const prefs = () => (ws.get('sharedPreferences', 'shared-preferences')?.payload || {}) as Data;
   if (path === '/bootstrap') {
     // Repair flexible-day state from durable sessions after an interrupted request.
+    if (db.weeks.some(w => w.mode === 'flexible' && w.status === 'draft' && db.sessions.some(s => s.weekId === w.id && ['finished', 'completed'].includes(s.status) && w.dayStates?.[s.dayKey]?.status !== 'workout'))) {
+      await loadWorkspace(); db = ws.db();
+    }
     for (const week of db.weeks.filter(w => w.mode === 'flexible' && w.status === 'draft')) {
       for (const session of db.sessions.filter(s => s.weekId === week.id && ['finished', 'completed'].includes(s.status))) {
         const current = ws.db().weeks.find(w => w.id === week.id)!;
@@ -279,17 +340,16 @@ async function route(url: URL, method: string, body: any, signal?:AbortSignal|nu
   }
   if (path === '/settings') {
     if (method !== 'GET') {
-      const allowed = ['uxPreferences', 'weeklyGoal', 'restSeconds', 'aiProvider', 'aiModel', 'aiApiKey', 'openRouterApiKey', 'nvidiaNimApiKey', 'tavilyApiKey', 'braveSearchApiKey', 'gender', 'hasSeenFeatureGuide', 'workoutReportEnabled', 'weeklyReportEnabled', 'monthlyReportEnabled', 'healthReportEnabled', 'skincareReportEnabled', 'reportSchedule', 'emailTimezone', 'telegramEnabled'];
+      const allowed = ['uxPreferences','weeklyGoal','restSeconds','gender','hasSeenFeatureGuide','dailyReportEnabled','workoutReportEnabled','weeklyReportEnabled','monthlyReportEnabled','reportSchedule','emailTimezone','telegramEnabled'];
       if(body.uxPreferences!==undefined) body.uxPreferences=uxPreferencesSchema.parse(body.uxPreferences);
       if(body.units!==undefined&&!['kg','lb'].includes(body.units))fail('Choose kilograms or pounds.');
-      if(body.aiProvider!==undefined&&!['openrouter','nvidia'].includes(body.aiProvider))fail('Choose a cloud AI provider.');
       if(body.weeklyGoal!==undefined&&(!Number.isInteger(Number(body.weeklyGoal))||Number(body.weeklyGoal)<1||Number(body.weeklyGoal)>7))fail('Weekly workout goal must be between 1 and 7.');
       if(body.restSeconds!==undefined&&(!Number.isFinite(Number(body.restSeconds))||Number(body.restSeconds)<0||Number(body.restSeconds)>3600))fail('Rest timer must be between 0 and 3600 seconds.');
       if(body.reportSchedule!==undefined&&!/^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday) ([01][0-9]|2[0-3]):[0-5][0-9]$/.test(body.reportSchedule))fail('Use a schedule such as Sunday 20:00.');
       const patch = Object.fromEntries(allowed.filter(k => body[k] !== undefined && (!k.endsWith('ApiKey') || body[k] !== '')).map(k => [k, body[k]]));
-      if(body.aiApiKey)patch[(body.aiProvider||prefs().aiProvider)==='nvidia'?'nvidiaNimApiKey':'openRouterApiKey']=body.aiApiKey;
+      if(body.openRouterApiKey||body.aiApiKey)fail('The OpenRouter connection is managed on the server. No provider key is accepted by this app.');
       await ws.save('sharedPreferences', { version: 1, ...prefs(), ...patch, units: body.units || db.profile.units, updatedAt: now() }, 'shared-preferences');
-      await ws.save('profile', { ...db.profile, displayName: body.profileName ?? db.profile.displayName, units: body.units || db.profile.units, height: body.height ?? db.profile.height }, ws.get('profile')?.id || 'profile');
+      if(body.profileName!==undefined||body.units!==undefined||body.height!==undefined)await ws.save('profile', { ...db.profile, displayName: body.profileName ?? db.profile.displayName, units: body.units || db.profile.units, height: body.height ?? db.profile.height }, ws.get('profile')?.id || 'profile');
     }
     return json(ws.settings());
   }
@@ -374,7 +434,7 @@ async function route(url: URL, method: string, body: any, signal?:AbortSignal|nu
     const at = (n: number) => { const d = new Date(date); d.setDate(d.getDate() + n); return localDateKey(d); };
     const first = body.strategy === 'today' ? index : 0;
     const week = await ws.save('week', { name: 'Flexible training week', weekNumber: '', startDate: at(0), notes: '', active: true, status: 'draft', mode: 'flexible', flexibleStartDate: at(first), flexibleEndDate: at(6), flexibleFirstDayKey: days[first], dayStates: Object.fromEntries(days.map((key, i) => [key, { date: at(i), status: i < first ? 'not_in_week' : i === first ? 'ready' : 'locked' }])), days: days.map(key => ({ key, type: 'flexible', title: 'Flexible workout', subtitle: '', muscles: [], exercises: [] })) });
-    await ws.save('workspaceState', { activeWeekId: week.id }, 'workspace-state');
+    if(!weekNeedsGoals(week))await ws.save('workspaceState', { activeWeekId: week.id }, 'workspace-state');
     return json({ week });
   }
   const flex = path.match(/^\/flexible-weeks\/([^/]+)\/(rest|complete)$/);
@@ -420,64 +480,22 @@ async function route(url: URL, method: string, body: any, signal?:AbortSignal|nu
     if (method === 'GET') { if (!week) fail('Week not found.', 404); return json(week); }
     if (method === 'DELETE') { await ws.remove('week', weekAction[1]); return json({ ok: true }); }
     if (action && !week) fail('Week not found.', 404);
-    if (action === 'activate') { await ws.save('workspaceState', { activeWeekId: week!.id }, 'workspace-state'); return json({ ok: true }); }
+    if (action === 'activate') {
+      if(weekNeedsGoals(week)){await ws.save('week',{...week,activateAfterGoals:true},week!.id);return json({ok:true,goalsRequired:true});}
+      await ws.save('workspaceState', { activeWeekId: week!.id }, 'workspace-state'); return json({ ok: true });
+    }
     if (action === 'complete') return json(await ws.save('week', { ...week, status: 'completed', active: false }, week!.id));
     if (action === 'duplicate' || path.includes('deload-from')) return json(await ws.save('week', { ...week, id: crypto.randomUUID(), active: false, name: `${week!.name} · ${action === 'duplicate' ? 'copy' : 'deload'}`, ...(path.includes('deload-from') ? { days: buildDeloadWeekDays(week!, Number(body.volumeMultiplier || 0.6)) } : {}) }));
     return json(await ws.save('week', { name: 'Training week', weekNumber: '', startDate: '', notes: '', active: false, days: [], ...week, ...body }, weekAction[1]));
   }
   if (path === '/skin') return json(db.skin);
-  if (path === '/medical-reports') return json({reports:ws.records.filter(r=>r.entityType==='medicalReport'&&!r.deletedAt).map(r=>r.payload)});
-  if (path === '/skin/photos') {
-    if (method === 'GET') return json(await photoUrls(ws.session, ws.records.filter(r => r.entityType === 'carePhoto' && !r.deletedAt).map(r => r.payload as Data)));
-    const previous = body.id ? ws.get('carePhoto', body.id)?.payload as Data : undefined;
-    const preview = body.dataUrl?.startsWith('data:') ? await uploadPhoto(ws.session, body.dataUrl) : previous?.preview;
-    if (!preview) fail('Choose a photo to upload.');
-    if (!['face','body','hair','scalp'].includes(body.area) || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) fail('Choose a valid photo date and area.');
-    const photo = await ws.save('carePhoto', { id:body.id, area:body.area, date:body.date, note:String(body.note || '').slice(0,2000), aiObservation:body.aiObservation ?? previous?.aiObservation ?? '', preview, original:body.dataUrl?.startsWith('data:') ? preview : previous?.original || preview, createdAt:previous?.createdAt || now() });
-    return json((await photoUrls(ws.session,[photo]))[0]);
-  }
-  if (path === '/skin/photos/observe') return json(await invokeCloud('body-os-ai', { action:path, ...body }));
-  if (path === '/skin/photos/migrate') {
-    let migrated=0;
-    for(const record of ws.records.filter(r=>r.entityType==='carePhoto'&&!r.deletedAt&&(r.payload as Data).dataUrl?.startsWith('data:'))){const photo=record.payload as Data;const preview=await uploadPhoto(ws.session,photo.dataUrl);const {dataUrl,...metadata}=photo;await ws.save('carePhoto',{...metadata,preview,original:photo.original||preview},record.id);migrated++;}
-    return json({ok:true,migrated});
-  }
-  if (path === '/skin/products/read-label' || path === '/skin/products/search-web') return json(await invokeCloud('body-os-ai', { action:path, ...body }));
-  if (path.startsWith('/skin/photos/') && method === 'DELETE') { await ws.remove('carePhoto', path.split('/').pop()!); return json({ ok: true }); }
-  if (path === '/skin/proposal/validate') return json(validateCareProposal(body, db.skin!));
-  if (path === '/skin/proposal/apply') {
-    const care = db.skin!.care;
-    if (body.baseRevision !== care.revision || body.baseUpdatedAt !== care.updatedAt) fail('Care changed. Review a fresh proposal.', 409);
-    const proposal = validateCareProposal(body, db.skin!);
-    body = { ...care, tasks: proposal.tasks, planHistory: [...care.planHistory, { id: crypto.randomUUID(), createdAt: now(), reason: proposal.reason, tasks: proposal.tasks }] };
-  }
-  if (path === '/skin/profile') return json(await ws.save('skinProfile', { ...emptySkinProfile(), ...db.skin?.profile, ...body }, ws.get('skinProfile')?.id || 'skin-profile'));
-  if (path === '/skin/products/template') return json(SKIN_PRODUCT_TEMPLATE);
-  if (path === '/skin/care' || path === '/skin/proposal/apply') {
-    const current = db.skin!.care;
-    if (body.revision !== current.revision || body.updatedAt !== current.updatedAt) fail('Care changed elsewhere. Reload before saving.', 409);
-    if (!['tasks', 'goals', 'events', 'checkIns', 'reviews', 'planHistory'].every(key => Array.isArray(body[key]))) fail('Invalid care data.');
-    const records = careRecords({ ...body, revision: current.revision + 1, updatedAt: now() }, 'cloud-web');
-    const careTypes = new Set<string>(CARE_SYNC_TYPES);
-    const response=await fetch(`${ws.session.config.url}/rest/v1/rpc/body_os_save_care`,{method:'POST',headers:{apikey:ws.session.config.publishableKey,Authorization:`Bearer ${ws.session.accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({expected_revision:current.revision,expected_updated_at:current.updatedAt,entries:records,expected_versions:Object.fromEntries(ws.records.filter(r=>!r.deletedAt&&careTypes.has(r.entityType)).map(r=>[`${r.entityType}:${r.id}`,r.changeVersion]))}),signal:AbortSignal.timeout(30000)});
-    if(!response.ok){const error=await response.json().catch(()=>({}));fail(error.message||'Care cloud save failed.',response.status===409||error.code==='40001'?409:response.status);}
-    const updated=(await response.json()).map((r:Data)=>({...validateRecord({...r,deletedAt:r.deletedAt||undefined}),changeVersion:r.changeVersion}));
-    ws.records=[...ws.records.filter(r=>!careTypes.has(r.entityType)),...updated];
-    await writeWorkspaceCache(ws.session, updated, []);
-    return json(ws.db().skin!.care);
-  }
-  if (path === '/skin/logs' && method === 'POST') {
-    const date = body.date || localDateKey();
-    const log = await ws.save('skinLog', { ...body, date, createdAt: body.createdAt || now() }, body.id || db.skin!.logs.find(l => l.date === date)?.id || `skin-log-${date}`);
-    return json({ log, skin: ws.db().skin, review: body.skipReview ? null : localLogReview(ws.db().skin!, log as any) });
-  }
-  if (path.endsWith('/import') && ['/exercises/import', '/skin/products/import'].includes(path)) {
+  if (path.endsWith('/import') && ['/exercises/import'].includes(path)) {
     const list = Array.isArray(body) ? body : body.exercises || body.products || [];
     if (!Array.isArray(list)) fail('Choose a valid list.');
-    for (const item of list) { if (path.startsWith('/skin')) await ws.save('skinProduct', item); else await ensureLibraryMedia(ws, { ...item, name: item.name, exerciseId: item.id, youtubeUrl: item.tutorialLink || undefined, action: item.tutorialLink ? 'contribute' : 'resolve' }); }
+    for (const item of list) { await ensureLibraryMedia(ws, { ...item, name: item.name, exerciseId: item.id, youtubeUrl: item.tutorialLink || undefined, action: item.tutorialLink ? 'contribute' : 'resolve' }); }
     return json({ imported: list.length, skipped: 0, errors: [] });
   }
-  const routes: Record<string, SyncEntityType> = { sessions: 'session', targets: 'target', measurements: 'measurement', habits: 'habit', 'habit-logs': 'habitLog', cardio: 'cardio', 'goal-checkins': 'goalCheckIn', 'weekly-reviews': 'weeklyReview', exercises: 'exercise', programs: 'program', 'pain-logs': 'painLog', schedule: 'scheduledWorkout', 'library-splits': 'librarySplit', 'skin/products': 'skinProduct', 'skin/routines': 'skinRoutine', 'skin/logs': 'skinLog' };
+  const routes: Record<string, SyncEntityType> = { sessions: 'session', targets: 'target', measurements: 'measurement', habits: 'habit', 'habit-logs': 'habitLog', cardio: 'cardio', 'goal-checkins': 'goalCheckIn', 'weekly-reviews': 'weeklyReview', exercises: 'exercise', programs: 'program', 'pain-logs': 'painLog', schedule: 'scheduledWorkout', 'library-splits': 'librarySplit' };
   for (const [resource, type] of Object.entries(routes)) {
     if (path !== `/${resource}` && !path.startsWith(`/${resource}/`)) continue;
     const id = path.slice(resource.length + 2);
@@ -508,6 +526,7 @@ export async function cloudFetch(input: RequestInfo | URL, init: RequestInit = {
     try {
       if (!owner || storedSession()?.uid !== owner) return json({ error: 'Account changed. Try again after signing in.' }, 401);
       let body = typeof init.body === 'string' ? JSON.parse(init.body) : {};
+      if(body.expectedOwnerId&&body.expectedOwnerId!==owner)return json({error:'Account changed. Review this request again.'},403);
       if(url.pathname==='/api/voice/transcribe'&&init.body instanceof Blob){
         if(init.body.size>3000000) return json({error:'Record a shorter clip (maximum 3 MB).'},413);
         const bytes=new Uint8Array(await init.body.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));body={base64:btoa(binary)};

@@ -1,5 +1,5 @@
 /** App version string used for update checks (keep in sync with package.json). */
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = typeof window !== 'undefined' && (window as any).__HEALTH_OS_ANDROID_VERSION__ || '1.4.0';
 
 /** Normalize tags like "v2.2.0" → "2.2.0" */
 export function normalizeVersion(v: string): string {

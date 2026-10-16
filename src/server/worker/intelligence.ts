@@ -1,0 +1,62 @@
+import {canonicalReceiptId,validateCanonicalAction,approvalFingerprint} from '../../shared/intelligence/canonical-action-policy.js';
+import {responseSchema} from '../../shared/mcp-contracts.js';
+import type {SupabaseAccountSession} from '../../shared/supabase-auth.js';
+export interface BackgroundCloud {owner:string;session:SupabaseAccountSession;request(path:string,init?:RequestInit):Promise<any>;}
+import {z} from 'zod';
+import {continueBackgroundRun} from '../../integrations/orchestration/background-agent.js';
+import {runSchema,type RunRepository} from '../../shared/intelligence/run-contracts.js';
+import {AgentReadTools,permittedTools} from '../../shared/intelligence/agent-tools.js';
+import {actionDefinitions,type ActionId} from '../../shared/mcp-contracts.js';
+import {cloudSupports} from '../../shared/mcp-execution.js';
+import {CloudActionGateway} from '../../hosted/mcp/cloud-gateway.js';
+import {fingerprint} from '../../shared/automation-model.js';
+import {defaultProfile} from '../../shared/defaults.js';
+import {emptySkinState} from '../../shared/skin.js';
+import {bioSchema} from '../../shared/biology.js';
+import {snapshotFromRecords} from '../../shared/record-snapshot.js';
+import {validateRecord} from '../../shared/cloud.js';
+/** Opt-in background reads use the same owner token, canonical gateway and durable loop. */
+export async function processBackgroundIntelligence(cloud:BackgroundCloud,workerId:string,options:{runId?:string;prepareChanges?:boolean;maxRounds?:number;gateway?:CloudActionGateway}={}){
+ const call=(body:unknown)=>cloud.request('functions/v1/body-os-ai',{method:'POST',body:JSON.stringify(body),signal:AbortSignal.timeout(150000)});
+ const available=await call({action:'/ai/run-store',operation:options.runId?'get':'list_background',...(options.runId?{runId:options.runId}:{}),expectedOwnerId:cloud.owner});
+ const recoverable=(r:ReturnType<typeof runSchema.parse>)=>!!(options.prepareChanges&&r.pendingProposal?.tool==='canonical_action'&&r.approval?.ownerId===cloud.owner&&r.approval.proposalId===r.pendingProposal.id&&cloudSupports(r.pendingProposal.payload.metadata.canonicalAction as ActionId)&&actionDefinitions[r.pendingProposal.payload.metadata.canonicalAction as ActionId]?.risk==='R1');
+ const run=(options.runId?[available].filter(Boolean):available as unknown[]).map(r=>runSchema.parse(r)).find(r=>r.ownerId===cloud.owner&&r.allowBackgroundReads&&(!r.pendingProposal||recoverable(r))&&!['completed','cancelled','failed'].includes(r.status)&&(!['blocked','awaiting_approval'].includes(r.status)||recoverable(r))&&(!r.executorLease||Date.parse(r.executorLease.expiresAt)<=Date.now()));if(!run)return false;
+ const repository:RunRepository={load:async id=>{const value=await call({action:'/ai/run-store',operation:'get',runId:id,expectedOwnerId:cloud.owner});return value?runSchema.parse(value):undefined;},save:async(state,expectedVersion)=>{if(state.ownerId!==cloud.owner)throw new Error('Background run owner mismatch.');await call({action:'/ai/run-store',operation:'save',state,expectedVersion,expectedOwnerId:cloud.owner});},list:async()=>[run]};
+ const snapshot:any={userId:cloud.owner,records:[],skin:emptySkinState(),profileProvided:false,db:{profile:defaultProfile(),meta:{},weeks:[],sessions:[],readiness:[],measurements:[],healthReadings:[],notes:[],targets:[],habits:[],habitLogs:[],goalCheckIns:[],painLogs:[],cardio:[],weeklyReviews:[],programs:[],scheduledWorkouts:[],librarySplits:[],exercises:[]}};
+ const tools=new AgentReadTools(snapshot,run.request.policy,undefined,run.request.attachments),gateway=options.gateway||new CloudActionGateway(),completed=new Set<string>();
+ const attachmentRead=tools.execute.bind(tools);tools.results.push(...run.observations.filter(r=>!r.error&&Object.hasOwn(permittedTools(tools.policy,run.request.attachments.length>0),r.name)));const lastWrite=run.observations.map(r=>r.name).lastIndexOf('action.verify');for(const observation of run.observations.slice(lastWrite+1))if(!observation.error&&observation.arguments)completed.add(fingerprint({name:observation.name,args:observation.arguments}));
+ tools.execute=async(name,args)=>{
+  if(name==='attachment.search')return attachmentRead(name,args);
+  const permitted=permittedTools(tools.policy),def=actionDefinitions[name as ActionId];
+  if(!Object.hasOwn(permitted,name)||!def||def.risk!=='R0'||!cloudSupports(name as ActionId))throw new Error('This step requires a compatible active Health OS app; background execution permits canonical cloud reads only.');
+  if(name.startsWith('health.')&&!['training','nutrition','sleep','recovery','body','goals'].every(d=>tools.policy.domains.includes(d as any)))throw new Error('Use a narrow domain read inside the approved background context.');
+  const parsed=z.record(z.string(),z.unknown()).parse(def.schema.parse(args));if(['knowledge.search','medical.search_knowledge'].includes(name)&&(parsed.domains as string[]).some(d=>!tools.policy.domains.includes(d as any)))throw new Error('Knowledge exceeds approved domains.');const identity=fingerprint({name,args:parsed});if(completed.has(identity))throw new Error('This cloud read already succeeded. Use the saved observation.');
+  await cloud.request('auth/v1/user');
+  const result=await gateway.execute({id:run.id+':'+identity,action:name as ActionId,input:parsed,receiptId:'read-only'},cloud.session,{userId:cloud.owner,clientId:'background:'+workerId,scopes:[def.scope],timeZone:'Asia/Kolkata',authorize:()=>{if(cloud.owner!==run.ownerId||cloud.session.uid!==run.ownerId||!run.allowBackgroundReads)throw new Error('Background authorization changed.');}});
+  if(!result.success)throw new Error('Canonical cloud read failed.');const ids=new Set<string>();const visit=(value:any)=>{if(!value||typeof value!=='object')return;if(typeof value.id==='string')ids.add(value.id);if(Array.isArray(value.sourceIds))for(const id of value.sourceIds)if(typeof id==='string')ids.add(id);for(const child of Object.values(value))if(child&&typeof child==='object')visit(child);};visit(result.data);if(['knowledge.search','medical.search_knowledge'].includes(name)){ids.clear();for(const source of (result.data as any)?.sources||[])if(typeof source.recordId==='string')ids.add(source.recordId);}
+  if(!ids.size&&!['knowledge.search','medical.search_knowledge'].includes(name))ids.add('canonical:'+name+':'+fingerprint(result.data));
+  const observation={name,arguments:parsed,domains:permitted[name].domains.length?permitted[name].domains:tools.policy.domains,sourceIds:[...ids].slice(0,500),data:result.data,freshness:'synchronized' as const,asOf:new Date().toISOString()};tools.results.push(observation);completed.add(identity);return observation;
+ };
+ const prepareAction=async(action:Parameters<AgentReadTools['prepare']>[0],id:string)=>{
+  // Hydrate only observed record IDs and the workspace slice needed to prepare this review.
+  const sourceIds=[...new Set(tools.results.flatMap(r=>r.sourceIds))].slice(0,500),records=[];
+  for(let offset=0;offset<sourceIds.length;offset+=80){const query=new URLSearchParams({user_id:'eq.'+cloud.owner,record_id:'in.('+sourceIds.slice(offset,offset+80).map(id=>JSON.stringify(id)).join(',')+')',select:'user_id,record_id,payload,revision',limit:'80'});const rows=await cloud.request('rest/v1/health_os_biological_records?'+query);for(const row of rows){if(row.user_id!==cloud.owner)throw new Error('Preparation source owner mismatch.');records.push(bioSchema.parse({...row.payload,revision:Number(row.revision)}));}}
+  const types=action.kind==='care_routine'?['careSettings','careTask','careGoal','careCheckIn','careEvent','careReview','skinProfile','skinProduct','skinRoutine','skinLog','skinCareData']:action.kind==='workout_draft'?['exercise','profile']:[];
+  let data={...snapshot,records};
+  if(types.length){const query=new URLSearchParams({user_id:'eq.'+cloud.owner,entity_type:'in.('+types.join(',')+')',deleted_at:'is.null',select:'user_id,record_id,entity_type,payload,revision,updated_at,device_id,deleted_at',order:'entity_type,record_id',limit:'1001'});const rows=await cloud.request('rest/v1/body_os_records?'+query);if(rows.length>1000)throw new Error('Preparation context is too large. Review a narrower proposal in Health OS.');const workspace=rows.map((r:any)=>{if(r.user_id!==cloud.owner)throw new Error('Preparation workspace owner mismatch.');return validateRecord({id:r.record_id,entityType:r.entity_type,payload:r.payload,revision:Number(r.revision),updatedAt:r.updated_at,deviceId:r.device_id,deletedAt:r.deleted_at||undefined});});const db=snapshotFromRecords(workspace);data={...data,db,skin:db.skin,profileProvided:types.includes('profile')};}
+  tools.refreshAuthorized(data);return tools.prepare(action,id);
+ };
+ const executeApproved=async(proposal:Parameters<NonNullable<import('../../integrations/orchestration/durable-agent.js').DurableAgentHooks['execute']>>[0])=>{
+  const current=runSchema.parse(await call({action:'/ai/run-store',operation:'get',runId:run.id,expectedOwnerId:cloud.owner}));if(!current.allowBackgroundReads||!current.backgroundPolicy?.enabled||!current.backgroundPolicy.allowWrites||current.request.policy.domains.includes('medical')&&!current.backgroundPolicy.medicalConsent||current.ownerId!==cloud.owner||current.status!=='executing'||current.approval?.proposalId!==proposal.id||current.approval.proposalFingerprint!==await approvalFingerprint(proposal)||proposal.tool!=='canonical_action')throw new Error('Exact current cloud action approval is unavailable.');
+  const action=proposal.payload.metadata.canonicalAction as ActionId,def=actionDefinitions[action];if(!def||def.risk!=='R1'||!cloudSupports(action))throw new Error('This approved action requires a compatible Health OS device.');
+  const receiptId=await canonicalReceiptId(cloud.owner,proposal.id),input=validateCanonicalAction(action,JSON.parse(String(proposal.payload.metadata.canonicalInput)),current.request.policy.domains,'agent-'+fingerprint(proposal.id));
+  const secured=new CloudActionGateway(async(url,init)=>{const path=new URL(String(url)).pathname;if(path.endsWith('/rpc/health_os_commit_biological_records')){const body=JSON.parse(String(init?.body));const data=await cloud.request('rest/v1/rpc/health_cloud_commit_approved_action',{method:'POST',body:JSON.stringify({p_run_id:current.id,p_proposal:proposal,...body})});return Response.json(data);}const normalized=(path+new URL(String(url)).search).replace(/^\//,'');const data=await cloud.request(normalized,init);return Response.json(data);});
+  const result=responseSchema.parse(await secured.execute({id:proposal.id,action,input,receiptId},cloud.session,{userId:cloud.owner,clientId:workerId,scopes:[def.scope],timeZone:'Asia/Kolkata',authorize:()=>{if(current.ownerId!==cloud.owner)throw new Error('Owner changed.');}}));
+  if(!result.success||!result.actionReceiptId)throw new Error('The approved cloud action has no verified receipt.');
+  const proposalRecordId='intelligence-action-'+proposal.id,query=new URLSearchParams({user_id:'eq.'+cloud.owner,record_id:'eq.'+proposalRecordId,select:'user_id,record_id,payload,revision',limit:'1'}),rows=await cloud.request('rest/v1/health_os_biological_records?'+query);
+  if(rows[0]){const row=rows[0];if(row.user_id!==cloud.owner)throw new Error('Saved proposal owner mismatch.');const revised={...row.payload,updatedAt:new Date().toISOString(),revision:Number(row.payload.revision||row.revision)+1,metadata:{...row.payload.metadata,status:'executed',proposal:JSON.stringify({...proposal,status:'executed',receiptId:'mcp-receipt-'+result.actionReceiptId,resultRevision:1,payload:{...proposal.payload,metadata:{...proposal.payload.metadata,canonicalUndoable:result.undoable===true}}})}};await cloud.request('rest/v1/rpc/health_cloud_commit_approved_action',{method:'POST',body:JSON.stringify({p_run_id:current.id,p_proposal:proposal,p_writes:[revised],p_expectations:[{id:row.record_id,revision:Number(row.revision)}]})});}
+  return {success:true as const,actionReceiptId:'mcp-receipt-'+result.actionReceiptId,summary:result.summary||'Approved cloud change verified.',changedRecords:result.changedRecords||[]};
+ };
+ await continueBackgroundRun(run.id,workerId,{ownerId:cloud.owner,workspaceId:run.workspaceId,repository,tools,...(options.prepareChanges?{prepareAction}:{}),call:request=>call({...request,action:'/ai/agent-step',expectedOwnerId:cloud.owner,consent:true})},{prepareChanges:options.prepareChanges,maxRounds:options.maxRounds,...(options.prepareChanges?{executeApproved}: {})});
+ return true;
+}

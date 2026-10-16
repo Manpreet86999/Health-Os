@@ -1,5 +1,6 @@
 /** Email addresses and message content never cross the report request boundary. */
 export type ReportEmailType =
+  | "daily"
   | "workout"
   | "weekly"
   | "monthly"
@@ -11,6 +12,7 @@ export type EmailRequest =
   | { reportType: "hard-reset"; code: string }
   | { reportType: "feedback"; category: string; message: string };
 export const EMAIL_MESSAGES = {
+  REPORT_TOO_EARLY: "This day's report can be sent only at or after 23:00 IST.",
   AUTH_REQUIRED: "Sign in to Health OS to send email.",
   EMAIL_NOT_AVAILABLE: "Your account has no primary email.",
   EMAIL_NOT_VERIFIED: "Confirm your account email before sending reports.",
@@ -61,7 +63,7 @@ export function parseEmailRequest(input: unknown): EmailRequest {
     };
   }
   if (
-    ["workout", "weekly", "monthly", "skincare", "health"].includes(
+    ["daily", "workout", "weekly", "monthly", "skincare", "health"].includes(
       String(type),
     ) && typeof value.reportId === "string" &&
     /^[\w:-]{1,160}$/.test(value.reportId)

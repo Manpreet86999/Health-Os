@@ -1,40 +1,36 @@
 import { CommandCenter } from './components/CommandCenter';
+import {WeekGoalsGate,DailyReportGate} from './components/DailyReportExperience';
+import { McpProvider } from './components/McpControlCenter';
 import { GlobalCapture, GlobalCaptureTriggers } from './components/GlobalCapture';
-import { AutomationProvider } from './state/AutomationContext';
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { AppProvider, useApp } from './state/AppContext';
 import type { WorkoutApiClient } from './lib/api-client';
 import { ToastProvider } from './components/Toast';
 const Dashboard=lazy(()=>import('./pages/Dashboard').then(module=>({default:module.Dashboard})));
 const Tracker=lazy(()=>import('./pages/Tracker').then(module=>({default:module.Tracker})));
-const AutomaticInsights=lazy(()=>import('./components/AutomaticReview').then(module=>({default:module.AutomaticInsights})));
-const AutomaticProgress=lazy(()=>import('./components/AutomationCenter').then(module=>({default:module.AutomaticProgress})));
-const LinkedRuleEditor=lazy(()=>import('./components/AutomationSettings').then(module=>({default:module.LinkedRuleEditor})));
 const RecoveryAdaptation=lazy(()=>import('./components/RecoveryAdaptation').then(module=>({default:module.RecoveryAdaptation})));
-const MedicalActionCenter=lazy(()=>import('./components/MedicalActionCenter').then(module=>({default:module.MedicalActionCenter})));
 
 import { QueueModal } from './components/QueueModal';
 import { Onboarding } from './components/Onboarding';
 import { Modal } from './components/Modal';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { BottomDock, KeyDock } from './components/KeyDock';
 import { today } from './lib/utils';
 import type { Page } from './lib/types';
 import { homeOf, pageLabel, isPage } from '../shared/workspaces';
-import { careTasksForDate } from '../shared/skin';
 import { APP_VERSION } from '../shared/version';
 import { getEffectiveSupabaseConfig, isSupabaseConfigured } from '../shared/supabase-project';
 import { CloudAccountProvider, useCloudAccount } from './state/CloudAccountContext';
+import { androidLayout } from './lib/android-layout';
+import { AndroidTopbar, AndroidNavigation, AndroidModuleTools } from './components/AndroidNavigation';
 import { OSNavigation } from './components/OSNavigation';
 import { canonicalRoute, locationFor, readRoute, routeHref, sections } from './lib/os-navigation';
 
 import { QuickLogProvider, useQuickLog } from './components/QuickLog';
-import { AddFoodProvider } from './components/AddFood';
 import { TodayWorkspace } from './pages/TodayWorkspace';
 
-import { WebReminderRuntime } from './components/WebReminderRuntime';
 
 import { BiologyProvider } from './state/BiologyContext';
+import { HealthConnectProvider } from './state/HealthConnectContext';
 import { BiologicalDataProvider, useBiologicalData } from './lib/use-biological-data';
 import { AllPages } from './components/AllPages';
 import { OSIcon } from './components/OSIcon';
@@ -42,43 +38,26 @@ import { HealthBrand } from './components/HealthBrand';
 import { HealthLoader } from './components/HealthLoader';
 import { PrimaryViews } from './components/PrimaryViews';
 import { MobileNavigation } from './components/MobileNavigation';
-import { UxProvider } from './state/UxContext';
 import { RouteExperience } from './components/RouteExperience';
 
-const PodsWorkspace=lazy(()=>import('./pages/PodsWorkspace').then(module=>({default:module.PodsWorkspace})));
-const AutomationsWorkspace=lazy(()=>import('./pages/AutomationsWorkspace').then(module=>({default:module.AutomationsWorkspace})));
-const ReportStudio=lazy(()=>import('./pages/ReportStudio').then(module=>({default:module.ReportStudio})));
 const Planner=lazy(()=>import('./pages/Planner').then(module=>({default:module.Planner})));
 const Records=lazy(()=>import('./pages/Records').then(module=>({default:module.Records})));
 const Analyzer=lazy(()=>import('./pages/Analyzer').then(module=>({default:module.Analyzer})));
-const Coach=lazy(()=>import('./pages/Coach').then(module=>({default:module.Coach})));
 const Targets=lazy(()=>import('./pages/Targets').then(module=>({default:module.Targets})));
 const Body=lazy(()=>import('./pages/Body').then(module=>({default:module.Body})));
 const Library=lazy(()=>import('./pages/Library').then(module=>({default:module.Library})));
 const Reports=lazy(()=>import('./pages/Reports').then(module=>({default:module.Reports})));
+const SearchWorkspace=lazy(()=>import('./components/SearchWorkspace').then(module=>({default:module.SearchWorkspace})));
+const CloudSyncPanel=lazy(()=>import('./components/CloudSyncPanel').then(module=>({default:module.CloudSyncPanel})));
+const HabitsPage=lazy(()=>import('./pages/HabitsPage').then(module=>({default:module.HabitsPage})));
 const Settings=lazy(()=>import('./pages/WebSettings').then(module=>({default:module.WebSettings})));
 const ExerciseHistory=lazy(()=>import('./pages/ExerciseHistory').then(module=>({default:module.ExerciseHistory})));
 const CalendarPage=lazy(()=>import('./pages/CalendarPage').then(module=>({default:module.CalendarPage})));
 const Programs=lazy(()=>import('./pages/Programs').then(module=>({default:module.Programs})));
-const SkinProfilePage=lazy(()=>import('./pages/skin/MySkin').then(module=>({default:module.SkinProfilePage})));
-const SkinProducts=lazy(()=>import('./pages/skin/Products').then(module=>({default:module.SkinProducts})));
-const SkinAi=lazy(()=>import('./pages/skin/AiCoach').then(module=>({default:module.SkinAi})));
-const CareToday=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareToday})));
-const CareGoals=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareGoals})));
-const CarePlan=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CarePlan})));
-const CareCalendar=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareCalendar})));
-const CareCheckInPage=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareCheckInPage})));
-const CareProgressPage=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareProgressPage})));
-const CareReviews=lazy(()=>import('./pages/skin/CarePages').then(module=>({default:module.CareReviews})));
-const BiologicalOS=lazy(()=>import('./pages/BiologicalOS').then(module=>({default:module.BiologicalOS})));
-const BioEditor=lazy(()=>import('./pages/BiologicalOS').then(module=>({default:module.BioEditor})));
-const UnifiedTimeline=lazy(()=>import('./pages/UnifiedTimeline').then(module=>({default:module.UnifiedTimeline})));
-const NutritionWorkspace=lazy(()=>import('./pages/NutritionWorkspace').then(module=>({default:module.NutritionWorkspace})));
 const RecoveryWorkspace=lazy(()=>import('./pages/RecoveryWorkspace').then(module=>({default:module.RecoveryWorkspace})));
-const SectionOverview=lazy(()=>import('./pages/SectionOverview').then(module=>({default:module.SectionOverview})));
 const InsightsWorkspace=lazy(()=>import('./pages/InsightsWorkspace').then(module=>({default:module.InsightsWorkspace})));
+const InsightsOverview=lazy(()=>import('./pages/InsightsWorkspace').then(module=>({default:module.InsightsOverview})));
 const WeeklyReview=lazy(()=>import('./pages/WeeklyReview').then(module=>({default:module.WeeklyReview})));
-const AppointmentsWorkspace=lazy(()=>import('./pages/AppointmentsWorkspace').then(module=>({default:module.AppointmentsWorkspace})));
 
 const V510_ANNOUNCEMENT_KEY = 'body-os-release-announcement-v510';
 
@@ -166,14 +145,8 @@ function FeatureGuide() {
   const [step, setStep] = useState(0);
 
   const features = [
-    { title: 'Health OS', desc: 'One operating system. Today, Train, Eat, Recover, Health, Body, Care and Insights share a permanent domain rail.', icon: 'B', color: '#a3e635' },
-    { title: 'Train', desc: 'Your daily hub. Check readiness, view your mission, and start today’s workout.', icon: '◎', color: '#3b82f6' },
-    { title: 'Start a workout', desc: 'Use Start Workout from Home. Log each set in Tracker and finish the session to save your progress.', icon: '▶', color: '#f59e0b' },
-    { title: 'Care', desc: 'Overview, routine, shelf, and barrier logs live in their own workspace. Same OS. Different desk.', icon: '◎', color: '#34d399' },
-    { title: 'Planner', desc: 'Build and organize training weeks, days, exercises, volume, and progression targets.', icon: '▦', color: '#f59e0b' },
-    { title: 'Progress analytics', desc: 'Analyzer tracks PRs, e1RM, volume, consistency, plateaus, and trends over time.', icon: '◈', color: '#8b5cf6' },
-    { title: 'Settings & help', desc: 'Theme, profile, AI, and backup live in the shared OS core — available from the rail footer.', icon: '⚙', color: '#38bdf8' },
-    { title: 'Protect your data', desc: 'Backup Health in Settings is where you export local data, manage Google Drive, and restore safely.', icon: '☁', color: '#10b981' },
+    {title:'Health OS',desc:'Track workouts, sleep, recovery, daily nutrition and body measurements.',icon:'◎',color:'#a3e635'},
+    {title:'Quick Log',desc:'Use Quick Log for fast entries. Review trends in Insights and connect external apps through HEOS MCP in Settings.',icon:'＋',color:'#38bdf8'},
   ];
 
   const next = () => {
@@ -346,6 +319,7 @@ function MigrationGate() {
   return <div className="unlock-screen"><div className="glass card unlock-card stack text-center"><BrandMark /><h2 style={{ margin: 0 }}>Review your first sync</h2><p className="subtle">Health OS found {preview?.localRecords ?? 'your'} local record{preview?.localRecords === 1 ? '' : 's'} and {preview?.remoteRecords ?? 'your'} cloud record{preview?.remoteRecords === 1 ? '' : 's'}. It will compare them before making any change.</p><p className="subtle">Conflicting edits are shown for your decision. Your data is never silently replaced.</p><button type="button" className="btn btn-hot w-full" disabled={!preview} onClick={() => void cloud.approveMigration()}>Review & start secure sync</button></div></div>;
 }
 
+function AndroidModuleToolsWrapper(props:Parameters<typeof AndroidModuleTools>[0]){return androidLayout?<AndroidModuleTools {...props}/>:null;}
 function Shell() {
   const { app } = useBiologicalData();
   const readinessLog = useQuickLog();
@@ -460,43 +434,17 @@ function Shell() {
   const day = week?.days?.find((d) => d.key === activeDay) || week?.days?.[0] || { key: 'Mon', title: 'Day 1', exercises: [] };
   const ready = db.readiness.find((r) => r.date === today());
   const record = db.sessions.find((s) => (s.status === 'finished' || s.status === 'completed') && ((week && s.weekId === week.id && s.dayKey === day.key) || s.date === today()));
-  const todayCare = careTasksForDate(skin.care, today(), skin.products);
-  const doneCare = todayCare.filter(task => skin.care.events.some(event => event.taskId === task.id && event.date === today() && event.status === 'done')).length;
 
   const pages: Partial<Record<Page, ReactNode>> = {
-    Today: panel==='Pods'?<PodsWorkspace/>:(<TodayWorkspace />),
-    Timeline: <UnifiedTimeline />,
-    Nudges: <AutomationsWorkspace />,
-    Eat: <NutritionWorkspace panel={panel} />,
-    Recover: panel==='Cardio'?<Records initialView="cardio"/>:<RecoveryWorkspace panel={panel} />,
-    Health: panel === 'Appointments' || panel.startsWith('Appointment:') ? <AppointmentsWorkspace appointmentId={panel.startsWith('Appointment:') ? panel.slice(12) : undefined}/> : panel === 'Follow-ups' ? <MedicalActionCenter initialTab="Follow-ups"/> : !panel ? <SectionOverview section="Health" choose={choosePage}/> : <BiologicalOS page="Health" panel={panel}/>,
-    Insights: !panel ? (<><SectionOverview section="Insights" choose={choosePage}/><AutomaticInsights/></>) : <InsightsWorkspace panel={panel.startsWith('Analytics ')?'Trends':panel} domain={panel.startsWith('Analytics ')?panel.slice(10):''}/>,
-    Dashboard: <Dashboard view={panel} />,
-    Planner: <Planner />,
-    Tracker: <><RecoveryAdaptation /><Tracker /></>,
-    Records: <Records />,
-    Analyzer: <Analyzer view={panel} />,
-    Coach: <Coach />,
-    Targets: <Targets />,
-    Habits: panel==='Weekly Review'?<WeeklyReview/>:<><AutomaticProgress kind="habit"/><BiologicalOS page="Habits"/><details className="glass card"><summary>Link a habit to evidence</summary><LinkedRuleEditor kind="habit"/></details></>,
-    Body: !panel ? <SectionOverview section="Body" choose={choosePage}/> : <Body initialView={panel} />,
-    Library: <Library initialView={panel} />,
-    Reports: panel==='Workout Reports' ? <Reports /> : (<ReportStudio/>),
-    Settings: <Settings initialTab={panel} />,
-    Profile: <Settings profileOnly />,
-    ExerciseHistory: <ExerciseHistory />,
-    Calendar: <CalendarPage />,
-    Programs: <Programs />,
-    SkinOverview: <CareToday />,
-    SkinRoutine: <CarePlan />,
-    SkinProfile: <SkinProfilePage />,
-    SkinProducts: <SkinProducts />,
-    SkinProgress: <CareProgressPage photosOnly={panel==='Photos'} />,
-    SkinAi: <SkinAi research={panel==='Research'} />,
-    SkinGoals: <CareGoals />,
-    SkinCalendar: <CareCalendar />,
-    SkinCheckIn: <CareCheckInPage />,
-    SkinReviews: <CareReviews />,
+    Today:<TodayWorkspace/>, Dashboard:<Dashboard/>, Planner:<Planner/>, Tracker:<><RecoveryAdaptation/><Tracker/></>,
+    Records:<Records/>, Analyzer:<Analyzer view={panel}/>, Targets:<Targets/>,
+    Habits:panel==='Weekly Review'?<WeeklyReview/>:<HabitsPage/>,
+    Recover:panel==='Cardio'?<Records initialView="cardio"/>:<RecoveryWorkspace panel={panel}/>,
+    Body:<Body initialView={panel||'Weight'}/>, Library:<Library initialView={panel}/>,
+    Reports:<Reports/>, Settings:<Settings initialTab={panel}/>, Profile:<Settings/>,
+    Search:<SearchWorkspace/>, Sync:<CloudSyncPanel/>, Permissions:<Settings initialTab="Privacy"/>,
+    ExerciseHistory:<ExerciseHistory/>, Calendar:<CalendarPage/>, Programs:<Programs/>,
+    Insights:!panel?<InsightsOverview/>:<InsightsWorkspace panel={panel.startsWith('Analytics ')?'Trends':panel} domain={panel.startsWith('Analytics ')?panel.slice(10):''}/>,
   };
 
   function startFab() {
@@ -533,40 +481,36 @@ function Shell() {
   }
 
   const title = page === 'Dashboard' ? 'Home' : pageLabel(page);
-  const subtitle =
-    page === 'Settings'
-      ? 'Shared OS core · profile, theme, AI, backup'
-      : workspace === 'skincare'
-        ? `${doneCare} of ${todayCare.length} care actions done today · ${skin.care.goals.filter(goal => goal.status === 'active').length} active goals`
-        : (week ? `${day.key} · ${day.title} · ${week.name}` : `${day.key} · ${day.title}`);
+  const subtitle = 'Workouts · sleep · recovery · nutrition · body';
 
   const location = locationFor(page,panel);
   const section = location.section;
   const sectionInfo = sections.find(s => s.name === section)!;
   return (
-    <div data-section={section} className={`os-frame stitch-frame ${('')} ${sectionOpen ? 'os-sidebar-open' : ''}`}>
+    <div data-section={section} className={`os-frame stitch-frame ${androidLayout?'android-organized':''} ${androidLayout&&page==='Tracker'&&app.tracker?'android-training-focused':''} ${sectionOpen ? 'os-sidebar-open' : ''}`}>
       <a className="stitch-skip-link" href="#health-main-content" onClick={event => { event.preventDefault(); document.getElementById('health-main-content')?.focus(); }}>Skip to content</a>
+      <WeekGoalsGate/><DailyReportGate/>
       {!settings?.isActivated && <Onboarding />}
       {settings?.isActivated && !settings?.hasSeenFeatureGuide && <FeatureGuide />}
       <QueueModal />
       {<GlobalCapture hideTriggers/>}{(<CommandCenter/>)}
-      {(<><AllPages open={allPagesOpen} onClose={() => setAllPagesOpen(false)} choose={choosePage} /><OSNavigation section={section} page={page} panel={panel} open={sectionOpen} choose={choosePage} close={() => setSectionOpen(false)} /></>)}
+      {!androidLayout&&(<><AllPages open={allPagesOpen} onClose={() => setAllPagesOpen(false)} choose={choosePage} /><OSNavigation section={section} page={page} panel={panel} open={sectionOpen} choose={choosePage} close={() => setSectionOpen(false)} /></>)}
       <div className="os-main">
-        {(<header className="os-topbar">
+        {androidLayout?<AndroidTopbar choose={choosePage}/>:(<header className="os-topbar">
           <div className="os-header-left"><button type="button" className="icon-btn os-menu-toggle" aria-label="Toggle section navigation" aria-expanded={sectionOpen} onClick={() => setSectionOpen(v => !v)}><OSIcon name="Menu" size={20}/></button><button className="os-search-control" onClick={()=>window.dispatchEvent(new Event('health-os-open-command'))}><OSIcon name="Search" size={18}/><span>Search your workspace…</span><kbd>Ctrl K</kbd></button><span className="os-breadcrumb">{section} <span>/</span> {location.primary.label}</span></div>
-          <div className="row os-header-actions"><span className="os-header-date"><OSIcon name="Calendar" size={16}/>{new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}</span>{<GlobalCaptureTriggers/>}<button className="os-all-pages-button" onClick={() => setAllPagesOpen(true)}>All pages <OSIcon name="Menu" size={16}/></button><button className="icon-btn" aria-label="Toggle theme" onClick={toggleTheme}><OSIcon name={theme==='dark'?'Sleep':'Sun'} size={19}/></button><button className="os-avatar" aria-label="Profile" onClick={() => choosePage('Profile')}>{(db.profile.displayName || 'M').slice(0,1)}</button></div>
+          <div className="row os-header-actions"><span className="os-header-date"><OSIcon name="Calendar" size={16}/>{new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}</span>{<GlobalCaptureTriggers/>}<button className="os-all-pages-button" onClick={() => setAllPagesOpen(true)}>All pages <OSIcon name="Menu" size={16}/></button><button className="icon-btn" aria-label="Toggle theme" onClick={toggleTheme}><OSIcon name={theme==='dark'?'Sleep':'Sun'} size={19}/></button><button className="os-avatar" aria-label="Open profile settings" onClick={() => choosePage('Settings')}>{(settings?.profileName || db.profile.displayName || 'M').slice(0,1)}</button></div>
         </header>)}
         <main id="health-main-content" tabIndex={-1} className={`os-content ${['Search','Sync','Settings','Profile'].includes(section)?'utility-workspace':''}`}>
-          <RouteExperience identity={`${page}:${panel}`} label={`${section} · ${location.view.label}`}/>
+          <AndroidModuleToolsWrapper page={page} panel={panel} choose={choosePage}/><RouteExperience identity={`${page}:${panel}`} label={`${section} · ${location.view.label}`}/>
           {app.legacyWorkoutAvailable&&!app.tracker&&page==='Today'&&<section className="glass card stack"><h2>Older workout draft found</h2><p>This device has a draft without a project identifier. Import it only if it belongs to this account.</p><button className="btn btn-soft" onClick={()=>void app.importLegacyWorkout()}>Import older workout draft</button></section>}
-          <PrimaryViews location={location} choose={choosePage} viewKey={`${page}-${panel}`}>
-          <Suspense fallback={<div className="glass card health-loading-view" role="status"><HealthLoader compact/>Loading view…</div>}>{pages[page] || <BiologicalOS page={page} panel={panel} />}</Suspense>
+          <PrimaryViews location={location} choose={choosePage} viewKey={page==='Settings'?'Settings':`${page}-${panel}`}>
+          <Suspense fallback={<div className="glass card health-loading-view" role="status"><HealthLoader compact/>Loading view…</div>}>{pages[page] || <TodayWorkspace/>}</Suspense>
           </PrimaryViews>
           {page === 'Sync' && !cloud.user && <button className="btn btn-soft" onClick={() => setConnectCloud(true)}>Connect Supabase account</button>}
         </main>
         {app.tracker && page !== 'Tracker' ? <aside className="os-workout-region" aria-label="Workout controls"><span className="subtle">Workout saved in progress</span><button className="os-resume btn btn-hot" onClick={() => choosePage('Tracker')}>▶ Resume saved workout</button></aside> : section === 'Train' && page !== 'Tracker' ? <aside className="os-workout-region" aria-label="Workout controls"><button className="os-resume btn btn-soft" onClick={startFab}>▶ {record ? 'View record' : ready ? 'Start workout' : 'Log readiness'}</button></aside> : null}
       </div>
-      {(<MobileNavigation focusedLogging={page==='Tracker'&&Boolean(app.tracker)} page={page} choose={choosePage} more={() => setAllPagesOpen(true)} moreOpen={allPagesOpen}/>)}
+      {androidLayout?<AndroidNavigation page={page} panel={panel} choose={choosePage}/>:(<MobileNavigation focusedLogging={page==='Tracker'&&Boolean(app.tracker)} page={page} panel={panel} choose={choosePage}/>)}
     </div>
   );
 }
@@ -577,5 +521,6 @@ export default function App({ apiClient }: { apiClient: WorkoutApiClient }) {
 function CloudApplication({apiClient}:{apiClient:WorkoutApiClient}) {
   const cloud=useCloudAccount();
   if(cloud.status==='loading'||!cloud.user)return <SupabaseAccountGate/>;
-  return <AppProvider key={`${cloud.savedConfig?.url}|${cloud.user.id}`} apiClient={apiClient}><BiologyProvider><BiologicalDataProvider><AutomationProvider><QuickLogProvider advanced={(request,close)=><Suspense fallback={<div role="status">Loading editor…</div>}><BioEditor kind={request.kind} initial={request.initial} defaults={request.defaults} onSaved={request.onSaved} onClose={close}/></Suspense>}><AddFoodProvider><UxProvider><WebReminderRuntime/><Shell/></UxProvider></AddFoodProvider></QuickLogProvider></AutomationProvider></BiologicalDataProvider></BiologyProvider></AppProvider>;
+  return <AppProvider key={`${cloud.savedConfig?.url}|${cloud.user.id}`} apiClient={apiClient}><BiologyProvider><BiologicalDataProvider><HealthConnectProvider><McpProvider><QuickLogProvider><Shell/></QuickLogProvider></McpProvider></HealthConnectProvider></BiologicalDataProvider></BiologyProvider></AppProvider>;
 }
+

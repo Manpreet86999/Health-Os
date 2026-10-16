@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {PGlite} from '../output/sql-validation/node_modules/@electric-sql/pglite/dist/index.js';
+const pg=await PGlite.create(),checks=[];
+const owner='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
+try{
+ await pg.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema body_os_private;
+ create table auth.users(id uuid primary key);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema auth to authenticated;
+ create table body_os_records(user_id uuid,entity_type text,record_id text,payload jsonb,deleted_at timestamptz,primary key(user_id,entity_type,record_id));
+ create table body_os_email_jobs(id bigserial primary key,user_id uuid,report_type text,report_id text,status text default 'queued',last_error text,created_at timestamptz default now(),attempts int default 0,next_attempt_at timestamptz default now(),locked_at timestamptz,automatic boolean default true,request_version int default 1,unique(user_id,report_type,report_id));
+ insert into auth.users values('${owner}'),('${other}');`);
+ await pg.exec(await readFile('supabase/migrations/20261016133612_daily_ist_reports_and_week_goals.sql','utf8'));
+ checks.push('Exact migration compiles');
+ const goals={calories:2400,protein:150,carbs:280,fat:80,fibre:30,water:3000};
+ await pg.query(`insert into body_os_records values($1,'week','new-week',$2,null)`,[owner,{id:'new-week',name:'Imported',active:true,nutritionGoals:goals}]);
+ let week=(await pg.query(`select payload from body_os_records where record_id='new-week'`)).rows[0].payload;
+ assert.equal(week.nutritionGoalsRequired,true);assert.equal(week.active,false);assert.equal(week.nutritionGoals,undefined);checks.push('Import requires fresh goals despite copied JSON');
+ await assert.rejects(pg.query(`insert into body_os_records values($1,'session','session-1',$2,null)`,[owner,{weekId:'new-week'}]),/all six/);checks.push('Server rejects training before goals');
+ await assert.rejects(pg.query(`insert into body_os_records values($1,'workspaceState','workspace-state',$2,null)`,[owner,{activeWeekId:'new-week'}]),/all six/);checks.push('Server rejects activation before goals');
+ for(const key of Object.keys(goals)){const invalid={...goals,[key]:0};assert.equal((await pg.query('select body_os_private.valid_nutrition_goals($1) ok',[invalid])).rows[0].ok,false);}
+ checks.push('Every goal is mandatory and positive');
+ await pg.query(`update body_os_records set payload=payload||$1 where record_id='new-week'`,[{nutritionGoals:goals}]);
+ await pg.query(`insert into body_os_records values($1,'session','session-1',$2,null)`,[owner,{weekId:'new-week'}]);checks.push('Training succeeds after all goals saved');
+ await assert.rejects(pg.query(`select * from body_os_request_daily_report($1,'2099-10-16')`,[owner]),/REPORT_TOO_EARLY/);checks.push('RPC blocks early or future sending');
+ const first=(await pg.query(`select * from body_os_request_daily_report($1,'2026-01-01')`,[owner])).rows[0];
+ const second=(await pg.query(`select * from body_os_request_daily_report($1,'2026-01-01')`,[owner])).rows[0];assert.equal(first.id,second.id);
+ await pg.query(`update body_os_email_jobs set status='done' where id=$1`,[first.id]);
+ assert.equal((await pg.query(`select * from body_os_request_daily_report($1,'2026-01-01')`,[owner])).rows[0].status,'done');checks.push('Repeated manual requests do not duplicate or resend');
+ await pg.query(`insert into body_os_daily_reports(user_id,report_date,payload,html,text,sent_at) values($1,'2026-01-01','{}','<p>Saved report</p>','Saved report',now())`,[owner]);
+ await pg.exec(`set role authenticated;select set_config('request.jwt.claim.sub','${other}',false);`);
+ assert.equal((await pg.query('select * from body_os_daily_reports')).rows.length,0);checks.push('Foreign account cannot read report');
+ await pg.exec(`select set_config('request.jwt.claim.sub','${owner}',false)`);
+ assert.equal((await pg.query('select * from body_os_daily_reports')).rows.length,1);
+ await assert.rejects(pg.query(`update body_os_daily_reports set read_at=now()`),/permission denied/);checks.push('Owner read only; acknowledgment requires trusted endpoint');
+ await pg.exec('reset role');
+ await pg.query('select * from body_os_daily_due_email_jobs()');checks.push('Scheduler compiles and runs');
+ await mkdir('output/daily-report-validation',{recursive:true});await writeFile('output/daily-report-validation/sql.json',JSON.stringify({checks},null,2));console.log(JSON.stringify({passed:checks.length,checks},null,2));
+}finally{await pg.close();}

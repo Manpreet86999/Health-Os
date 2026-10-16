@@ -60,7 +60,8 @@ export function useDraftState<T>(workflow: string, initial: T | (() => T), redac
     try { await writeDraft(key, undefined, true); if(revision===generation.current)setStatus(''); return true; }
     catch { if(revision===generation.current)setStatus('Draft cleanup failed on this device. The saved record is unaffected.'); return false; }
   }, [key]);
-  return { value, setValue, ready:ready&&activeKey.current===key, status, clear, persist };
+  const readCurrent=useCallback(()=>current.current,[]);
+  return { value, setValue, readCurrent, ready:ready&&activeKey.current===key, status, clear, persist };
 }
 
 /** Group fields in one durable snapshot instead of issuing one write per input. */

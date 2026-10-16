@@ -22,7 +22,7 @@ export const intelligenceMetrics=[
 ] as const;
 
 /** Call only with an account-authorized database and care state. No writes or AI calls. */
-export function buildHealthIntelligence(input:Dataset&{activeWorkout?:string},date:string,now=new Date()) {
+export function buildHealthIntelligence(input:Dataset&{activeWorkout?:unknown},date:string,now=new Date()) {
   const records=effectiveBiology(input.db,live(input.records).filter(row=>row.userId===input.userId&&(row.metadata.requiresConfirmation!==true||row.metadata.confirmed===true)));
   const data={...input,records,dailyAggregates:undefined};
   // Estimated readings are useful in a diary, but cannot establish personal normality.
@@ -40,7 +40,13 @@ export function buildHealthIntelligence(input:Dataset&{activeWorkout?:string},da
   const candidates:HealthRecommendation[]=[];
   const add=(id:string,recommendation:string,priority:number,confidence:HealthRecommendation['confidence'],why:string[],metrics:string[],action:HealthRecommendation['action'],limitations:string[]=[])=>candidates.push({id,recommendation,priority,confidence,why,supportingSignals:signals(metrics),action,limitations});
   const timeline=buildTimeline(records,data.db,data.skin,date);
-  if(input.activeWorkout)add('active-workout',input.activeWorkout,110,'high',['Continue your existing session before starting another workout.'],[],{label:'Resume workout',page:'Tracker'});
+  // HealthData carries the draft for training actions; recommendation text needs its title.
+  // Dataset's narrower TS type does not remove the draft at runtime when a worker passes it here.
+  const draft=input.activeWorkout;
+  const activeWorkout=typeof draft==='string'?draft.trim():draft&&typeof draft==='object'&&!Array.isArray(draft)
+    ? (typeof (draft as {dayTitle?:unknown}).dayTitle==='string'?(draft as {dayTitle:string}).dayTitle.trim():'')||'Workout in progress'
+    : undefined;
+  if(activeWorkout)add('active-workout',activeWorkout,110,'high',['Continue your existing session before starting another workout.'],[],{label:'Resume workout',page:'Tracker'});
   const reminder=dueMedicationReminder(timeline,date,now);
   if(reminder)add('medication','Review your saved reminder',100,'high',[reminder,'Follow your prescribed schedule. A reminder does not establish a missed dose.'],[],{label:'Review schedule',page:'Timeline'});
   const sleep=baselines.find(item=>item.metric==='Sleep')!,rhr=baselines.find(item=>item.metric==='Resting HR')!;

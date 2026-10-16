@@ -1,10 +1,19 @@
+import {modelQualificationFixture,modelEndpointsFixture} from './model-fixtures.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-(globalThis as any).Deno = { env: { get: (name: string) => ({ SUPABASE_URL: 'https://cloud.test', SUPABASE_ANON_KEY: 'public-key', YOUTUBE_API_KEY: 'app-youtube' }[name]) }, serve() {} };
+(globalThis as any).Deno = { env: { get: (name: string) => ({ SUPABASE_URL: 'https://cloud.test', SUPABASE_ANON_KEY: 'public-key', YOUTUBE_API_KEY: 'app-youtube', SUPABASE_SERVICE_ROLE_KEY: 'service-key' }[name]) }, serve() {} };
 const { handler } = await import('../functions/body-os-ai/index.ts');
 const request = (body: unknown, token = true) => new Request('https://cloud.test/functions/v1/body-os-ai', { method: 'POST', headers: token ? { authorization: 'Bearer user-token' } : {}, body: JSON.stringify(body) });
 
+async function modelInfrastructure(url:string,init?:RequestInit){
+ if(url.endsWith('/endpoints'))return Response.json(modelEndpointsFixture(new URL(url).pathname.slice('/api/v1/models/'.length,-'/endpoints'.length)));
+ if(url.includes("/health_ai_model_qualification"))return Response.json(modelQualificationFixture());
+ if(url.endsWith('/health_ai_provider_secret_get')){assert.equal(new Headers(init?.headers).get('authorization'),'Bearer service-key');assert.equal(JSON.parse(String(init?.body)).p_owner,'owner');return Response.json('private-provider-key');}
+ if(url.includes('/rpc/'))return new Response(null,{status:204});
+ if(url.includes('/health_ai_usage'))return Response.json([]);
+ if(url.endsWith('/api/v1/models'))return Response.json({data:['deepseek/deepseek-v4-flash-0731','z-ai/glm-5.3-flash'].map(id=>({id,pricing:{prompt:'0.000000016',completion:'0.00000064'},supported_parameters:['response_format']}))});
+}
 test('cloud AI requires authentication before reading any records', async () => {
   assert.equal((await handler(request({ action: '/ai/test' }, false))).status, 401);
 });
@@ -22,6 +31,7 @@ test('cloud AI reads owner records and excludes saved credentials from provider 
   try {
     globalThis.fetch = async (input, init) => {
       const url = String(input);
+      const infrastructure=await modelInfrastructure(url,init);if(infrastructure)return infrastructure;
       if (url.endsWith('/auth/v1/user')) return Response.json({ id: 'owner' });
       if (url.includes('/body_os_records')) {
         assert.equal(new URL(url).searchParams.get('user_id'), 'eq.owner');
@@ -31,7 +41,7 @@ test('cloud AI reads owner records and excludes saved credentials from provider 
       assert.equal(url, 'https://openrouter.ai/api/v1/chat/completions');
       assert.equal((init?.headers as any).Authorization, 'Bearer private-provider-key');
       assert.ok(!String(init?.body).includes('private-provider-key'));
-      return Response.json({ choices: [{ message: { content: 'Connection works.' } }] });
+      return Response.json({ choices: [{ message: { content: JSON.stringify({answer:'Connection works.'}) } }] });
     };
     const result = await handler(request({ action: '/ai/test' }));
     assert.equal(result.status, 200);
@@ -45,6 +55,7 @@ test('coach health context is bounded, owner-scoped, and never presented as dail
   try{
     globalThis.fetch=async(input,init)=>{
       const url=new URL(String(input));
+      const infrastructure=await modelInfrastructure(String(url),init);if(infrastructure)return infrastructure;
       if(url.pathname==='/auth/v1/user')return Response.json({id:'owner'});
       if(url.pathname.includes('/body_os_records')){
         assert.equal(url.searchParams.get('user_id'),'eq.owner');
@@ -55,7 +66,7 @@ test('coach health context is bounded, owner-scoped, and never presented as dail
       }
       const body=JSON.parse(String(init?.body));const prompt=JSON.parse(body.messages[1].content);
       assert.equal(prompt.context.health.readings[0].source,'watch');assert.match(prompt.context.health.scope,/not complete daily totals/);assert.ok(!String(init?.body).includes('private-provider-key'));
-      return Response.json({choices:[{message:{content:'Only a partial health sample is available.'}}]});
+      return Response.json({choices:[{message:{content:JSON.stringify({answer:'Only a partial health sample is available.'})}}]});
     };
     assert.equal((await handler(request({action:'/ai/coach'}))).status,200);
   }finally{globalThis.fetch=original;}

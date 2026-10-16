@@ -1,6 +1,7 @@
 import { useDraftState } from '../lib/use-draft';
+import {fingerprint} from '../../shared/automation-model';
 import { isCompletedWorkout } from '../lib/completed-workout';
-import { cloudFetch, invalidateCloudWorkspace } from '../lib/cloud-api';
+import { cloudFetch, invalidateCloudWorkspace, refreshCloudWorkspace, WORKSPACE_UPDATED } from '../lib/cloud-api';
 import { ACCOUNT_EVENT, storedSession } from '../lib/cloud-session';
 import { canonicalRoute, routeHref } from '../lib/os-navigation';
 import { queryClient } from '../lib/query-client';
@@ -48,6 +49,8 @@ function readLastPage(key: string, fallback: Page): Page {
 }
 
 interface AppState {
+  readWorkout:()=>TrackerState|null;
+  compareAndSetWorkout:(expected:string,next:TrackerState|null)=>Promise<void>;
   page: Page;
   setPage: (p: Page, panel?: string, history?: 'push' | 'replace' | 'none') => void;
   workspace: WorkspaceId;
@@ -91,12 +94,8 @@ const Ctx = createContext<AppState | null>(null);
 
 export function AppProvider({ children, apiClient }: { children: ReactNode; apiClient: WorkoutApiClient }) {
   const toast = useToast();
-  const [workspace, setWorkspaceState] = useState<WorkspaceId>(readWorkspace);
-  const [page, setPageState] = useState<Page>(() =>
-    readWorkspace() === 'skincare'
-      ? readLastPage(LAST_SKIN_KEY, 'SkinOverview')
-      : readLastPage(LAST_WORKOUT_KEY, 'Today'),
-  );
+  const [workspace, setWorkspaceState] = useState<WorkspaceId>('workout');
+  const [page, setPageState] = useState<Page>(() => canonicalRoute(readLastPage(LAST_WORKOUT_KEY, 'Today')).page);
   const [skin, setSkin] = useState<SkinState>(emptySkinState);
   const [db, setDb] = useState<AppDb | null>(null);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
@@ -114,6 +113,15 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
   const [legacyWorkoutAvailable,setLegacyWorkoutAvailable]=useState(()=>{try{return !!localStorage.getItem(`body-os-tracker-draft:${storedSession()?.uid}`);}catch{return false;}});
   const setTracker=useCallback((value:TrackerState|null)=>{editedTracker.current=true;setTrackerState(value?{...value,id:value.id||crypto.randomUUID()}:null);if(!value)void workoutDraft.clear();},[setTrackerState,workoutDraft.clear]);
   const patchTracker=useCallback((patch:Partial<TrackerState>)=>{editedTracker.current=true;setTrackerState(previous=>previous?{...previous,...patch}:previous);},[setTrackerState]);
+  const readWorkout=workoutDraft.readCurrent;
+  const compareAndSetWorkout=useCallback(async(expected:string,next:TrackerState|null)=>{
+    if(!workoutDraft.ready)throw new Error('The workout draft is still loading.');
+    if(fingerprint(readWorkout())!==expected)throw new Error('Your workout changed. Review a fresh proposal.');
+    editedTracker.current=true;setTrackerState(next);
+    const saved=next?await workoutDraft.persist():await workoutDraft.clear();
+    if(!saved)throw new Error('The workout draft could not be saved.');
+    if(fingerprint(readWorkout())!==fingerprint(next))throw new Error('Your workout was edited while saving.');
+  },[workoutDraft.ready,workoutDraft.persist,workoutDraft.clear,readWorkout,setTrackerState]);
   const importLegacyWorkout=useCallback(async()=>{
     if(!workoutDraft.ready||tracker)return;
     const key=`body-os-tracker-draft:${storedSession()?.uid}`;
@@ -125,7 +133,7 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [appearance, setAppearance] = useState<'system' | 'light' | 'dark'>(() => {
     const saved = localStorage.getItem('body-os-theme') || localStorage.getItem('powerpulse-theme');
-    return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : ('dark');
+    return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : ('light');
   });
   const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   const theme = appearance === 'system' ? (systemDark ? 'dark' : 'light') : appearance;
@@ -191,11 +199,11 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
   }, [manualDay]);
 
   const refreshing=useRef<Promise<void>|null>(null),refreshQueued=useRef(false);
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (initial = false) => {
     if(refreshing.current){refreshQueued.current=true;await refreshing.current;return;}
     const owner = storedSession()?.uid;
     const operation=(async()=>{
-      invalidateCloudWorkspace();
+      if (!initial&&navigator.onLine) { invalidateCloudWorkspace(); if (owner) await refreshCloudWorkspace(); }
       const b = await queryClient.fetchQuery({ queryKey: ['bootstrap', owner], queryFn: () => apiClient.bootstrap(), retry: false, networkMode: 'always' });
       if (storedSession()?.uid !== owner) return;
       applyBootstrap(b);
@@ -216,7 +224,7 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
         return;
       }
       if (!status.hasPin) setAuthToken('');
-      await refresh();
+      await refresh(true);
       setUnlocked(true);
       setNeedsPin(status.hasPin);
     } catch (e) {
@@ -239,9 +247,14 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
       void boot();
     };
     const reload = () => { if (storedSession()) void refresh().catch(e => setError(e.message)); };
+    const updated = () => {
+      const owner = storedSession()?.uid;
+      if (owner) void apiClient.bootstrap().then(b => { if (storedSession()?.uid === owner) applyBootstrap(b); }).catch(() => {});
+    };
     window.addEventListener(ACCOUNT_EVENT, reset);
     window.addEventListener('body-os-cloud-refresh', reload);
-    return () => { window.removeEventListener(ACCOUNT_EVENT, reset); window.removeEventListener('body-os-cloud-refresh', reload); };
+    window.addEventListener(WORKSPACE_UPDATED, updated);
+    return () => { window.removeEventListener(ACCOUNT_EVENT, reset); window.removeEventListener('body-os-cloud-refresh', reload); window.removeEventListener(WORKSPACE_UPDATED, updated); };
   }, [boot, refresh]);
 
   const unlock = useCallback(
@@ -316,7 +329,7 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
       draftStatus,
       workoutDraftMessage:workoutDraft.status,legacyWorkoutAvailable,importLegacyWorkout,
       tracker,
-      setTracker,
+      setTracker,readWorkout,compareAndSetWorkout,
       patchTracker,
       lastSessionId,
       setLastSessionId,
@@ -347,7 +360,7 @@ export function AppProvider({ children, apiClient }: { children: ReactNode; apiC
       urls,
       activeDay,
       manualDay,
-      draftStatus,workoutDraft.status,legacyWorkoutAvailable,importLegacyWorkout,setTracker,patchTracker,
+      draftStatus,workoutDraft.status,legacyWorkoutAvailable,importLegacyWorkout,setTracker,patchTracker,readWorkout,compareAndSetWorkout,
       tracker,
       lastSessionId,
       theme,

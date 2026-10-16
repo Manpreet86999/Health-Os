@@ -39,7 +39,7 @@ try{
    try{$inputStream.CopyTo($outputStream)}finally{$inputStream.Dispose();$outputStream.Dispose()}
   }
   [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $project 'www/health-os-native.js'),'assets/public/health-os-native.js',[IO.Compression.CompressionLevel]::Optimal)|Out-Null
-  foreach($name in @('health-os-release.js','health-os-release.css','release-config.js')){
+  foreach($name in @('health-os-release.js','health-os-release.css','release-config.js','friend-pods.css')){
    [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $project ('www/'+$name)),('assets/public/'+$name),[IO.Compression.CompressionLevel]::Optimal)|Out-Null
   }
  }finally{$archive.Dispose()}

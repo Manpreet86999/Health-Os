@@ -22,7 +22,7 @@ try{
   }else{$retained++}
  }
  foreach($entry in $review.Entries){
-  if(-not $original.GetEntry($entry.FullName) -and $entry.FullName -notin @('assets/public/health-os-native.js','assets/public/health-os-release.js','assets/public/health-os-release.css','assets/public/release-config.js') -and $entry.FullName -notmatch '^META-INF/[^/]+\.(SF|RSA|DSA|EC)$|^META-INF/MANIFEST.MF$'){throw "Unexpected added entry: $($entry.FullName)"}
+  if(-not $original.GetEntry($entry.FullName) -and $entry.FullName -notin @('assets/public/health-os-native.js','assets/public/health-os-release.js','assets/public/health-os-release.css','assets/public/release-config.js','assets/public/friend-pods.css') -and $entry.FullName -notmatch '^META-INF/[^/]+\.(SF|RSA|DSA|EC)$|^META-INF/MANIFEST.MF$'){throw "Unexpected added entry: $($entry.FullName)"}
  }
  if($changed.Count -ne 4 -or -not $review.GetEntry('assets/public/health-os-native.js')){throw 'Expected manifest/integration/tracker patch not found'}
  foreach($pair in @(
@@ -31,6 +31,7 @@ try{
   @('assets/public/health-os-release.css','src/client/public/health-os-release.css'),
   @('assets/public/release-config.js','src/client/public/release-config.js'),
   @('assets/public/health-os-native.js','apps/health-os-mobile/www/health-os-native.js'),
+  @('assets/public/friend-pods.css','src/client/pages/pods-workspace.css'),
   @('assets/public/assets/Tracker-DqfCL2CA.js','apps/health-os-mobile/www/assets/Tracker-DqfCL2CA.js'),
   @('assets/public/assets/ux-system-zE_LYOjW.js','apps/health-os-mobile/www/assets/ux-system-zE_LYOjW.js')
  )){

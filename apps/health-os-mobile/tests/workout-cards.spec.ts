@@ -22,7 +22,7 @@ test('Android workout alternates confirmed sets and persistent rest cards withou
  await expect(rest).toHaveCount(0);await expect(page.getByRole('spinbutton',{name:'Set 3 load',exact:true})).toBeVisible();await page.clock.resume();
  await page.getByRole('spinbutton',{name:'Set 3 load',exact:true}).fill('60');await page.getByRole('spinbutton',{name:'Set 3 reps',exact:true}).fill('5');
  await page.getByRole('button',{name:'Complete Set',exact:true}).click();await rest.getByRole('button',{name:'Skip rest · continue',exact:true}).click();
- await page.getByRole('button',{name:'Review workout',exact:true}).click();await page.getByRole('button',{name:'Save workout',exact:true}).click();
+ await page.getByRole('button',{name:'Review workout',exact:true}).click();await page.getByRole('button',{name:'Save & send AI report',exact:true}).click();
  await expect.poll(()=>cloud.records.filter(r=>r.entity_type==='session').length).toBe(1);
  expect(cloud.records.find(r=>r.entity_type==='session')?.payload.logs[0].sets).toHaveLength(3);
 });

@@ -1,3 +1,6 @@
+import { androidLayout } from './lib/android-layout';
+import { androidProductThemes } from './lib/android-product-themes';
+import { initializeNativeAndroid } from './lib/android-native';
 import { productThemes } from '../shared/product-design';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/query-client';
@@ -21,13 +24,14 @@ import './ux-system.css';
 
 const paletteStyle = document.createElement('style');
 paletteStyle.id = 'health-os-theme-tokens';
-paletteStyle.textContent = Object.entries(productThemes).map(([theme,colors]) =>
+paletteStyle.textContent = Object.entries(androidLayout?androidProductThemes:productThemes).map(([theme,colors]) =>
   `body${theme === 'dark' ? '.dark' : ':not(.dark)'}{${Object.entries(colors).map(([role,value])=>`--hos-${role}:${value}`).join(';')}}`
 ).join('\n');
 document.head.append(paletteStyle);
 initializeMobileInteractions();
+if(androidLayout)void initializeNativeAndroid();
 
-if ('serviceWorker' in navigator && import.meta.env.PROD && true) {
+if ('serviceWorker' in navigator && import.meta.env.PROD && !androidLayout) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/service-worker.js');
   });
@@ -42,3 +46,5 @@ createRoot(document.getElementById('root')!).render(
 });
 
 import './web-unified.css';
+import './android-organized.css';
+import './health-os-premium.css';

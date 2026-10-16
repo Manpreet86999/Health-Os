@@ -8,7 +8,8 @@ export const workerHome=path.join(homedir(),'.health-os-worker');
 const credentialFile=path.join(workerHome,'session');
 function dpapi(input:string,protect:boolean):string {
   const script=`Add-Type -AssemblyName System.Security; $value=[Console]::In.ReadToEnd(); $bytes=[Convert]::FromBase64String($value); $result=[Security.Cryptography.ProtectedData]::${protect?'Protect':'Unprotect'}($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser); [Console]::Out.Write([Convert]::ToBase64String($result))`;
-  const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{input,encoding:'utf8',windowsHide:true,timeout:15000});
+  const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{input,encoding:'utf8',windowsHide:true,timeout:45000});
+  if((result.error as NodeJS.ErrnoException|undefined)?.code==='ETIMEDOUT')throw new Error('Windows session protection timed out. Retry when the system is available.');
   if(result.status!==0)throw new Error('Windows could not protect/unlock the worker session.');
   return result.stdout.trim();
 }

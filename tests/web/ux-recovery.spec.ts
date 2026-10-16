@@ -43,7 +43,7 @@ test('unavailable browser draft storage is explicit and does not claim protectio
 
 test('draft data is project/account scoped and settings drafts exclude credentials',async({page})=>{
   await setup(page);await page.goto('/#Settings');
-  await page.getByRole('tab',{name:'Connections',exact:true}).click();
+  await page.getByRole('tab',{name:'AI & Intelligence',exact:true}).click();
   await page.getByLabel('Provider API key',{exact:true}).fill('synthetic-secret-value');
   await expect(page.getByText('Draft saved on this device',{exact:true})).toBeVisible();
   const result=await page.evaluate(async({base,owner})=>{

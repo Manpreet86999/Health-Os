@@ -1,3 +1,5 @@
+import {enqueueDueGoalReview} from './goal-reviews.js';
+import {processBackgroundIntelligence} from './intelligence.js';
 import path from 'node:path';
 import { hostname } from 'node:os';
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -46,10 +48,11 @@ async function main(){
   console.log(`Health OS worker ready for ${cloud.session.email}. No inbound port is opened.`);
   while(!stopping){
     try{
+      await enqueueDueGoalReview(cloud);
       const job=await processNextJob(cloud,workerId,operations,executeJob);
       if(job){
         console.log(`${job.operation}: ${job.accepted?(job.failed?'failed':'completed'):'lease cancelled or expired'}`);
-      }else await new Promise(resolve=>setTimeout(resolve,10000));
+      }else if(await processBackgroundIntelligence(cloud,workerId)){console.log('Intelligence background evidence checkpoint saved.');}else await new Promise(resolve=>setTimeout(resolve,10000));
     }catch{console.error('Worker connection interrupted. Retrying in 30 seconds.');await new Promise(resolve=>setTimeout(resolve,30000));}
   }
   clearInterval(timer);disposeHandlers();

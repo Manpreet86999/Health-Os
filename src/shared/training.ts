@@ -1,4 +1,5 @@
 import { CALCULATION_VERSION } from './evidence.js';
+import {prescriptionSetCount} from './workout-prescription.js';
 import type {
   AppDb,
   ExerciseLog,
@@ -51,10 +52,11 @@ export function bestSetE1rm(log: ExerciseLog, workOnly = true): number {
 
 export function parseRepRange(vol: string): { sets: number; low: number; high: number } {
   const m = String(vol || '').match(/(\d+)\s*[x×]\s*(\d+)\s*[-–]\s*(\d+)/i);
-  if (m) return { sets: Number(m[1]), low: Number(m[2]), high: Number(m[3]) };
+  if (m) return { sets: prescriptionSetCount(vol), low: Number(m[2]), high: Number(m[3]) };
   const fixed = String(vol || '').match(/(\d+)\s*[x×]\s*(\d+)/i);
-  if (fixed) return { sets: Number(fixed[1]), low: Number(fixed[2]), high: Number(fixed[2]) };
-  return { sets: 3, low: 8, high: 12 };
+  if (fixed) {const reversed=/\d+\s*sets?\s*$/i.test(vol);return {sets:prescriptionSetCount(vol),low:Number(fixed[reversed?1:2]),high:Number(fixed[reversed?1:2])};}
+  const reps=/(\d+)\s*(?:[-–]\s*(\d+)\s*)?reps?\b/i.exec(vol);
+  return {sets:prescriptionSetCount(vol),low:reps?Number(reps[1]):8,high:reps?Number(reps[2]||reps[1]):12};
 }
 
 export function weightFromPercent1rm(e1rm: number, percent: number): number {

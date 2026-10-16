@@ -13,7 +13,7 @@ export async function handler(request: Request): Promise<Response> {
       EdgeRuntime.waitUntil(runReportJob(input.jobId).catch(() => dependencies.log({code:'EMAIL_DELIVERY_FAILED',userId:'scheduler'})));
       return Response.json({ok:true,status:'accepted'}, {status:202});
     }
-    const jobs = await db('rpc/body_os_due_email_jobs', { method: 'POST', body: '{}' });
+    const jobs = await db('rpc/body_os_daily_due_email_jobs', { method: 'POST', body: '{}' });
     // Immediate dispatch and cron share the same database lease.
     EdgeRuntime.waitUntil(Promise.all(jobs.map((job: ReportJob) => processReportJob(job, queueDependencies)))
       .catch(() => dependencies.log({code:'EMAIL_DELIVERY_FAILED',userId:'scheduler'})));

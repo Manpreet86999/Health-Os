@@ -1,0 +1,3 @@
+import { defineConfig } from '@playwright/test';
+import base from './playwright.web.config';
+export default defineConfig({ ...base, outputDir: 'output/settings-test-results', expect: { timeout: 10000 }, testMatch: ['settings-workspace.spec.ts', 'mcp.spec.ts', 'cloud.spec.ts', 'exercise-integrations.spec.ts', 'ux-recovery.spec.ts', 'intelligence-chat.spec.ts'], use: { ...base.use, baseURL: 'http://127.0.0.1:10135' }, webServer: { command: 'node node_modules/vite/bin/vite.js --config vite.acceptance.config.ts --host 127.0.0.1 --port 10135 --strictPort', url: 'http://127.0.0.1:10135', reuseExistingServer: false, timeout: 60000 } });

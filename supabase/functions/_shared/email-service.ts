@@ -6,12 +6,14 @@ import {
 } from "../../../src/shared/email-contract.ts";
 import { baseTemplate, escapeEmailHtml, reportTemplate } from "./templates.ts";
 import { prepareReportEmailImages, type ReportEmailAttachment } from '../../../src/shared/report-email.ts';
+import {canSendDailyReport} from '../../../src/shared/daily-report-policy.ts';
 export interface EmailUser {
   id: string;
   email?: string;
   email_confirmed_at?: string;
 }
 export interface EmailDependencies {
+  generateDailyReport?(userId:string,date:string):Promise<{html:string;text:string}>;
   report(
     userId: string,
     type: ReportEmailType,
@@ -37,6 +39,7 @@ export async function sendAccountEmail(
   deliveryKey?: string,
 ) {
   const request: EmailRequest = parseEmailRequest(raw);
+  if('reportId' in request&&request.reportType==='daily'&&!canSendDailyReport(request.reportId))throw new EmailError('REPORT_TOO_EARLY');
   if (!user.id) throw new EmailError("AUTH_REQUIRED");
   if (!user.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
     throw new EmailError("EMAIL_NOT_AVAILABLE");
@@ -58,7 +61,7 @@ export async function sendAccountEmail(
       const enabled =
         (await deps.preferences(user.id))[`${request.reportType}ReportEnabled`];
       if (
-        request.reportType === "workout" ? enabled === false : enabled !== true
+        request.reportType === "workout" || request.reportType === 'daily' ? enabled === false : enabled !== true
       ) return { ok: true, skipped: true, sentTo: [] };
     }
     const records = await deps.report(
@@ -101,6 +104,10 @@ export async function sendAccountEmail(
     return { ok: true, sentTo: [to] };
   }
   try {
+    if('reportId' in request&&request.reportType==='daily'){
+      if(!deps.generateDailyReport)throw new EmailError('REPORT_GENERATION_FAILED');
+      ({html,text}=await deps.generateDailyReport(user.id,request.reportId));
+    }
     if ('reportId' in request && request.reportType === 'workout') {
       if (!deps.generateWorkoutReport) throw new EmailError('REPORT_GENERATION_FAILED');
       const analyzed = await deps.generateWorkoutReport(user.id, request.reportId);

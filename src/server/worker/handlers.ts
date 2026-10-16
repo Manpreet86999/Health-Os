@@ -6,16 +6,16 @@ import { runMedicalResearch } from '../services/medical-research.js';
 import { researchWorkbenchSchema } from '../../shared/research-workbench.js';
 import { snapshotFromRecords } from '../../shared/record-snapshot.js';
 import { validateMedicalUnits, validateLocalFhir } from '../services/medical-standards.js';
-import { reportBundle } from '../../shared/medical.js';
+import { exportMedicalFhir as reportBundle } from '../../integrations/medical/fhir-mapper.js';
 import { executeRecordInventory } from '../services/medical-cql.js';
 import { extractMedical, importMedicalSchema } from '../services/medical-ingest.js';
 import { rebuildAnalyticsMirror, duckDbStatus } from '../services/duckdb-analytics.js';
-import { LocalWhisper } from '../services/whisper.js';
+import { createSpeechToText } from '../services/whisper.js';
 import type { WorkerJob } from '../../shared/worker-jobs.js';
 import type { WorkerCloud } from './cloud.js';
 import { REPORT_LOGO_DATA_URI } from '../../shared/report-logo.js';
 
-const voice=new LocalWhisper();
+const voice=createSpeechToText();
 export async function capabilities(){
   const research=await runMedicalResearch('status').catch(()=>({available:false}));
   const duckdb=await duckDbStatus().catch(()=>({available:false}));

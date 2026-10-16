@@ -27,12 +27,13 @@ export function CloudAccountProvider({ children }: { children: ReactNode }) {
     window.addEventListener(ACCOUNT_EVENT, changed);
     window.addEventListener(SESSION_EVENT, renewed);
     if (!storedSession()) setStatus('signed-out');
+    else if(!navigator.onLine)setStatus('offline');
     else void activeSession().then(s => { if (alive) { setSession(s); setStatus('saved'); } }).catch(e => { if (alive) { setError(e.message); setStatus('error'); } });
     return () => { alive = false; window.removeEventListener(ACCOUNT_EVENT, changed); window.removeEventListener(SESSION_EVENT, renewed); };
   }, []);
   useEffect(() => {
     if (!session) return;
-    const renew = () => { if (storedSession()) void activeSession().catch(e => setError(e.message)); };
+    const renew = () => { if (storedSession()&&navigator.onLine) void activeSession().then(()=>{setError(null);setStatus(value=>value==='offline'?'saved':value);}).catch(e => setError(e.message)); };
     const timer = window.setInterval(renew, 30000);
     window.addEventListener('focus', renew); window.addEventListener('online', renew);
     return () => { clearInterval(timer); window.removeEventListener('focus', renew); window.removeEventListener('online', renew); };

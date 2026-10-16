@@ -1,3 +1,7 @@
+import {prescriptionSetCount} from '../../shared/workout-prescription';
+import {OSIcon} from '../components/OSIcon';
+import {MetricRing} from '../components/VisualMetrics';
+import { androidLayout } from '../lib/android-layout';
 import { cloudFetch as fetch } from '../lib/cloud-api';
 import { HealthOsImage } from '../components/HealthOsImage';
 import { workoutVisual } from '../lib/visual-assets';
@@ -14,13 +18,10 @@ import { TrainingAdaptation } from '../components/TrainingAdaptation';
 import type { PlannedExercise } from '../../shared/types';
 
 export function Dashboard({view=''}:{view?:string}) {
-  const { app } = useBiologicalData();
+  const { app, selectedDate } = useBiologicalData();
   const quick = useQuickLog();
   const toast = useToast();
   const { db, analytics, coach, programming, activeDay, setActiveDay, manualDay, setManualDay, setPage, setTracker, settings } = app;
-  const [brief, setBrief] = useState('');
-  const [briefModel, setBriefModel] = useState('');
-  const [busyBrief, setBusyBrief] = useState(false);
   const [missionInput, setMissionInput] = useState('');
   const [showMission,setShowMission]=useState(false);
   const [flexWeekName, setFlexWeekName] = useState('');
@@ -30,7 +31,7 @@ export function Dashboard({view=''}:{view?:string}) {
 
   useEffect(() => { void fetch('/api/reports/pending').then((response) => response.ok ? response.json() : { reports: [] }).then((data) => setPendingReports(data.reports || [])).catch(() => {}); }, []);
 
-  if (!db || !analytics || !coach || !settings) return null;
+  if (!db || !analytics || !settings) return null;
   const currentSettings = settings;
 
   const plannedWeek = (db.weeks && db.weeks.length > 0) ? (db.weeks.find((w) => w.id === db.meta.activeWeekId) || db.weeks[0]) : null;
@@ -58,7 +59,8 @@ export function Dashboard({view=''}:{view?:string}) {
   const flexibleActiveDay = flexibleWeek ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].find((key) => flexibleWeek.dayStates?.[key]?.status === 'ready') : undefined;
   // A saved day remains reviewable: clicking its tab must show its own
   // readiness and record instead of the next unlocked flexible day.
-  const selectedDayKey = flexibleWeek && manualDay ? activeDay : (flexibleActiveDay || activeDay);
+  const dateDayKey = new Intl.DateTimeFormat('en-US',{weekday:'short'}).format(new Date(`${selectedDate}T12:00:00`));
+  const selectedDayKey = androidLayout ? dateDayKey : flexibleWeek && manualDay ? activeDay : (flexibleActiveDay || activeDay);
   const day = week.days?.find((d) => d.key === selectedDayKey) || week.days?.[0] || { key: 'Mon', title: 'Day 1', exercises: [] };
   const calendarDayKey = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(`${today()}T12:00:00`));
   // Resolve the selected plan day to its own calendar date, including past weeks.
@@ -76,7 +78,7 @@ export function Dashboard({view=''}:{view?:string}) {
         (targetDate ? s.date === targetDate && s.dayKey === day.key : false) ||
         (isCurrentDay ? s.date === today() && s.dayKey === day.key : false)),
   );
-  const readinessDate = record?.date || targetDate;
+  const readinessDate = androidLayout ? selectedDate : record?.date || targetDate;
   const ready = db.readiness.find(r => r.date === readinessDate) || (record?.readiness?.date === readinessDate ? record.readiness : undefined);
   const nextWeek =
     db.weeks.find((x) => Number(x.weekNumber || 0) === Number(week.weekNumber || 0) + 1) || null;
@@ -93,7 +95,6 @@ export function Dashboard({view=''}:{view?:string}) {
   const nextTrainingDay = [...week.days.slice(dayIndex + 1), ...week.days.slice(0, dayIndex)]
     .find((item) => item.type !== 'rest' || item.exercises.length > 0);
   const ctaLabel = record ? 'Open record' : ready ? 'Start session' : 'Check in on Today';
-  const isAiEnabled = settings.hasAiApiKey || settings.aiProvider === 'ollama';
 
   async function retryReports() {
     if (!currentSettings.hasEmailDelivery || !currentSettings.recipients?.length) {
@@ -108,7 +109,7 @@ export function Dashboard({view=''}:{view?:string}) {
       const reports = failed ? await fetch('/api/reports/pending').then((r) => r.json()).then((x) => x.reports || []) : [];
       setPendingReports(reports);
       const reason = reports.find((item: any) => item.lastError)?.lastError;
-      toast.push(failed ? reason || `${failed} report(s) still need attention.` : 'Pending AI reports sent.', failed ? 'err' : 'ok');
+      toast.push(failed ? reason || `${failed} report(s) still need attention.` : 'Pending reports sent.', failed ? 'err' : 'ok');
     } catch (error) { toast.push(error instanceof Error ? error.message : 'Could not retry reports.', 'err'); }
   }
 
@@ -206,56 +207,9 @@ export function Dashboard({view=''}:{view?:string}) {
     );
   }
 
-  async function loadBriefing() {
-    setBusyBrief(true);
-    try {
-      const res = await app.api.morningBrief();
-      if (!res.ok) {
-        toast.push(res.error || 'Failed to load brief', 'err');
-        return;
-      }
-      setBrief(res.brief || '');
-      setBriefModel(res.model || '');
-    } catch (e) {
-      toast.push((e as Error).message, 'err');
-    } finally {
-      setBusyBrief(false);
-    }
-  }
-
-  const morningBriefing = isAiEnabled ? (
-    <section className="dash-panel dash-ai">
-      <div className="dash-ai-glow" aria-hidden />
-      <div className="dash-panel-head">
-        <div className="dash-ai-title">
-          <span className="dash-ai-badge">AI</span>
-          <div>
-            <h3>Morning briefing</h3>
-            <p className="subtle" style={{ margin: 0 }}>Personalized focus from readiness & history</p>
-          </div>
-        </div>
-        {!brief && (
-          <button className="btn btn-hot btn-sm" disabled={busyBrief} onClick={() => void loadBriefing()}>
-            {busyBrief ? 'Generating…' : 'Generate brief'}
-          </button>
-        )}
-      </div>
-      {brief ? (
-        <div className="dash-ai-body">
-          <p>{brief}</p>
-          <span className="dash-ai-model">Model · {briefModel}</span>
-        </div>
-      ) : (
-        <p className="subtle dash-ai-placeholder">
-          Generate a short coach note tailored to how you feel and what you&apos;ve been training.
-        </p>
-      )}
-    </section>
-  ) : null;
-
   const fullDashboard=<>
 
-      {pendingReports.length ? <section className="dash-panel" style={{ borderColor: 'var(--warn, #eab308)' }}><div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><span className="dash-eyebrow">REPORT DELIVERY NEEDS ATTENTION</span><h3 style={{ margin: '4px 0' }}>{pendingReports.length} AI report{pendingReports.length === 1 ? '' : 's'} waiting</h3><p className="subtle" style={{ margin: 0 }}>Your workouts are saved. {pendingReports[0]?.lastError}</p></div><button type="button" className="btn btn-hot" onClick={() => void retryReports()}>{!settings.hasEmailDelivery || !settings.recipients?.length ? 'Configure email' : 'Retry reports'}</button></div></section> : null}
+      {pendingReports.length ? <section className="dash-panel" style={{ borderColor: 'var(--warn, #eab308)' }}><div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><span className="dash-eyebrow">REPORT DELIVERY NEEDS ATTENTION</span><h3 style={{ margin: '4px 0' }}>{pendingReports.length} report{pendingReports.length === 1 ? '' : 's'} waiting</h3><p className="subtle" style={{ margin: 0 }}>Your workouts are saved. {pendingReports[0]?.lastError}</p></div><button type="button" className="btn btn-hot" onClick={() => void retryReports()}>{!settings.hasEmailDelivery || !settings.recipients?.length ? 'Configure email' : 'Retry reports'}</button></div></section> : null}
       <Modal
         open={showMission}
         title="Weekly focus"
@@ -298,108 +252,11 @@ export function Dashboard({view=''}:{view?:string}) {
       </Modal>
 
       {/* ── Welcome Hero ── */}
-      <section className="dash-hero winter-arc-hero visual-training-hero"><HealthOsImage context={workoutVisual({name:day.title,category:day.type,muscles:day.muscles,exercises:day.exercises},db.exercises)} variant="hero" priority alt={day.title}/>
-        <div className="dash-hero-orbs" aria-hidden>
-          <span className="dash-orb dash-orb-a" />
-          <span className="dash-orb dash-orb-b" />
-          <span className="dash-orb dash-orb-c" />
-        </div>
-        <div className="dash-hero-grid" aria-hidden />
-        <div className="winter-arc-snow" aria-hidden>
-          <span /><span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span /><span />
-          <span /><span /><span /><span /><span /><span />
-        </div>
-
-        <div className="dash-hero-top">
-          <div className="dash-status-row">
-            <span className="dash-live">
-              <span className="dash-live-dot" />
-              System online
-            </span>
-            <span className="dash-chip winter-arc-era">Your training plan</span>
-            {ready ? (
-              <span className={`dash-chip tone-${readyTone(ready)}`}>
-                Readiness · {readinessDate} · {ready.score}
-              </span>
-            ) : isRestDay ? (
-              <span className="dash-chip muted">Rest day</span>
-            ) : (
-              <span className="dash-chip warn">Check in on Today</span>
-            )}
-          </div>
-
-          <div className="dash-hero-actions">
-            <button type="button" className="dash-telegram-button" title="Send today’s workout to Telegram" aria-label="Send today’s workout to Telegram" disabled={sendingTelegram} onClick={() => void sendWorkoutToTelegram()}>
-              {sendingTelegram ? '…' : '➤'}
-            </button>
-            <button type="button" className="btn btn-soft btn-sm" onClick={() => setPage('Calendar')}>
-              Calendar
-            </button>
-            <button type="button" className="btn btn-soft btn-sm" onClick={() => setPage('Targets')}>
-              Goals
-            </button>
-            <button type="button" className="btn btn-soft btn-sm" onClick={() => setPage('Analyzer')}>
-              PRs
-            </button>
-          </div>
-        </div>
-
-        <div className="dash-hero-body">
-          <div className="dash-hero-copy">
-            <p className="dash-kicker">TRAIN / TODAY’S WORKOUT</p>
-            <h1 className="dash-title">{day.title}</h1>
-            {week.missionObjective ? (
-              <div className="dash-mission">
-                <span className="dash-mission-label">Mission</span>
-                <span className="dash-mission-text">{week.missionObjective}</span>
-              </div>
-            ) : <button type="button" className="btn btn-soft btn-sm" onClick={()=>setShowMission(true)}>Set weekly focus</button>}
-            <p className="dash-sub">
-              {day.exercises.length} exercises · {day.muscles.join(' · ')}
-              {day.subtitle ? ` — ${day.subtitle}` : ' · Your plan, ready when you are.'}
-            </p>
-            <div className="dash-cta-row">
-              <button type="button" className="btn btn-hot btn-xl dash-cta-primary" onClick={()=>startTracker()}>
-                <span className="dash-cta-icon" aria-hidden>▶</span>
-                {ctaLabel}
-              </button>
-              <button type="button" className="btn btn-soft btn-lg" onClick={() => setPage('Planner')}>
-                Edit plan
-              </button>
-            </div>
-          </div>
-
-          <div className="dash-hero-panel">
-            <div className="dash-ring-wrap">
-              <div className="dash-week-ring" style={{ ['--p' as string]: weekPct }}>
-                <div className="dash-week-ring-inner">
-                  <span className="dash-week-pct">{weekPct}%</span>
-                  <span className="dash-week-label">week</span>
-                </div>
-              </div>
-            </div>
-            <div className="dash-hero-panel-meta">
-              <div>
-                <span className="subtle">Sessions</span>
-                <strong>{doneThisWeek} this week</strong>
-              </div>
-              <div>
-                <span className="subtle">Planned</span>
-                <strong>{day.exercises.length} moves</strong>
-              </div>
-              <div>
-                <span className="subtle">Status</span>
-                <strong>{record ? 'Logged' : isRestDay ? 'Rest' : ready ? 'Unlocked' : 'Gate open'}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
+      <section className="hos-training-hero">
+        <div className="hos-training-copy"><span className="hos-eyebrow"><OSIcon name="Train" size={18}/>TODAY’S WORKOUT</span><h1>{day.title}</h1><p>{day.muscles.join(' · ')}{day.subtitle?` · ${day.subtitle}`:''}</p><div className="hos-training-meta"><span><OSIcon name="Routine" size={18}/>{day.exercises.length} {day.exercises.length===1?'exercise':'exercises'}</span><span>{record?'Completed':isRestDay?'Rest day':ready?`${ready.score}/100 readiness`:'Check in before you begin'}</span></div><div className="row wrap"><button type="button" className="btn btn-hot" onClick={()=>startTracker()}><OSIcon name="Train" size={18}/>{ctaLabel}</button><button type="button" className="btn btn-soft" onClick={()=>setPage('Planner')}>Edit plan</button></div></div>
+        <div className="hos-training-progress"><MetricRing value={status.total?weekPct:null} label="Week complete" display={`${weekPct}%`} size={172}/><p>{doneThisWeek} sessions this week</p></div>
+        <details className="hos-training-tools"><summary>Plan & sharing</summary><div className="row wrap"><button type="button" className="btn btn-soft" onClick={()=>setShowMission(true)}>{week.missionObjective||'Set weekly focus'}</button><button type="button" className="btn btn-soft" onClick={()=>setPage('Calendar')}>Calendar</button><button type="button" className="btn btn-soft" onClick={()=>setPage('Targets')}>Goals</button><button type="button" className="btn btn-soft" onClick={()=>setPage('Analyzer')}>PRs</button><button type="button" className="btn btn-soft" aria-label="Send today’s workout to Telegram" disabled={sendingTelegram} onClick={()=>void sendWorkoutToTelegram()}>{sendingTelegram?'Sending…':'Share to Telegram'}</button></div></details>
       </section>
-
       {/* Alerts */}
       {status.complete && nextWeek ? (
         <div className="dash-alert success">
@@ -451,7 +308,7 @@ export function Dashboard({view=''}:{view?:string}) {
       {/* ── Signal strip ── */}
       <section className="dash-signals">
         <article className="dash-signal">
-          <div className="dash-signal-icon accent">⚡</div>
+          <div className="dash-signal-icon accent"><OSIcon name="Energy"/></div>
           <div>
             <span className="dash-signal-label">Streak</span>
             <strong className="dash-signal-value">{analytics.totals.streak}</strong>
@@ -459,7 +316,7 @@ export function Dashboard({view=''}:{view?:string}) {
           </div>
         </article>
         <article className="dash-signal">
-          <div className="dash-signal-icon peach">◎</div>
+          <div className="dash-signal-icon peach"><OSIcon name="Goal"/></div>
           <div>
             <span className="dash-signal-label">Completion</span>
             <strong className="dash-signal-value">{analytics.totals.completion}%</strong>
@@ -467,7 +324,7 @@ export function Dashboard({view=''}:{view?:string}) {
           </div>
         </article>
         <article className="dash-signal">
-          <div className="dash-signal-icon blue">◉</div>
+          <div className="dash-signal-icon blue"><OSIcon name="Train"/></div>
           <div>
             <span className="dash-signal-label">Tonnage</span>
             <strong className="dash-signal-value">{money(analytics.totals.tonnage, settings.units)}</strong>
@@ -475,7 +332,7 @@ export function Dashboard({view=''}:{view?:string}) {
           </div>
         </article>
         <article className="dash-signal">
-          <div className="dash-signal-icon green">★</div>
+          <div className="dash-signal-icon green"><OSIcon name="Activity"/></div>
           <div>
             <span className="dash-signal-label">Latest PR</span>
             <strong className="dash-signal-value dash-signal-value-sm">
@@ -605,10 +462,6 @@ export function Dashboard({view=''}:{view?:string}) {
             <div><span>Sessions done</span><strong>{doneThisWeek} / {status.total}</strong></div>
             <div><span>Today</span><strong>{record ? 'Logged' : isRestDay ? 'Recover' : ready ? 'Unlocked' : 'Check in'}</strong></div>
           </div>
-
-          {morningBriefing ? (
-            <div className="dash-ai-in-context">{morningBriefing}</div>
-          ) : null}
         </div>
 
         {/* Supporting habits and training summaries */}
@@ -742,25 +595,7 @@ export function Dashboard({view=''}:{view?:string}) {
           )}
         </div>
 
-        <div className="dash-panel">
-          <div className="dash-panel-head compact">
-            <div>
-              <span className="dash-eyebrow">Coach pulse</span>
-              <h3>Signals</h3>
-            </div>
-            <button type="button" className="btn btn-soft btn-sm" onClick={() => setPage('Coach')}>
-              Coach
-            </button>
-          </div>
-          <div className="dash-coach-list">
-            {(coach.advice || []).slice(0, 3).map((x) => (
-              <div key={x} className="dash-coach-item">{x}</div>
-            ))}
-            {!(coach.advice || []).length ? (
-              <p className="subtle" style={{ margin: 0 }}>Log a session for smarter tips.</p>
-            ) : null}
-          </div>
-        </div>
+
       </section>
 
       {/* Sunday review */}
@@ -830,5 +665,7 @@ export function Dashboard({view=''}:{view?:string}) {
       ) : null}
 
   </>;
+  if(androidLayout)return <div className="fade dash android-train"><h1>Train</h1><section className="health-panel stack"><span className="chip">{selectedDate} · {app.tracker?'In progress':record?'Completed':isRestDay?'Rest day':'Planned'}</span><h2>{app.tracker?.dayTitle||day.title}</h2><div className="aw-train-facts"><span><strong>{day.exercises.length}</strong> exercises</span><span><strong>{day.exercises.reduce((n,exercise)=>n+prescriptionSetCount(exercise.vol),0)}</strong> planned sets</span></div><button className="btn btn-hot" onClick={()=>startTracker()}>{app.tracker?'Resume workout':record?'Open record':ready?'Start workout':'Check in on Today'}</button>{day.exercises.map((exercise,index)=><button className="android-exercise-row" key={index} onClick={()=>setActiveExerciseIndex(index)}><strong>{exercise.name}</strong><span>{exercise.vol} · {exercise.target}</span></button>)}<div className="row wrap"><button className="btn btn-soft" onClick={()=>setPage('Planner')}>Edit plan</button><button className="btn btn-soft" onClick={()=>setPage('Records')}>History</button></div></section>{!flexibleWeek&&day.exercises.length>0&&<TrainingAdaptation original={day.exercises} library={db.exercises} reduced={!!ready&&ready.score<60} onUse={proposal=>startTracker(proposal)}/>} {activeExerciseIndex!==null&&day.exercises[activeExerciseIndex]&&<ExerciseDetailModal exerciseName={day.exercises[activeExerciseIndex].name} allExercises={day.exercises} currentIndex={activeExerciseIndex} onSelectIndex={setActiveExerciseIndex} onClose={()=>setActiveExerciseIndex(null)}/>}</div>;
   return <div className="fade dash">{(fullDashboard)}{!flexibleWeek&&day.exercises.length>0&&<TrainingAdaptation original={day.exercises} library={db.exercises} reduced={!!ready&&ready.score<60} onUse={proposal=>startTracker(proposal)}/>}</div>;
 }
+

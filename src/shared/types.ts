@@ -87,6 +87,9 @@ export type FlexibleDayStatus = 'locked' | 'ready' | 'workout' | 'rest' | 'not_i
 export interface FlexibleDayState { status: FlexibleDayStatus; date: string; completedAt?: string; }
 
 export interface Week {
+  nutritionGoalsRequired?: boolean;
+  nutritionGoals?: import('./daily-report-policy.js').NutritionGoals;
+  nutritionGoalsSetAt?: string;
   id: string;
   name: string;
   weekNumber: number | string;
@@ -574,7 +577,7 @@ export type SkinPage =
   | 'SkinCheckIn'
   | 'SkinReviews';
 
-export type WebOSPage = 'Today' | 'Timeline' | 'Eat' | 'Recover' | 'Health' | 'Insights' | 'Habits' | 'Nudges' | 'Experiments' | 'Research' | 'BodyCoach' | 'Search' | 'Sync' | 'Permissions' | 'Profile';
+export type WebOSPage = 'Intelligence' | 'Today' | 'Timeline' | 'Eat' | 'Recover' | 'Health' | 'Insights' | 'Habits' | 'Nudges' | 'Experiments' | 'Research' | 'BodyCoach' | 'Search' | 'Sync' | 'Permissions' | 'Profile';
 export type Page = WorkoutPage | SkinPage | WebOSPage | 'Settings';
 
 export interface ProgressionTip {

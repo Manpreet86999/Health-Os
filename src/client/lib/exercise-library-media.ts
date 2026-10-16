@@ -12,7 +12,7 @@ async function resolveShared(ws: CloudWorkspace, input: Input): Promise<{ exerci
   const seed = previous?.url || local?.tutorialLink;
   const result = await invokeCloud('body-os-exercise-library', { ...input, youtubeUrl: input.youtubeUrl || (youtubeVideoId(seed) ? seed : undefined), action: input.action || 'resolve' });
   const exercise = catalogExercise(result.exercise, [], result.media || []);
-  ws.catalog.set(exercise.id, exercise);
+  ws.catalog = new Map(ws.catalog).set(exercise.id, exercise);
   const personal = ws.get('exercise', exercise.id)?.payload || {};
   // Only personal organization metadata stays owner-scoped; shared media is authoritative.
   const payload = { ...personal, ...(input.meta && typeof input.meta === 'object' ? { meta: input.meta } : {}), id: exercise.id, source: 'supabase', name: exercise.name, media: exercise.media, tutorialLink: exercise.tutorialLink };

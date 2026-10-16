@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { openDB } from 'idb';
+import {recordHash,type RecordService} from '../../shared/intelligence/contracts';
 import { get, post } from '../lib/api';
 import { bioSchema, type BioRecord, type BioKind, type BioDomain } from '../../shared/biology';
 import { useCloudAccount } from './CloudAccountContext';
@@ -14,7 +15,8 @@ function cache(scope = 'guest') {
 }
 export type BioInput = { type: BioKind; domain: BioDomain; name: string; value?: number; unit?: string; timestamp?: string; endTime?: string; source?: string; sourceId?: string; quality?: BioRecord['quality']; metadata?: BioRecord['metadata']; id?: string };
 interface BiologyState {
-  records: BioRecord[]; ready: boolean; status: string; error: string; conflicts: BioRecord[]; fallbackRecords: number;
+  commit:RecordService['commit'];
+  readRecords: () => Promise<BioRecord[]>; records: BioRecord[]; ready: boolean; status: string; error: string; conflicts: BioRecord[]; fallbackRecords: number;
   save: (input: BioInput) => Promise<void>; saveMany: (inputs: BioInput[]) => Promise<void>; remove: (record: BioRecord) => Promise<void>; restore: (record: BioRecord) => Promise<void>; sync: () => Promise<void>;
   importRecords: (rows: unknown[]) => Promise<void>; adoptFallback: () => Promise<void>;
   resolveConflict: (id: string, side: 'cloud' | 'browser') => Promise<void>;
@@ -137,6 +139,20 @@ export function BiologyProvider({ children }: { children: ReactNode }) {
     await persist(rows);
   };
   const save=(input:BioInput)=>saveMany([input]);
+  // Compare and write in the same transaction. Intelligence cannot overwrite a later edit.
+  const commit:RecordService['commit']=async(writes,deletes,expectations)=>{
+    if(scopeRef.current!==scope||!cloud.user)throw new Error('An authenticated account is required.');
+    if(writes.length+deletes.length>500)throw new Error('This batch is too large.');
+    const db=await cache(scope),tx=db.transaction(['records','outbox'],'readwrite'),store=tx.objectStore('records'),now=new Date().toISOString();
+    try{
+      const checks=[...expectations,...deletes];
+      for(const check of checks){const old:BioRecord|undefined=await store.get(check.id);if((old?.revision??null)!==check.revision||(old&&old.userId!==cloud.user.id)||(check.fingerprint&&(!old||recordHash(old)!==check.fingerprint)))throw new Error('A source record changed. Review a fresh proposal.');}
+      for(const input of writes){const id=input.id||crypto.randomUUID(),old:BioRecord|undefined=await store.get(id);if(old&&old.userId!==cloud.user.id)throw new Error('Record owner mismatch.');if(!checks.some(c=>c.id===id))throw new Error('A revision expectation is required for each write.');const row=bioSchema.parse({...input,id,userId:cloud.user.id,source:input.source||'Health OS Intelligence',deviceId:localStorage.getItem('health-os-device-id')||'intelligence-browser',quality:input.quality||'manual',unit:input.unit||'',timestamp:input.timestamp||old?.timestamp||now,createdAt:old?.createdAt||now,updatedAt:now,revision:(old?.revision||0)+1,syncState:'pending',metadata:input.metadata||{}});await store.put(row);await tx.objectStore('outbox').put(row);}
+      for(const check of deletes){const old:BioRecord=await store.get(check.id);const row={...old,deletedAt:now,updatedAt:now,revision:old.revision+1,syncState:'pending'};await store.put(row);await tx.objectStore('outbox').put(row);}
+      if(scopeRef.current!==scope)throw new Error('Account changed.');await tx.done;
+    }catch(e){try{tx.abort();}catch{}await tx.done.catch(()=>{});throw e;}
+    await refresh();void sync();
+  };
   const undoBatch=async(ids:string[],previous:BioRecord[])=>{
     const db=await cache(scope),now=new Date().toISOString(),rows:BioRecord[]=[];
     for(const id of ids){const current:BioRecord|undefined=await db.get('records',id);if(!current)continue;const old=previous.find(r=>r.id===id);rows.push(bioSchema.parse({...old||current,...(old?{}:{deletedAt:now}),updatedAt:now,revision:current.revision+1,syncState:'pending'}));}
@@ -159,5 +175,5 @@ export function BiologyProvider({ children }: { children: ReactNode }) {
     else{const local=await tx.objectStore('records').get(id);const next={...local,revision:Math.max(local.revision,conflict.payload.revision)+1,updatedAt:new Date().toISOString(),syncState:'pending'};await tx.objectStore('records').put(next);await tx.objectStore('outbox').put(next);}
     await tx.objectStore('conflicts').delete(id);await tx.done;await refresh();void sync();
   };
-  return <Context.Provider value={{records,ready,status,error,conflicts,fallbackRecords,save,saveMany,remove,restore,sync,importRecords,adoptFallback,resolveConflict,undoBatch}}>{children}</Context.Provider>;
+  return <Context.Provider value={{commit,readRecords:async()=>{if(scopeRef.current!==scope)throw new Error('Account changed.');return (await cache(scope)).getAll('records');},records,ready,status,error,conflicts,fallbackRecords,save,saveMany,remove,restore,sync,importRecords,adoptFallback,resolveConflict,undoBatch}}>{children}</Context.Provider>;
 }

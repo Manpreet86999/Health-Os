@@ -33,6 +33,15 @@ function stampSources(data:Dataset,now:Date):Record<string,{revision:string;date
   return result;
 }
 export function recordEventType(r:BioRecord,previous?:BioRecord):string {
+  if(r.type==='journal'&&r.metadata.intelligenceReceipt===true){if(r.metadata.status==='undone')return 'intelligence.action_undone';if(r.metadata.status!=='executed')return 'intelligence.action_pending';const events:Record<string,string>={'training.apply_today_adaptation':'training.adapted','training.replace_today_workout':'training.adapted','nutrition.confirm_planned_meal':'food.plan_confirmed','recovery.create_plan':'recovery.plan_created','sleep.set_target':'sleep.target_changed'};return events[String(r.metadata.action)]||'intelligence.action_executed';}
+  if(r.type==='mealPlan')return r.metadata.confirmed===true?'food.plan_confirmed':`mealPlan.${previous?'updated':'logged'}`;
+  if(r.type==='goal'&&r.metadata.status==='completed')return 'goal.completed';
+  if(r.type==='sleepPreference')return 'sleep.target_changed';
+  if(r.type==='recoveryNote'&&r.metadata.category==='plan')return 'recovery.plan_created';
+  if(r.type==='journal'&&r.metadata.mcpReceipt===true&&!r.deletedAt){
+    const events:Record<string,string>={'training.start_workout':'workout.started','training.log_set':'workout.set_logged','training.apply_adaptation_plan':'workout.updated','recovery.log_soreness':'pain.reported','sleep.set_target':'sleep.target_changed','health.undo_action':'intelligence.action_undone'};
+    return events[String(r.metadata.action)]||'intelligence.action_executed';
+  }
   if(r.type==='automationEvent'&&r.metadata.subtype==='careAction')return `care.${r.deletedAt?'action_deleted':r.metadata.status==='skipped'?'action_skipped':'action_completed'}`;
   if(r.type==='journal'&&r.metadata.subtype==='careObservation')return `care.${r.deletedAt?'observation_deleted':'observation_added'}`;
   if(r.deletedAt)return `${r.type==='vital'&&r.metadata.metric==='Weight'?'weight':r.type}.deleted`;

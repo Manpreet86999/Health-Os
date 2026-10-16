@@ -18,7 +18,7 @@ select public.health_os_pod_action('complete',(select v::uuid from pod_test_stat
 do $$begin
  if (select count(*) from public.health_os_pods)<>1 or (select count(*) from public.health_os_pod_members)<>2 or (select count(*) from public.health_os_pod_completions)<>1 then raise exception 'Member visibility failed'; end if;
  begin perform public.health_os_pod_action('invite',(select v::uuid from pod_test_state where k='pod')); raise exception 'Non-owner invite allowed'; exception when insufficient_privilege then null; end;
- begin insert into public.health_os_pod_completions values((select v::uuid from pod_test_state where k='pod'),(select v::uuid from pod_test_state where k='goal'),(select v::uuid from pod_test_state where k='account-a'),current_date,true); raise exception 'Direct write allowed'; exception when insufficient_privilege then null; end;
+ begin insert into public.health_os_pod_completions(pod_id,goal_id,user_id,day,completed) values((select v::uuid from pod_test_state where k='pod'),(select v::uuid from pod_test_state where k='goal'),(select v::uuid from pod_test_state where k='account-a'),current_date,true); raise exception 'Direct write allowed'; exception when insufficient_privilege then null; end;
 end$$;
 select set_config('request.jwt.claim.sub',(select v from pod_test_state where k='account-a'),true);
 do $$begin if (select count(*) from public.health_os_pod_completions where completed)<>1 then raise exception 'Completion synchronization failed'; end if; end$$;

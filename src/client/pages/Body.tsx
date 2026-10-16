@@ -165,6 +165,8 @@ export function Body({initialView='Measurements'}:{initialView?:string}) {
         </div>
       </header>
 
+      {initialView==='Weight'&&<section className="hos-body-hero"><div><span className="hos-eyebrow">YOUR LATEST WEIGHT</span><strong>{weight.latest?(weight.latest.weight*(units==='lb'?2.2046226218:1)).toLocaleString(undefined,{maximumFractionDigits:1}):'—'} <small>{units}</small></strong><p>{weight.latest?`Recorded ${weight.latest.date}`:'Your first entry is the start of your story.'}</p><button className="btn btn-hot" onClick={()=>quick.open('vital',undefined,undefined,{metric:'Weight',unit:units})}>Log weight</button></div><div><span className="hos-eyebrow">7-DAY TREND</span><strong>{weight.trend===null?'—':(weight.trend*(units==='lb'?2.2046226218:1)).toLocaleString(undefined,{maximumFractionDigits:1})} <small>{units}</small></strong><p>{weight.change30===null?'More history brings perspective.':`${(weight.change30*(units==='lb'?2.2046226218:1)).toFixed(1)} ${units} vs 30 days ago`}</p></div></section>}
+
       <div className="page-signals">
         <div className="page-signal">
           <span className="page-signal-label">Weight</span>

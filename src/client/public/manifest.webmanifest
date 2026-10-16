@@ -1,7 +1,7 @@
 {
   "name": "Health OS",
   "short_name": "Health OS",
-  "description": "Training, care, and health in your Supabase cloud workspace.",
+  "description": "Workouts, sleep, recovery, daily nutrition, body metrics and insights.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#060d18",

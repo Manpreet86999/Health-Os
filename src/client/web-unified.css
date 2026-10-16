@@ -172,3 +172,11 @@ html .os-frame .health-segment button[aria-pressed="true"], html .os-frame .heal
 }
 /* Deep mint keeps small evidence links readable on a tinted light card. */
 html body:not(.dark) .health-insight-grid .visual-why summary {color:var(--hos-primary-hover);}
+
+@media(max-width:1023px){.os-frame .ux-mobile-nav{display:flex;overflow-x:auto;flex-wrap:nowrap}.os-frame .ux-mobile-nav button{flex:1 0 65px;min-width:65px}}
+
+/* Compact daily tracker: five signals, followed by direct logging actions. */
+.tracker-today .bio-page-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}.tracker-today .bio-page-head label{max-width:220px}.tracker-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.tracker-status-grid>button{min-height:130px;padding:18px;align-items:flex-start;justify-content:space-between;border-radius:14px}.tracker-status-grid>button strong{line-height:1.2}.tracker-status-grid>button small{line-height:1.4}.toast{color:var(--text-primary,#213b36)}body.dark .toast{color:#edf3ef}
+@media(max-width:600px){.tracker-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tracker-status-grid>button{min-height:125px;padding:16px}.tracker-today .bio-page-head label{max-width:180px}.tracker-today .bio-page-head h1{font-size:28px}}
+
+.tracker-status-grid>button:nth-child(3) strong{font-size:22px!important;overflow-wrap:normal!important;word-break:normal}.tracker-status-grid>button{gap:10px}

@@ -1,5 +1,7 @@
 # Health OS 5.2 APK refinement
 
+Current Android build (2026-10-16): run `npm run build:apk` from the source root. The user selected `Health-OS-v1.4-fix.apk` as the current visual baseline. The default pipeline preserves that APK's original design while adapting retained pages and HEOS MCP. See [current implementation and verification](../../docs/ANDROID-ORIGINAL-UI-MCP.md). The 5.2 instructions below describe earlier builds.
+
 The supplied `Health-OS-5.2.0-2026100802.apk` is the visual and functional baseline. Its SHA256 is `8856365bbdbd2bbd295f0cfe136fc51bfe2265e68764bfee9842dd95b7e91fb3`.
 
 This is an APK-derived project, not the recovered original TypeScript/Gradle source. The APK contains a Capacitor wrapper, bundled React interface, compiled native plugins and 101 registered views. It identifies the original Android project as `apps/health-os-mobile/android`; that source and its signing key were not supplied. The unrelated native alpha is not used to render this version.

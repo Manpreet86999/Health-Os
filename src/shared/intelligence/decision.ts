@@ -1,0 +1,23 @@
+import type {CurrentHealthState} from './state.js';
+import type {HealthPrediction} from './prediction.js';
+import type {EvidenceReference,StateDomain} from './contracts.js';
+import {fingerprint} from '../automation-model.js';
+export interface HealthDecision {id:string;userId:string;predictionId:string;priority:number;domain:StateDomain;issue:string;recommendation:string;evidence:EvidenceReference[];confidence:number;actionability:number;urgency:number;userGoalRelevance:number;interruptionCost:number;suggestedActionId?:string;actionInput?:Record<string,unknown>;mode:'silent'|'surface'|'prepare'|'request_approval';createdAt:string;expiresAt:string;feedback?:'accepted'|'rejected'|'ignored'|'executed'|'outcomeObserved'|'useful';}
+export function decisionValue(d:Pick<HealthDecision,'confidence'|'actionability'|'urgency'|'userGoalRelevance'|'interruptionCost'>,severity:number){return Math.max(0,Math.round(100*severity*d.confidence*d.actionability*(.5+.5*d.userGoalRelevance)*(.5+.5*d.urgency)-d.interruptionCost));}
+export function decideHealth(state:CurrentHealthState,predictions:HealthPrediction[],options:{maxItems?:number;personalization?:boolean;minimumPriority?:number}={}):HealthDecision[]{
+  const goal=state.goals.activeGoals.length?1:.8;
+  return predictions.filter(p=>p.userId===state.userId&&p.status==='active').map(p=>{
+    let recommendation=p.type.replaceAll('_',' '),severity=.25,actionability=.5,urgency=.4,mode:HealthDecision['mode']='silent',suggestedActionId:string|undefined,actionInput:Record<string,unknown>|undefined;
+    if(p.type==='volume_adjustment_need'&&p.expectedOutcome.considerAdjustment){recommendation='Consider a lighter session';severity=1;actionability=1;urgency=1;mode='request_approval';suggestedActionId='training.apply_today_adaptation';actionInput={date:state.date};}
+    else if(p.type==='workout_performance_risk'&&p.expectedOutcome.risk==='elevated'){recommendation='Make room to recover before training';severity=.9;actionability=.9;urgency=1;mode='surface';}
+    else if(p.type==='protein_target_miss'){recommendation=`Review ${Math.round(Number(p.expectedOutcome.shortfall))} g protein remaining`;severity=.8;actionability=.9;urgency=1;mode='surface';suggestedActionId='nutrition.plan_recipe_as_meal';}
+    else if(p.type==='calorie_target_miss'){recommendation='Review today’s food plan';severity=.55;actionability=.8;urgency=.8;mode='surface';}
+    else if(p.type==='likely_next_meal'||p.type==='likely_usual_meal'){recommendation=`Your usual ${String(p.expectedOutcome.meal).toLowerCase()}: ${p.expectedOutcome.name}`;severity=.75;actionability=p.expectedOutcome.recipeId?1:.5;urgency=.8;mode='prepare';suggestedActionId=p.expectedOutcome.recipeId?'nutrition.plan_recipe_as_meal':undefined;actionInput={recipeId:p.expectedOutcome.recipeId,date:state.date,meal:p.expectedOutcome.meal,portions:1};}
+    else if(p.type==='sleep_debt_risk'){recommendation='Make space for your sleep routine';severity=.55;actionability=.8;urgency=.65;mode='surface';}
+    else if(p.type==='plateau_likelihood'){recommendation='Review weight and logging coverage before changing targets';severity=.5;actionability=.8;urgency=.4;mode='surface';}
+    const value={id:`decision-${fingerprint([p.id,state.date])}`,userId:state.userId,predictionId:p.id,priority:0,domain:p.domain as StateDomain,issue:p.type,recommendation,evidence:p.evidence,confidence:p.confidence,actionability,urgency,userGoalRelevance:goal,interruptionCost:mode==='silent'?12:7,suggestedActionId,actionInput,mode,createdAt:p.generatedAt,expiresAt:p.expiresAt};value.priority=decisionValue(value,severity);
+    if(p.confidence<.5||value.priority<(options.minimumPriority??24))value.mode='silent';return value;
+  }).sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id));
+}
+export function attentionBudget(decisions:HealthDecision[],limit=3){const selected:HealthDecision[]=[],seen=new Set<string>();for(const d of decisions){if(d.mode==='silent'||selected.length>=Math.max(0,Math.min(3,limit)))continue;const family=['volume_adjustment_need','workout_performance_risk','recovery_risk_tomorrow'].includes(d.issue)?'recovery-training':d.issue.startsWith('likely_')?'meal-pattern':d.issue;if(seen.has(family))continue;selected.push(d);seen.add(family);}return selected;}
+export function getTodayIntelligenceSummary(state:CurrentHealthState,decisions:HealthDecision[],preparedActions:unknown[]=[]){const priorities=attentionBudget(decisions);return {readiness:state.readiness.score,topPriorities:priorities,preparedActions,importantAlerts:priorities.filter(d=>d.priority>=65),nothingNeedsAttention:priorities.length===0,message:priorities.length?'Focus on these next steps.':'Nothing else needs your attention.'};}

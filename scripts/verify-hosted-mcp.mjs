@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+const origin='https://health-os-mcp.health-os-manpr-dc3fa7.workers.dev';
+const health=await fetch(origin+'/health');assert.equal(health.status,200);const release=await health.json();assert.equal(release.mode,'hosted');assert.equal(release.version,'3.1.0');assert.equal(release.toolCount,73);assert.equal(release.cloudSupportedTools,48);assert.equal(release.requiresOpenApp,false);
+const unauthorized=await fetch(origin+'/mcp');assert.equal(unauthorized.status,401);assert.match(unauthorized.headers.get('www-authenticate')||'',/oauth-protected-resource/);
+const resource=await fetch(origin+'/.well-known/oauth-protected-resource/mcp');assert.equal(resource.status,200);assert.equal((await resource.json()).resource,origin+'/mcp');
+const auth=await fetch(origin+'/.well-known/oauth-authorization-server');assert.equal(auth.status,200);const meta=await auth.json();assert.equal(meta.authorization_endpoint,origin+'/authorize');assert.ok(meta.code_challenge_methods_supported.includes('S256'));
+const blocked=await fetch(origin+'/control/status',{method:'POST',headers:{Origin:'https://untrusted.example'},body:'{}'});assert.equal(blocked.status,403);
+const query=new URLSearchParams({response_type:'code',client_id:'https://chatgpt.com/oauth/client.json',redirect_uri:'https://chatgpt.com/connector_platform_oauth_redirect',scope:'health.read',state:'health-os-readiness-check',code_challenge:createHash('sha256').update('health-os-readiness-verifier-01234567890123456789').digest('base64url'),code_challenge_method:'S256',resource:origin+'/mcp'});
+const consent=await fetch(origin+'/authorize?'+query,{redirect:'manual'});assert.equal(consent.status,200);const html=await consent.text();assert.match(html,/ChatGPT/);const handle=html.match(/name="handle" value="([^"]+)"/)?.[1];assert.ok(handle);
+const cookie=consent.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ');
+const cancel=await fetch(origin+'/authorize',{method:'POST',redirect:'manual',headers:{Origin:origin,Cookie:cookie,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({handle,decision:'deny'})});assert.equal(cancel.status,302);assert.equal(new URL(cancel.headers.get('Location')).hostname,'chatgpt.com');
+console.log('Live hosted MCP: health, OAuth discovery, protected-resource discovery, anonymous protection and origin protection passed.');
+console.log('HEOS MCP 3.1.0: 73 tools, 48 cloud-supported, deployed at the existing URL.');
+console.log('Live ChatGPT client metadata discovery and OAuth consent/cancel passed; no health account was accessed.');

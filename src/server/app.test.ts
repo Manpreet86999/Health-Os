@@ -49,7 +49,7 @@ test('voice status is private and invalid uploads do not start Whisper', async (
   await withServer(async url => {
     const status = await fetch(`${url}/api/voice/status`);
     assert.equal(status.headers.get('cache-control'), 'no-store');
-    assert.equal((await status.json() as { engine: string }).engine, 'local-whisper');
+    assert.ok(['local-whisper','whisper.cpp'].includes((await status.json() as { engine: string }).engine));
     const wrongType = await fetch(`${url}/api/voice/transcribe`, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: 'not audio' });
     assert.equal(wrongType.status, 415);
     const empty = await fetch(`${url}/api/voice/transcribe`, { method: 'POST', headers: { 'Content-Type': 'audio/webm' }, body: new Uint8Array() });

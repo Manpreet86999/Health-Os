@@ -29,7 +29,7 @@ export interface DockGroup {
 }
 
 export const WORKOUT_HOME: Page = 'Dashboard';
-export const SKIN_HOME: Page = 'SkinOverview';
+export const SKIN_HOME: Page = 'Today';
 
 export const WORKOUT_DOCK: DockGroup[] = [
   {
@@ -50,7 +50,6 @@ export const WORKOUT_DOCK: DockGroup[] = [
     label: 'Insight',
     items: [
       { page: 'Analyzer', icon: '◆', label: 'Progress' },
-      { page: 'Coach', icon: '✦', label: 'Coach' },
       { page: 'Targets', icon: '◎', label: 'Goals' },
       { page: 'Body', icon: '◌', label: 'Body' },
       { page: 'Reports', icon: '📄', label: 'Reports' },
@@ -59,40 +58,12 @@ export const WORKOUT_DOCK: DockGroup[] = [
   },
 ];
 
-export const SKIN_DOCK: DockGroup[] = [
-  { id: 'daily', label: 'Daily care', items: [
-    { page: 'SkinOverview', icon: '⌂', label: 'Today' },
-    { page: 'SkinAi', icon: '✦', label: 'Coach' },
-    { page: 'SkinCheckIn', icon: '◌', label: 'Check-in' },
-    { page: 'SkinCalendar', icon: '▣', label: 'Calendar' },
-  ]},
-  { id: 'plan', label: 'Planning', items: [
-    { page: 'SkinRoutine', icon: '▦', label: 'Care Plan' },
-    { page: 'SkinProducts', icon: '◈', label: 'My Products' },
-    { page: 'SkinGoals', icon: '◎', label: 'Goals & Commitment' },
-  ]},
-  { id: 'understand', label: 'Understanding me', items: [
-    { page: 'SkinProgress', icon: '↗', label: 'Progress' },
-    { page: 'SkinReviews', icon: '◇', label: 'Reviews' },
-    { page: 'SkinProfile', icon: '□', label: 'My Profile' },
-  ]},
-];
+export const SKIN_DOCK: DockGroup[] = [];
 
 export const WORKOUT_MOBILE: Page[] = ['Dashboard', 'Tracker', 'Records', 'Analyzer', 'Settings'];
-export const SKIN_MOBILE: Page[] = ['SkinOverview', 'SkinAi', 'SkinProducts', 'SkinRoutine', 'SkinGoals'];
+export const SKIN_MOBILE: Page[] = WORKOUT_MOBILE;
 
-const SKIN_PAGES = new Set<Page>([
-  'SkinOverview',
-  'SkinRoutine',
-  'SkinProfile',
-  'SkinProducts',
-  'SkinProgress',
-  'SkinAi',
-  'SkinGoals',
-  'SkinCalendar',
-  'SkinCheckIn',
-  'SkinReviews',
-]);
+const SKIN_PAGES = new Set<Page>();
 
 const WORKOUT_PAGES = new Set<Page>([
   'Dashboard',
@@ -104,17 +75,12 @@ const WORKOUT_PAGES = new Set<Page>([
   'Programs',
   'Analyzer',
   'ExerciseHistory',
-  'Coach',
   'Targets',
   'Body',
   'Reports',
 ]);
 
-const ALL_PAGES = new Set<Page>([
-  ...WORKOUT_PAGES,
-  ...SKIN_PAGES,
-  'Settings', 'Today', 'Timeline', 'Eat', 'Recover', 'Health', 'Insights', 'Habits', 'Nudges', 'Experiments', 'Research', 'BodyCoach', 'Search', 'Sync', 'Permissions', 'Profile',
-]);
+const ALL_PAGES = new Set<Page>([...WORKOUT_PAGES,'Today','Recover','Insights','Habits','Search','Settings','Profile','Sync','Permissions']);
 
 export function isPage(value: string | null | undefined): value is Page {
   return Boolean(value && ALL_PAGES.has(value as Page));
@@ -128,11 +94,11 @@ export function workspaceOf(page: Page): WorkspaceId | 'system' {
 }
 
 export function homeOf(workspace: WorkspaceId): Page {
-  return workspace === 'skincare' ? SKIN_HOME : WORKOUT_HOME;
+  return 'Today';
 }
 
 export function dockFor(workspace: WorkspaceId): DockGroup[] {
-  return workspace === 'skincare' ? SKIN_DOCK : WORKOUT_DOCK;
+  return WORKOUT_DOCK;
 }
 
 export function mobileNavFor(workspace: WorkspaceId): Page[] {

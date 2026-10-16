@@ -1,17 +1,17 @@
 {
   "name": "health-os",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Health OS - Supabase cloud health, nutrition, training and care",
   "type": "module",
   "scripts": {
+    "test:mcp": "npm run mcp:bundle && node --import tsx --test src/hosted/mcp/hosted.test.ts src/hosted/mcp/cloud-hosted.test.ts src/hosted/mcp/cloud-gateway.test.ts src/server/mcp.test.ts src/shared/health-action-registry.test.ts src/shared/mcp-expanded.test.ts src/shared/mcp-execution.test.ts",
     "dev": "vite --host 127.0.0.1 --port 10000",
     "worker:setup": "node scripts/setup-worker.mjs",
     "worker:login": "tsx --tsconfig tsconfig.server.json src/server/worker/index.ts --login",
     "worker:start": "tsx --tsconfig tsconfig.server.json src/server/worker/index.ts",
     "worker:doctor": "tsx --tsconfig tsconfig.server.json src/server/worker/index.ts --doctor",
     "worker:verify": "node scripts/verify-worker.mjs",
-    "worker:mcp": "tsx --tsconfig tsconfig.server.json src/server/worker/mcp.ts",
     "voice:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-whisper.ps1",
     "dev:server": "tsx watch --tsconfig tsconfig.server.json src/server/index.ts",
     "dev:client": "vite",
@@ -32,26 +32,40 @@
     "typecheck:web": "tsc -p tsconfig.client.json --noEmit",
     "test:web": "playwright test -c playwright.web.config.ts",
     "test:release": "playwright test -c playwright.health-release.config.ts",
-    "build:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/health-os-mobile/scripts/build-review.ps1 -VersionCode 2026100908 -VersionName 0.1.0"
+    "build:android": "node scripts/prepare-original-android.mjs",
+    "build:apk": "npm run build:android && pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/package-original-android.ps1 -VersionCode 2026101605 -VersionName 1.4.0",
+    "voice:setup:cpp": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-whisper-cpp.ps1",
+    "mcp:dev": "wrangler dev -c wrangler.mcp.jsonc",
+    "mcp:deploy": "wrangler deploy -c wrangler.mcp.jsonc",
+    "mcp:check": "tsc -p tsconfig.hosted.json",
+    "mcp:bundle": "wrangler deploy -c wrangler.mcp.jsonc --dry-run --outdir output/hosted-mcp-build"
   },
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.2.3",
     "@duckdb/node-api": "^1.5.5-r.4",
+    "@langchain/langgraph": "1.4.21",
     "@lhncbc/ucum-lhc": "^7.1.9",
     "@medplum/core": "^5.2.0",
     "@medplum/definitions": "^5.2.0",
     "@medplum/fhirtypes": "^5.2.0",
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/node": "2.1.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/server": "2.3.1",
     "@noble/ciphers": "^1.3.0",
     "@noble/hashes": "^1.8.0",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/core": "2.12.0",
+    "@opentelemetry/sdk-metrics": "2.12.0",
+    "@opentelemetry/sdk-trace-web": "2.12.0",
     "@pixiv/three-vrm": "^3.5.5",
     "@pixiv/three-vrm-animation": "^3.5.5",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@tanstack/react-query": "^5.102.8",
-    "@zxing/browser": "^0.2.1",
     "chart.js": "^4.4.8",
     "cql-exec-fhir": "^2.2.0",
     "cql-execution": "^3.3.2",
@@ -78,6 +92,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/workers-types": "5.20261011.1",
     "@gltf-transform/cli": "^4.5.0",
     "@gltf-transform/core": "^4.5.0",
     "@gltf-transform/extensions": "^4.5.0",
@@ -98,7 +113,8 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "wrangler": "4.149.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.62.2"

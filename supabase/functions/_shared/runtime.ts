@@ -1,3 +1,6 @@
+import {ownerOpenRouterSecret} from '../body-os-ai/provider-secret.ts';
+import {productionModelStack} from '../body-os-ai/model-stack.ts';
+import {productionUsageLedger} from '../body-os-ai/usage-ledger.ts';
 import nodemailer from "nodemailer";
 import {
   EmailError,
@@ -7,6 +10,7 @@ import type { EmailDependencies, EmailUser } from "./email-service.ts";
 import { attachReportReadiness } from '../../../src/shared/report-email.ts';
 import { analyzeWorkout, hasCurrentWorkoutAnalysis } from './workout-analysis.ts';
 import { processReportJob, type ReportJob, type QueueDependencies } from './report-queue.ts';
+import {dailyReports} from './daily-report-service.ts';
 export function env(name: string) {
   const value = Deno.env.get(name);
   if (!value) throw new EmailError("EMAIL_DELIVERY_FAILED");
@@ -77,8 +81,11 @@ async function withReadiness(userId: string, reports: Record<string, unknown>[])
   const checkins = await records(userId, 'readiness');
   return attachReportReadiness(reports, checkins.map(item => item.payload));
 }
+const daily=dailyReports(db,records,async userId=>({key:await ownerOpenRouterSecret(env('SUPABASE_URL'),userId),roles:await productionModelStack(),ledger:productionUsageLedger(env('SUPABASE_URL'),userId,{apikey:env('SUPABASE_SERVICE_ROLE_KEY'),Authorization:'Bearer '+env('SUPABASE_SERVICE_ROLE_KEY'),'Content-Type':'application/json'},true)}));
 export const dependencies: EmailDependencies = {
+  generateDailyReport:daily.generate,
   async report(userId: string, type: ReportEmailType, id: string) {
+    if(type==='daily')return [{date:id}];
     if (type === "weekly" || type === "monthly") {
       if (/^\d{4}-\d{2}-\d{2}$/.test(id)) {
         const start = new Date(`${id}T00:00:00Z`);
@@ -146,7 +153,8 @@ export const dependencies: EmailDependencies = {
     if (await hasCurrentWorkoutAnalysis(row.payload)) return (await withReadiness(userId, [row.payload]))[0];
     const prefs = await dependencies.preferences(userId);
     const recent = await db(`body_os_records?user_id=eq.${encodeURIComponent(userId)}&entity_type=eq.session&record_id=neq.${encodeURIComponent(id)}&deleted_at=is.null&payload->>status=in.(finished,completed)&payload->>date=lte.${encodeURIComponent(row.payload.date)}&select=payload&order=updated_at.desc&limit=5`);
-    const analyzed = await analyzeWorkout(row.payload, prefs, recent.map((item: {payload: Record<string, unknown>}) => item.payload));
+    const privateConfig={key:await ownerOpenRouterSecret(env('SUPABASE_URL'),userId),roles:await productionModelStack(),ledger:productionUsageLedger(env('SUPABASE_URL'),userId,{apikey:env('SUPABASE_SERVICE_ROLE_KEY'),Authorization:'Bearer '+env('SUPABASE_SERVICE_ROLE_KEY'),'Content-Type':'application/json'},true)};
+    const analyzed = await analyzeWorkout(row.payload, prefs, recent.map((item: {payload: Record<string, unknown>}) => item.payload),fetch,privateConfig);
     const saved = await db(`${path}&cloud_updated_at=eq.${encodeURIComponent(row.cloud_updated_at)}`, {
       method: 'PATCH', headers: { Prefer: 'return=representation' },
       body: JSON.stringify({ payload: analyzed, revision: Number(row.revision) + 1, updated_at: new Date().toISOString(), device_id: 'body-os-cloud-ai-report' }),
@@ -173,6 +181,7 @@ export const dependencies: EmailDependencies = {
     );
   },
   async completeReport(userId, type, id) {
+    if(type==='daily')await daily.sent(userId,id);
     await db(`body_os_email_jobs?user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(type)}&report_id=eq.${encodeURIComponent(id)}`, {method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'done',last_error:null})});
   },
   async send(message) {
@@ -225,6 +234,8 @@ export const queueDependencies: QueueDependencies = {
   },
 };
 export async function runReportJob(id: number) {
+  const legacy=await db(`body_os_email_jobs?id=eq.${id}&report_type=eq.workout&select=id&limit=1`);
+  if(legacy?.length)return {ok:true,status:'skipped',sentTo:[]};
   const jobs = await db('rpc/body_os_claim_report_job', { method: 'POST', body: JSON.stringify({ job_id: id }) });
   if (jobs?.[0]) return processReportJob(jobs[0] as ReportJob, queueDependencies);
   return { ok: true, status: 'processing', sentTo: [] };

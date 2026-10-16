@@ -10,7 +10,7 @@ export const domainEventSchema=z.object({
   payload:z.object({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),previousDate:z.string().optional(),recordType:z.string().optional(),revision:z.string().optional()}),
 });
 export type DomainEvent=z.infer<typeof domainEventSchema>;
-export type Dataset={db:AppDb;skin:SkinState;records:BioRecord[];photoDates?:{id:string;date:string}[];dailyAggregates?:Record<string,{metrics:Record<string,number|null>;metricRefs:Record<string,string[]>}>;userId:string};
+export type Dataset={db:AppDb;skin:SkinState;records:BioRecord[];photoDates?:{id:string;date:string}[];dailyAggregates?:Record<string,{metrics:Record<string,number|null>;metricRefs:Record<string,string[]>}>;userId:string;activeWorkout?:unknown;medicalReports?:import('./medical.js').MedicalReport[];preferences?:Record<string,unknown>;profileProvided?:boolean;freshness?:'device'|'synchronized'|'historical'};
 export const automationDefaults={smartDefaults:true,habits:true,goals:true,mealPatterns:true,recurringMeals:true,adaptiveCheckin:true,workoutPreparation:true,automaticReports:true,insights:true,baselines:true,anomalyPrompts:true,carePlan:true,measurementScheduling:true,doseReminders:true,reportRegenerationDays:90,maxInbox:5};
 export type AutomationPreferences=typeof automationDefaults;
 export interface Evidence {ids:string[];explanation:string;quality:'high'|'medium'|'low';}

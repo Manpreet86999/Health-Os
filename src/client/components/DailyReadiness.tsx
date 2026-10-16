@@ -7,7 +7,6 @@ import { normalizeReadiness } from '../../shared/readiness';
 import { atTime } from '../../shared/biological-intelligence';
 import { api } from '../lib/api';
 import { useBiologicalData } from '../lib/use-biological-data';
-import { useAutomations } from '../state/AutomationContext';
 import { Modal } from './Modal';
 import { ReadinessCards } from './ReadinessCards';
 import { HealthReadings } from './HealthReadings';
@@ -17,7 +16,7 @@ export function DailyReadiness({ initial, date: requestedDate, defaults = {}, on
   initial?: BioRecord; date?: string; defaults?: Record<string, string | number | boolean>;
   onSaved?: () => void | Promise<void>; close: () => void;
 }) {
-  const { app, bio, stored, records } = useBiologicalData(), { preferences } = useAutomations(), toast = useToast();
+  const { app, bio, stored, records } = useBiologicalData(), toast = useToast();
   const today = dateOf(new Date().toISOString()), date = requestedDate || (initial ? dateOf(initial.timestamp) : today);
   const saved = app.db!.readiness.find(item => item.date === date);
   const known = initial || stored.filter(record => record.type === 'checkIn' && dateOf(record.timestamp) === date && record.quality !== 'estimated' && (record.metadata.requiresConfirmation !== true || record.metadata.confirmed === true)).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))[0];
@@ -32,7 +31,7 @@ export function DailyReadiness({ initial, date: requestedDate, defaults = {}, on
     const previous: Record<string, any> = saved ? { ...saved } : {
       sleepHours: sleep?.value, sleepQuality: sleep ? num(sleep, 'quality') ?? undefined : undefined,
       restingHeartRate: vital('Resting HR'), steps: vital('Steps'),
-      ...(preferences.adaptiveCheckin ? known?.metadata : {}),
+      ...(true ? known?.metadata : {}),
     };
     if (initial) Object.assign(previous, initial.metadata);
     if (previous.painFlag === undefined && previous.painAnswer) previous.painFlag = previous.painAnswer === 'Yes';
@@ -80,7 +79,7 @@ export function DailyReadiness({ initial, date: requestedDate, defaults = {}, on
   return <Modal open title={date === today ? 'Today’s readiness check-in' : `Readiness · ${date}`} onClose={close} className="flow-modal daily-readiness-modal">
     {legacyKey && <div className="health-card"><p>An older check-in draft exists on this device. Import it only if it belongs to you.</p><button className="btn btn-soft" onClick={()=>{try{const older=JSON.parse(localStorage.getItem(legacyKey)||'{}');void applyHealth(older).then(ok=>{if(ok){localStorage.removeItem(legacyKey);setLegacyKey('');}});}catch{toast.push('The older draft could not be read.','err');}}}>Import older draft into my account</button></div>}
     {date === today && <HealthReadings activeDate={date} onApply={applyHealth}/>}
-    <ReadinessCards key={version} initial={values} draftKey={draftKey} onSave={save} reuseAnswers={preferences.adaptiveCheckin} onGoogleFitImport={date === today && app.settings?.hasGoogleFit ? importGoogleFit : undefined}/>
+    <ReadinessCards key={version} initial={values} draftKey={draftKey} onSave={save} reuseAnswers={true} onGoogleFitImport={date === today && app.settings?.hasGoogleFit ? importGoogleFit : undefined}/>
   </Modal>;
 }
 

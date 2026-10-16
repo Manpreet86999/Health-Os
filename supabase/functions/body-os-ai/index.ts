@@ -1,11 +1,25 @@
+import {cloudRunControl} from './cloud-control.ts';
+import {observeAttachmentImage} from './attachment-image.ts';
 import { research, publicUrl, type Source } from './research.ts';
 import { bestExerciseReference } from '../../../src/shared/exercise-media-ranking.ts';
 import { validateCareProposal } from '../../../src/shared/care-proposal.ts';
 import { emptyCareData, PRODUCT_CATEGORIES } from '../../../src/shared/skin.ts';
+import {agentStep} from './agent.ts';
+import {runStore} from './run-store.ts';
+import {providerHealth} from '../../../src/integrations/ai/provider-health.ts';
+import {ownerOpenRouterSecret} from './provider-secret.ts';
+import {productionUsageLedger} from './usage-ledger.ts';
+import {productionModelStack} from './model-stack.ts';
+import {PRIMARY_MODEL,SECONDARY_MODEL,PRODUCTION_MODELS,MONTHLY_MODEL_LIMIT_USD,productionModelStatus} from '../../../src/shared/intelligence/production-models.ts';
+import {modelRoles} from '../../../src/shared/intelligence/agent-contracts.ts';
+import {AgentModelRouter} from '../../../src/integrations/ai/model-router.ts';
+import {legacyResponseSchema} from './legacy-schemas.ts';
+import {z} from 'zod';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const reply = (value: unknown, status = 200) => Response.json(value, { status, headers: cors });
 type Row = Record<string, any>;
-const actions = new Set(['/biology/estimate-meal','/biology/parse-capture','/biology/coach','/ai/test', '/ai/models', '/ai/ask', '/ai/coach', '/ai-coach', '/ai/morning-brief', '/ai/workout-gen', '/ai/auto-regulate', '/ai/plateau-buster', '/ai/exercise-cues', '/ai/skin', '/ai/skin/build-routine', '/ai/analyze-session', '/media/config', '/media/youtube', '/ai/web-research', '/ai/benchmark', '/skin/photos/observe', '/skin/products/read-label', '/skin/products/search-web']);
+const actions = new Set(['/ai/agent-step','/ai/agent-usage','/biology/estimate-meal','/biology/parse-capture','/biology/coach','/ai/test', '/ai/models', '/ai/ask', '/ai/coach', '/ai-coach', '/ai/morning-brief', '/ai/workout-gen', '/ai/auto-regulate', '/ai/plateau-buster', '/ai/exercise-cues', '/ai/skin', '/ai/skin/build-routine', '/ai/analyze-session', '/media/config', '/media/youtube', '/ai/web-research', '/ai/benchmark', '/skin/photos/observe', '/skin/products/read-label', '/skin/products/search-web']);
+actions.add('/ai/cloud-run-control');actions.add('/ai/run-store');actions.add('/ai/attachment-image');
 export async function handler(request: Request): Promise<Response> {
   if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (request.method !== 'POST') return reply({ error: 'Method not allowed.' }, 405);
@@ -22,7 +36,10 @@ export async function handler(request: Request): Promise<Response> {
     const text = await request.text();
     if (text.length > 3100000) return reply({ error: 'Request is too large.' }, 413);
     const input = JSON.parse(text);
+    if(input.expectedOwnerId&&input.expectedOwnerId!==user.id)return reply({error:'Account changed. Review this request again.'},403);
     if (!actions.has(input.action)) return reply({ error: 'Unknown cloud action.' }, 400);
+    if(input.action==='/ai/cloud-run-control')return reply(await cloudRunControl(input,user,base,headers));
+    if(input.action==='/ai/run-store')return reply(await runStore(input,user.id,base,headers));
     // Shared app credentials are independent of personal settings and AI configuration.
     if (input.action === '/media/config') return reply({
       youtubeConfigured: Boolean(Deno.env.get('YOUTUBE_API_KEY')?.trim()),
@@ -40,20 +57,29 @@ export async function handler(request: Request): Promise<Response> {
       return reply({ videos: selected ? [selected] : [] });
     }
     const records: Row[] = [];
+    const restricted=['/ai/models','/ai/attachment-image','/ai/agent-step','/ai/agent-usage','/biology/coach','/ai/web-research','/skin/products/search-web','/ai/test'].includes(input.action);
     // RLS and an explicit owner filter apply to every page; secrets never go to the AI prompt.
     for (let offset = 0;; offset += 500) {
-      const response = await fetch(`${base}/rest/v1/body_os_records?user_id=eq.${user.id}&deleted_at=is.null&entity_type=in.(sharedPreferences,profile,session,readiness,target,skinProfile,careSettings,careGoal,careTask,careCheckIn,skinLog,skinProduct)&select=entity_type,record_id,payload,cloud_updated_at,revision&order=record_id&limit=500&offset=${offset}`, { headers, signal: AbortSignal.timeout(20000) });
+      const types=restricted?'sharedPreferences':'sharedPreferences,profile,session,readiness,target,skinProfile,careSettings,careGoal,careTask,careCheckIn,skinLog,skinProduct';
+      const response = await fetch(`${base}/rest/v1/body_os_records?user_id=eq.${user.id}&deleted_at=is.null&entity_type=in.(${types})&select=entity_type,record_id,payload,cloud_updated_at,revision&order=record_id&limit=500&offset=${offset}`, { headers, signal: AbortSignal.timeout(20000) });
       if (!response.ok) throw new Error('Could not read your cloud workspace.');
       const page = await response.json(); records.push(...page); if (page.length < 500) break;
     }
     const prefs = records.find(r => r.entity_type === 'sharedPreferences' && r.record_id === 'shared-preferences')?.payload || {};
     const action = input.action;
+    const ledger=productionUsageLedger(base,user.id,headers);
+    if(action==='/ai/attachment-image')return reply(await observeAttachmentImage(input,prefs,ledger,await ownerOpenRouterSecret(base,user.id)));
+    if(action==='/ai/agent-step'||action==='/ai/agent-usage'){
+      if(action==='/ai/agent-usage'){const summary=await ledger.summary();try{return reply({...summary,providerHealth:providerHealth(await ledger.readHealth!())});}catch{return reply({...summary,providerHealth:[],providerHealthError:'Provider health history is unavailable.'});}}
+      return reply(await agentStep(input,prefs,ledger,await ownerOpenRouterSecret(base,user.id)));
+    }
     if(action.startsWith('/biology/')&&input.consent!==true)return reply({error:'Explicit consent is required for AI analysis.'},400);
     let sources:Source[]=[];
     if (action === '/ai/web-research' || action === '/skin/products/search-web') {
       sources=await research(String(input.query || input.question || ''),prefs);
+      if(input.sourcesOnly===true)return reply({ok:true,sources});
       if(!sources.length) return reply({ok:true,answer:'No usable sources were found. Try the exact product name or manufacturer page.',sources:[]});
-      if(!(prefs.aiApiKey||prefs.openRouterApiKey||prefs.nvidiaNimApiKey)) return reply({ok:true,answer:'Review these source excerpts. Add an AI key for a summarized draft.',sources});
+      if(!(prefs.hasOpenRouterApiKey||prefs.aiApiKey||prefs.openRouterApiKey||prefs.nvidiaNimApiKey)) return reply({ok:true,answer:'Review these source excerpts. Connect your provider for a summarized draft.',sources});
     }
     let image:string|undefined;
     if(action==='/biology/estimate-meal'&&input.photo){if(typeof input.photo!=='string'||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(input.photo)||input.photo.length>3000000)return reply({error:'Choose a compressed JPEG, PNG or WebP smaller than 2 MB.'},400);image=input.photo;}
@@ -77,12 +103,13 @@ export async function handler(request: Request): Promise<Response> {
       }
       if(typeof image!=='string'||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>3000000) return reply({error:'Choose a compressed JPEG, PNG, or WebP photo.'},400);
     }
-    if (input.action === '/ai/models') return reply({ recommended: 'openrouter/free', models: [{ id: 'openrouter/free', label: 'OpenRouter Free Router' }], nvidiaModels: [] });
-    const nvidia = prefs.aiProvider === 'nvidia';
-    if (prefs.aiProvider && !['nvidia', 'openrouter'].includes(prefs.aiProvider)) return reply({ error: 'Select OpenRouter or NVIDIA in cloud settings.' }, 400);
-    const apiKey = (nvidia ? prefs.nvidiaNimApiKey : prefs.openRouterApiKey) || prefs.aiApiKey;
-    if (!apiKey) return reply({ error: 'Add your AI provider key in Settings → Connections. Workout logging and email reports work without AI.' }, 400);
-    const model = prefs.aiModel || (nvidia ? '' : 'openrouter/free');
+    if (input.action === '/ai/models') {
+      const qualifications=await ledger.readQualifications!();
+      const roles=Object.fromEntries(modelRoles.filter(role=>role!=='vision').map(role=>[role,productionModelStatus(PRIMARY_MODEL,role,qualifications)]));
+      return reply({recommended:PRIMARY_MODEL,models:[{id:PRIMARY_MODEL,label:'Qwen3 235B A22B Instruct 2507',status:Object.values(roles).every(status=>status==='QUALIFIED')?'QUALIFIED':'PROVISIONAL',roles,vision:false}],nvidiaModels:[]});
+    }
+    const apiKey=await ownerOpenRouterSecret(base,user.id),roles=await productionModelStack();
+    let model=image?SECONDARY_MODEL:PRIMARY_MODEL;
     if (!model) return reply({ error: 'Enter a model ID in Settings → Connections.' }, 400);
     const payloads = (type: string) => records.filter(r => r.entity_type === type).map(r => r.payload);
     const sessions = payloads('session').filter(s => ['finished', 'completed'].includes(s.status)).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 12);
@@ -116,15 +143,11 @@ export async function handler(request: Request): Promise<Response> {
       instruction += ' Analyze the supplied saved workout. Return ONLY JSON: {"overallSummary":"Specific evidence-based summary","exerciseComments":{"Exercise name":"Short feedback on logged sets"}}.';
     }
     const start = Date.now();
-    const response = await fetch(nvidia ? 'https://integrate.api.nvidia.com/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'Health OS' },
-      body: JSON.stringify({ model, temperature: 0.3, max_tokens: 3500, messages: [{ role: 'system', content: instruction }, { role: 'user', content: image?[{type:'text',text:instruction+'\n'+String(input.description||'').slice(0,4000)},{type:'image_url',image_url:{url:image}}]:JSON.stringify({ context: action === '/ai/test' ? undefined : context, question: input.question || input.description || input.prompt || input.query || input.exercise || '', evidence:action==='/biology/coach'?JSON.stringify(input.evidence||{}).slice(0,60000):undefined, history:Array.isArray(input.history)?input.history.slice(-12).map((m:Row)=>({role:m.role==='user'?'user':'assistant',content:String(m.content||'').slice(0,3000)})):undefined, sources, currentWorkout: input.sessionJson, savedWorkout: report?.payload }) }] }), signal: AbortSignal.timeout(65000),
-    });
-    if (!response.ok) return reply({ error: `AI provider rejected the request (${response.status}). Check your key, model, quota, and credits.` }, 502);
-    const result = await response.json(); const answer = result.choices?.[0]?.message?.content;
-    if (typeof answer !== 'string' || !answer.trim()) return reply({ error: 'The AI provider returned no answer. Try another model.' }, 502);
     const structured = ['/biology/estimate-meal','/biology/parse-capture','/ai/workout-gen', '/ai/auto-regulate', '/ai/exercise-cues', '/ai/plateau-buster', '/ai/skin/build-routine', '/ai/analyze-session','/ai/skin','/skin/products/read-label','/skin/products/search-web'].includes(action);
-    const parsed = structured ? JSON.parse(answer.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '')) : null;
+    const responseSchema=legacyResponseSchema(action),monthlyLimit=prefs.aiMonthlyPaidLimitUsd===undefined?MONTHLY_MODEL_LIMIT_USD:Math.max(0,Math.min(MONTHLY_MODEL_LIMIT_USD,Number(prefs.aiMonthlyPaidLimitUsd)||0));
+    const router=new AgentModelRouter({allowProvisional:true,preferFree:false,allowPaid:monthlyLimit>0,dailyPaidLimitUsd:monthlyLimit,roles,allowedModels:PRODUCTION_MODELS},{openrouter:apiKey},ledger);
+    const result=await router.run(crypto.randomUUID(),image?'vision':'general_reasoner',responseSchema as any,[{role:'system',content:instruction+' Return only JSON matching this exact schema: '+JSON.stringify(z.toJSONSchema(responseSchema))},{role:'user',content:image?[{type:'text',text:instruction+'\n'+String(input.description||'').slice(0,4000)},{type:'image_url',image_url:{url:image}}]:JSON.stringify({context:restricted?undefined:context,question:input.question||input.description||input.prompt||input.query||input.exercise||'',evidence:action==='/biology/coach'?JSON.stringify(input.evidence||{}).slice(0,60000):undefined,history:Array.isArray(input.history)?input.history.slice(-12).map((m:Row)=>({role:m.role==='user'?'user':'assistant',content:String(m.content||'').slice(0,3000)})):undefined,sources,currentWorkout:restricted?undefined:input.sessionJson,savedWorkout:report?.payload})}]);
+    model=result.usage.at(-1)?.model||model;const parsed=result.result as any,answer=structured?JSON.stringify(parsed):String(parsed.answer);
     if(action==='/biology/estimate-meal'){
       if(typeof parsed?.name!=='string'||parsed.name.length>250||['calories','protein','carbs','fat','fibre'].some(k=>!Number.isFinite(parsed[k])||parsed[k]<0||parsed[k]>(k==='calories'?20000:4000)))return reply({error:'The provider returned an invalid nutrition estimate.'},502);
       return reply({estimate:{name:parsed.name,calories:parsed.calories,protein:parsed.protein,carbs:parsed.carbs,fat:parsed.fat,fibre:parsed.fibre,notes:String(parsed.notes||'Estimate; verify portions.').slice(0,2000)}});

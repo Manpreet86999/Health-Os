@@ -1,3 +1,4 @@
+import {istDate} from './daily-report-policy.js';
 import { z } from 'zod';
 import { checkInReadiness, readinessBand } from './readiness.js';
 
@@ -24,6 +25,7 @@ export const bioSchema = z.object({
   const bound = bounds[r.type];
   const normalized=r.type==='water'?waterMillilitres(r):r.type==='sleep'?sleepDurationHours(r):r.value??null;
   if (bound && (normalized === null || normalized < bound[0] || normalized > bound[1])) ctx.addIssue({ code: 'custom', message: `${r.type} value must be between ${bound[0]} and ${bound[1]} in ${r.type==='water'?'mL':'hours'} using a supported unit` });
+  if(r.type==='nutritionDay'&&r.metadata.dailyTotals===true)for(const key of dailyNutritionKeys){const value=r.metadata[key];if(value!==undefined&&(typeof value!=='number'||!Number.isFinite(value)||value<0||value>({calories:20000,protein:1000,carbs:3000,fat:1000,fibre:300,water:20000}[key])))ctx.addIssue({code:'custom',message:`Invalid daily ${key} total`});}
   for (const key of ['calories', 'protein', 'carbs', 'fat', 'fibre', 'sodium','saturatedFat','sugars','iron','calcium','potassium','magnesium','zinc','folate','vitaminB12','vitaminC','vitaminD']) {
     if (r.metadata[key] !== undefined && (typeof r.metadata[key] !== 'number' || Number(r.metadata[key]) < 0)) ctx.addIssue({ code: 'custom', message: `${key} must be a nonnegative number` });
   }
@@ -32,7 +34,7 @@ export const bioSchema = z.object({
   if (r.type === 'sleep' && ['deep','rem','light','awake'].reduce((sum,k)=>sum+(typeof r.metadata[k]==='number'?Number(r.metadata[k]):0),0) > (sleepDurationHours(r) || 0) + .05) ctx.addIssue({code:'custom',message:'Sleep stages cannot exceed session duration'});
 });
 export type BioRecord = z.infer<typeof bioSchema>;
-export const dateOf = (stamp: string) => { const d = new Date(stamp); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+export const dateOf = (stamp: string) => istDate(new Date(stamp));
 export const live = (records: BioRecord[]) => records.filter(r => !r.deletedAt);
 export const mean = (numbers: number[]) => numbers.length ? numbers.reduce((a, b) => a + b, 0) / numbers.length : null;
 export const num = (r: BioRecord, key: string) => typeof r.metadata[key] === 'number' ? Number(r.metadata[key]) : null;
@@ -49,9 +51,28 @@ export function sleepDurationHours(record:{value?:number;unit:string}):number|nu
   const multiplier=factor[record.unit.trim().toLowerCase()];
   return multiplier===undefined?null:record.value*multiplier;
 }
+export const dailyNutritionKeys = ['calories','protein','carbs','fat','fibre','water'] as const;
+export type NutritionKey = typeof dailyNutritionKeys[number];
+export function dailyNutritionRecord(records:BioRecord[],date:string) {
+  return live(records).filter(r=>r.type==='nutritionDay'&&r.metadata.dailyTotals===true&&dateOf(r.timestamp)===date).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)||b.id.localeCompare(a.id))[0];
+}
+/** Daily totals replace historic meal sums, field by field. Missing values stay unknown. */
+export function dailyNutrition(records:BioRecord[],date:string):Record<NutritionKey,number|null> {
+  const rows=live(records).filter(r=>dateOf(r.timestamp)===date),daily=dailyNutritionRecord(rows,date),meals=rows.filter(r=>r.type==='meal');
+  return Object.fromEntries(dailyNutritionKeys.map(key=>{
+    if(key==='water'){
+      const water=rows.filter(r=>r.type==='water'&&waterMillilitres(r)!==null);
+      let included:string[]=[];try{included=JSON.parse(String(daily?.metadata.waterEntryIds||'[]'));}catch{}
+      const base=daily?num(daily,key):null,extra=water.filter(r=>base===null||!included.includes(r.id));
+      return [key,base!==null||extra.length?(base||0)+extra.reduce((sum,r)=>sum+(waterMillilitres(r)||0),0):null];
+    }
+    const total=daily?num(daily,key):null;
+    return [key,total!==null?total:meals.length&&meals.every(r=>num(r,key)!==null)?meals.reduce((sum,r)=>sum+num(r,key)!,0):null];
+  })) as Record<NutritionKey,number|null>;
+}
 export function nutrition(records: BioRecord[], date: string) {
-  const meals = live(records).filter(r => r.type === 'meal' && dateOf(r.timestamp) === date);
-  return Object.fromEntries(['calories', 'protein', 'carbs', 'fat', 'fibre'].map(k => [k, meals.reduce((sum, r) => sum + (num(r, k) || 0), 0)])) as Record<'calories' | 'protein' | 'carbs' | 'fat' | 'fibre', number>;
+  const totals=dailyNutrition(records,date);
+  return Object.fromEntries(['calories','protein','carbs','fat','fibre'].map(k=>[k,totals[k as NutritionKey]??0])) as Record<'calories'|'protein'|'carbs'|'fat'|'fibre',number>;
 }
 /** Select one source per metric/day. Never sum overlapping devices. */
 export function preferredVitals(records: BioRecord[], metric: string) {

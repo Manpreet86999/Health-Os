@@ -1,0 +1,44 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "health-os-mcp",
+	"account_id": "dc3fa7a76253cd9eaa2bb37d6689bbf3",
+	"main": "src/hosted/mcp/index.ts",
+	"compatibility_date": "2026-10-11",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"workers_dev": true,
+	"observability": {
+		"enabled": false
+	},
+	"vars": {
+		"MCP_ENABLED": "true",
+		"MCP_WRITES_ENABLED": "true",
+		"CLOUD_EXECUTION_ENABLED": "true",
+		"PUBLIC_ORIGIN": "https://health-os-mcp.health-os-manpr-dc3fa7.workers.dev",
+		"APP_ORIGINS": "http://localhost:10000,http://127.0.0.1:10000,https://localhost"
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "ACCOUNTS",
+				"class_name": "HealthAccount"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "hosted-v1",
+			"new_sqlite_classes": [
+				"HealthAccount"
+			]
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "b44e60f655ae406f9099f3da1163ea45"
+		}
+	]
+}

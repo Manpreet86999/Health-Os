@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {providerHealth,type ProviderAttempt} from '../integrations/ai/provider-health.js';
+import {AgentModelRouter} from '../integrations/ai/model-router.js';
+import {z} from 'zod';
+const now=Date.parse('2026-10-13T14:00:00Z');
+const attempt=(outcome:ProviderAttempt['outcome'],ms=0):ProviderAttempt=>({provider:'openrouter',model:'fixture:free',role:'router',at:new Date(now-ms).toISOString(),outcome,latencyMs:200});
+test('provider cooldown distinguishes quota from semantic quality and expires',()=>{const limited=providerHealth([attempt('rate_limited')],now)[0];assert.equal(limited.status,'cooldown');assert.equal(limited.semanticQuality,'not_evaluated');assert.equal(providerHealth([attempt('rate_limited')],now+300001)[0].status,'unknown');assert.equal(providerHealth([attempt('valid',8*86400000)],now).length,0);});
+test('schema reliability does not qualify semantic correctness',()=>{const healthy=providerHealth([attempt('valid'),attempt('valid',1000),attempt('valid',2000)],now)[0];assert.equal(healthy.status,'available');assert.equal(healthy.semanticQuality,'not_evaluated');assert.equal(providerHealth([attempt('invalid_output'),attempt('valid',1000),attempt('invalid_output',2000)],now)[0].status,'degraded');});
+test('router skips cooling model without making or reserving its provider request',async()=>{const calls:string[]=[];const current={...attempt('rate_limited'),at:new Date().toISOString()};const router=new AgentModelRouter({preferFree:true,allowPaid:false,dailyPaidLimitUsd:0,roles:{router:{provider:'openrouter',model:'fixture:free',paid:false},fallback:{provider:'openrouter',model:'fallback:free',paid:false}}},{openrouter:'fixture'},{readHealth:async()=>[current],reserve:async()=>{},settle:async()=>{}},async(_url,init)=>{calls.push(JSON.parse(String(init?.body)).model);return Response.json({choices:[{message:{content:'{"ready":true}'}}]});});await router.run('health-test','router',z.object({ready:z.boolean()}),[]);assert.deepEqual(calls,['fallback:free']);});

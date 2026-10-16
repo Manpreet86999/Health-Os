@@ -52,7 +52,7 @@ function sharedPreferencesRecord(deviceId:string):SyncRecord<SharedPreferences>{
   const settings=repo.getSettings(),profile=repo.getProfile();
   const row=stmt("SELECT max(updated_at) updated_at FROM (SELECT updated_at FROM settings UNION ALL SELECT updated_at FROM profiles)").get() as {updated_at?:string};
   const updatedAt=row.updated_at||new Date(0).toISOString();
-  return {
+  return validateRecord({
     id:'shared-preferences',
     entityType:'sharedPreferences',
     payload:{
@@ -78,7 +78,7 @@ function sharedPreferencesRecord(deviceId:string):SyncRecord<SharedPreferences>{
     deviceId,
     workspace:'core',
     payloadVersion:1
-  };
+  }) as unknown as SyncRecord<SharedPreferences>;
 }
 function bases(account: string): Map<string, CloudRecord> {
   tables();

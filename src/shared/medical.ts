@@ -8,6 +8,8 @@ export const labSchema = z.object({
   referenceText:z.string().max(1000).default(''), laboratory:z.string().max(250).default(''), method:z.string().max(250).default(''),
   specimen:z.string().max(250).default(''), collectedAt:z.string().datetime({offset:true}), sourceLine:z.string().max(2000).default(''),
   sourceFlag:z.string().max(40).default(''),
+  sourceCodes:z.array(z.object({system:z.string().max(500).optional(),code:z.string().max(250).optional(),display:z.string().max(250).optional()})).max(30).optional(),
+  sourceUnitCode:z.string().max(80).optional(), sourceUnitSystem:z.string().max(500).optional(),
 }).superRefine((r,c)=>{if(r.value===undefined&&!r.valueText)c.addIssue({code:'custom',message:'A result needs a value or text'});if(r.referenceLow!==undefined&&r.referenceHigh!==undefined&&r.referenceLow>r.referenceHigh)c.addIssue({code:'custom',message:'Reference bounds are reversed'});});
 export type LabResult = z.infer<typeof labSchema>;
 export const reportInputSchema = z.object({title:z.string().min(1).max(250),category:z.enum(['laboratory','radiology','ECG','discharge','other']),collectedAt:z.string().datetime({offset:true}),laboratory:z.string().max(250).default(''),narrative:z.string().max(200000).default(''),results:z.array(labSchema).max(1000)}).superRefine((r,c)=>{if(new Set(r.results.map(v=>v.id)).size!==r.results.length)c.addIssue({code:'custom',message:'Result IDs must be unique'});});
@@ -83,8 +85,8 @@ export function reportBundle(report:MedicalReport,patientId='local-patient'):Bun
     if(specimen)specimens.push(specimen);
     const lab=labReference(r.laboratory||report.laboratory);
     return {resourceType:'Observation',id:`${report.id}.${index}`,status,subject:{reference:`urn:health-os:Patient:${patientId}`},effectiveDateTime:r.collectedAt,
-      code:{text:r.name,coding:r.loinc?[{system:'http://loinc.org',code:r.loinc,display:r.name}]:undefined},
-      valueQuantity:r.value===undefined?undefined:{value:r.value,comparator:r.comparator,unit:r.unit,...ucumCoding(r.unit)},
+      code:{text:r.name,coding:r.sourceCodes?.length?r.sourceCodes:r.loinc?[{system:'http://loinc.org',code:r.loinc,display:r.name}]:undefined},
+      valueQuantity:r.value===undefined?undefined:{value:r.value,comparator:r.comparator,unit:r.unit,...(r.sourceUnitCode?{code:r.sourceUnitCode,system:r.sourceUnitSystem}:ucumCoding(r.unit))},
       valueString:r.value===undefined?r.valueText:undefined,
       referenceRange:r.referenceLow!==undefined||r.referenceHigh!==undefined||r.referenceText?[{
         low:r.referenceLow===undefined?undefined:{value:r.referenceLow,unit:r.unit,...ucumCoding(r.unit)},

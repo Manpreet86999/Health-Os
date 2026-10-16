@@ -1,6 +1,8 @@
+import { androidLayout } from '../lib/android-layout';
+import { ErrorBoundary } from './ErrorBoundary';
 import { legacyViewIds } from '../lib/legacy-view-ids';
 import { viewIdentity } from '../lib/os-navigation';
-import { Activity, useRef, type ReactNode } from 'react';
+import { Activity, useDeferredValue, useRef, type ReactNode } from 'react';
 import type { Page } from '../lib/types';
 import type { locationFor } from '../lib/os-navigation';
 import { navigation, sections } from '../lib/os-navigation';
@@ -16,16 +18,19 @@ export function PrimaryViews({location,choose,viewKey,children}:{
   visited.current.delete(viewKey); visited.current.set(viewKey,children);
   while (visited.current.size > 6) visited.current.delete(visited.current.keys().next().value!);
   const {primary,view}=location;
+  const deferredKey=useDeferredValue(viewKey);
+  const renderedKey=androidLayout?deferredKey:viewKey;
 
   const screenId = legacyViewIds[viewIdentity(view)] || viewIdentity(view);
-  return <div className="primary-workspace stack">
-    {(location.section==='Train')&&<nav className="web-train-modes" aria-label="Training workflow">{[{label:'Plan',page:'Planner' as const},{label:'Train',page:'Dashboard' as const},{label:'Review',page:'Analyzer' as const}].map(item=><button className="btn btn-soft" key={item.label} onClick={()=>choose(item.page)}>{item.label}</button>)}</nav>}
-    {(<nav className="stitch-section-nav" aria-label={`${location.section} pages`}>
+  return <div className="primary-workspace stack" aria-busy={renderedKey!==viewKey}>
+    {androidLayout&&renderedKey!==viewKey&&<span className="android-route-progress" role="status">Opening…</span>}
+    {(!androidLayout&&location.section==='Train')&&<nav className="web-train-modes" aria-label="Training workflow">{[{label:'Plan',page:'Planner' as const},{label:'Train',page:'Dashboard' as const},{label:'Review',page:'Analyzer' as const}].map(item=><button className="btn btn-soft" key={item.label} onClick={()=>choose(item.page)}>{item.label}</button>)}</nav>}
+    {!androidLayout&&location.section!=='Settings'&&(<nav className="stitch-section-nav" aria-label={`${location.section} pages`}>
       {navigation[location.section].map(item => <button type="button" key={item.label} aria-current={item === primary ? 'page' : undefined} onClick={() => choose(item.page, item.panel)}>{item.label}</button>)}
     </nav>)}
-    {primary.views.length>1&&<nav className="primary-view-tabs page-tabs" aria-label={`${primary.label} views`}>
+    {!androidLayout&&location.section!=='Settings'&&primary.views.length>1&&<nav className="primary-view-tabs page-tabs" aria-label={`${primary.label} views`}>
       {primary.views.map(tab=><button type="button" key={tab.label} className={`page-tab ${tab.label===view.label?'active':''}`} aria-current={tab.label===view.label?'page':undefined} onClick={()=>choose(tab.page,tab.panel)}>{tab.label}</button>)}
     </nav>}
-    {Array.from(visited.current,([key,node])=><Activity key={key} mode={key===viewKey?'visible':'hidden'}><div data-view-key={key} data-stitch-screen={key===viewKey ? screenId : undefined} data-route-identity={key===viewKey ? viewIdentity(view) : undefined} >{node}</div></Activity>)}
+    {Array.from(visited.current,([key,node])=><Activity key={key} mode={key===renderedKey?'visible':'hidden'}><div data-view-key={key} data-stitch-screen={key===viewKey ? screenId : undefined} data-route-identity={key===viewKey ? viewIdentity(view) : undefined} ><ErrorBoundary section={key.split('-')[0]} onHome={()=>choose('Today')}>{node}</ErrorBoundary></div></Activity>)}
   </div>;
 }

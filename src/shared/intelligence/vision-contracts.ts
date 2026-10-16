@@ -1,0 +1,4 @@
+import {z} from 'zod';
+export const imageAttachmentSchema=z.object({name:z.string().min(1).max(240),dataUrl:z.string().max(1500000).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/)}).strict();
+export const imageObservationSchema=z.object({description:z.string().min(1).max(2000),visibleItems:z.array(z.string().min(1).max(200)).max(30),uncertainties:z.array(z.string().min(1).max(300)).min(1).max(10),requiresRecordReview:z.boolean()}).strict();
+export function validImageSignature(dataUrl:string){const base64=dataUrl.slice(dataUrl.indexOf(',')+1),binary=atob(base64.slice(0,32));return dataUrl.startsWith('data:image/png;')?binary.startsWith('\x89PNG\r\n\x1a\n'):dataUrl.startsWith('data:image/jpeg;')?binary.charCodeAt(0)===255&&binary.charCodeAt(1)===216&&binary.charCodeAt(2)===255:dataUrl.startsWith('data:image/webp;')?binary.startsWith('RIFF')&&binary.slice(8,12)==='WEBP':false;}

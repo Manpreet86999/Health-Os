@@ -8,7 +8,7 @@ test('settings offers shared YouTube configuration without GIFs or key inputs', 
   const {records} = await setup(page);
   await page.route(`${base}/functions/v1/body-os-ai`, route => route.fulfill({json:{youtubeConfigured:true}}));
   await page.goto('/#Settings');
-  await page.getByRole('tab',{name:'Connections',exact:true}).click();
+  await page.getByRole('tab',{name:'Connected services',exact:true}).click();
   const region=page.getByRole('region',{name:'YouTube guides connection'});
   await expect(region.locator('input')).toHaveCount(0);
   await expect(page.getByRole('region',{name:'GIF guides connection'})).toHaveCount(0);

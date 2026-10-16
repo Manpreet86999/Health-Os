@@ -1,4 +1,6 @@
 import * as React from 'react';
+import {androidLayout} from '../lib/android-layout';
+import {scheduleAndroidRest,cancelAndroidRest} from '../lib/android-native';
 export type WorkoutRestState = {deadline:number|null;remaining:number;total:number;running:boolean;card?:boolean};
 
 /** The timer occupies its own step; the persisted deadline survives reload and backgrounding. */
@@ -11,8 +13,8 @@ export function WorkoutRestCard({state,onChange,onFinish,nextLabel,onSchedule,on
     window.addEventListener('health-os-resume',update);document.addEventListener('visibilitychange',update);
     return()=>{clearInterval(timer);window.removeEventListener('health-os-resume',update);document.removeEventListener('visibilitychange',update);};
   },[]);
-  React.useEffect(()=>{if(state.running&&state.deadline!==null)onSchedule?.(state.deadline);},[state.running,state.deadline]);
-  const finish=()=>{if(finished.current)return;finished.current=true;onCancel?.();onFinish();};
+  React.useEffect(()=>{if(state.running&&state.deadline!==null){onSchedule?.(state.deadline);if(androidLayout)void scheduleAndroidRest(state.deadline).catch(()=>{});}else if(androidLayout)void cancelAndroidRest().catch(()=>{});},[state.running,state.deadline]);
+  const finish=()=>{if(finished.current)return;finished.current=true;onCancel?.();if(androidLayout)void cancelAndroidRest().catch(()=>{});onFinish();};
   React.useEffect(()=>{if(state.running&&remaining===0){navigator.vibrate?.(140);finish();}},[state.running,remaining]);
   const resume=(seconds:number)=>{const duration=Math.max(1,seconds);setClock(Date.now());onChange({...state,deadline:Date.now()+duration*1000,remaining:duration,total:Math.max(state.total,duration),running:true,card:true});};
   const button=(label:string,action:()=>void,primary=false)=>React.createElement('button',{type:'button',className:primary?'and-primary-action btn btn-hot':'and-secondary-action btn btn-soft',onClick:action},label);

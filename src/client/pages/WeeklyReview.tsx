@@ -6,6 +6,7 @@ import { useBiologicalData } from '../lib/use-biological-data';
 import { useTimelineActions } from '../lib/use-timeline-actions';
 import { dateOf } from '../../shared/biology';
 import { shiftDay, summarizeRange } from '../../shared/biological-intelligence';
+import {SignalChart} from '../components/SignalChart';
 
 export function WeeklyReview(){
   const {app,records}=useBiologicalData(),actions=useTimelineActions(),toast=useToast();
@@ -15,9 +16,10 @@ export function WeeklyReview(){
   const from=shiftDay(end,-6),db=app.db!,summary=summarizeRange(records,db,app.skin,from,end);
   const fmt=(v:number|null,suffix='')=>v===null?'Not enough data':`${Number(v.toFixed(1))}${suffix}`;
   const habits=db.habitLogs.filter(r=>r.date>=from&&r.date<=end).length+records.filter(r=>r.type==='habitDone'&&dateOf(r.timestamp)>=from&&dateOf(r.timestamp)<=end).length;
-  const items=[['Training',`${summary.workouts} workouts`],['Nutrition',`${fmt(summary.averageCalories,' kcal')} · ${fmt(summary.averageProtein,' g protein')}`],['Sleep & recovery',`${fmt(summary.averageSleep,' h')} · readiness ${fmt(summary.averageReadiness)}`],['Body',`Trend weight ${fmt(summary.weight.trend,' kg')}`],['Care adherence',fmt(summary.careAdherence,'%')],['Habits',`${habits} logged entries`],['Medication & supplement adherence',fmt(summary.supplementAdherence,'%')]];
+  const items=[['Training',`${summary.workouts} workouts`],['Nutrition',`${fmt(summary.averageCalories,' kcal')} · ${fmt(summary.averageProtein,' g protein')}`],['Sleep & recovery',`${fmt(summary.averageSleep,' h')} · readiness ${fmt(summary.averageReadiness)}`],['Body',`Trend weight ${fmt(summary.weight.trend,' kg')}`],['Habits',`${habits} logged entries`]];
   return <div className="flow-workspace stack"><header className="bio-page-head"><p className="bio-eyebrow">TODAY / WEEKLY REVIEW</p><h1>Weekly review</h1><p className="subtle">{from} to {end}. Reflect on the evidence and choose your next adjustment.</p><label>Week ending<input className="input" type="date" value={end} onChange={e=>e.target.value&&setEnd(e.target.value)}/></label></header>
     <div className="overview-destinations">{items.map(([label,value])=><article className="glass card" key={label}><h3>{label}</h3><p>{value}</p></article>)}</div>
+    <div className="hos-weekly-charts"><section className="glass card"><SignalChart label="Sleep this week" unit="h" points={summary.series.map(s=>({date:s.date,value:s.Sleep}))}/></section><section className="glass card"><SignalChart label="Recovery this week" unit="/100" points={summary.series.map(s=>({date:s.date,value:s.Readiness}))}/></section></div>
     <form className="glass card stack" onSubmit={e=>{e.preventDefault();void actions.run('review',async()=>{await app.api.saveWeeklyReview({id:draft.value.id,weekStart:from,wins,blockers,adjustment});draft.setValue({id:crypto.randomUUID(),wins:'',blockers:'',adjustment:''});await draft.clear();await app.refresh();toast.push('Weekly review saved to account','ok');});}}>
       <DraftFeedback draft={draft}/><div className="form-field"><label htmlFor="weekly-wins">Wins</label><textarea id="weekly-wins" className="input" value={wins} onChange={e=>setWins(e.target.value)}/></div>
       <div className="form-field"><label htmlFor="weekly-blockers">Blockers</label><textarea id="weekly-blockers" className="input" value={blockers} onChange={e=>setBlockers(e.target.value)}/></div>

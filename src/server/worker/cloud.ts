@@ -9,7 +9,7 @@ export class WorkerCloud {
   async request(path:string,init:RequestInit={}){
     if(!this.refreshing)this.refreshing=(async()=>{const next=await refreshSupabaseSession(this.session);if(next.uid!==this.owner)throw new Error('Worker account changed.');if(next!==this.session)this.persist(next);this.session=next;})().finally(()=>{this.refreshing=undefined;});
     await this.refreshing;
-    const response=await fetch(`${this.session.config.url}/${path}`,{...init,headers:{apikey:this.session.config.publishableKey,Authorization:`Bearer ${this.session.accessToken}`,'Content-Type':'application/json',...init.headers},signal:AbortSignal.timeout(30000)});
+    const response=await fetch(`${this.session.config.url}/${path}`,{...init,headers:{apikey:this.session.config.publishableKey,Authorization:`Bearer ${this.session.accessToken}`,'Content-Type':'application/json',...init.headers},signal:init.signal||AbortSignal.timeout(30000)});
     const data=await response.json().catch(()=>null);
     if(!response.ok)throw new Error(`Supabase worker request failed (${response.status}). ${typeof data?.message==='string'?data.message.slice(0,200):''}`);
     return data;

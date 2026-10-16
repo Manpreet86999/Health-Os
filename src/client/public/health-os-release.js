@@ -9,23 +9,19 @@ export function isNewer(remote, local) {
 }
 export function releaseAsset(release, android = false) {
   if (!release || release.draft || release.prerelease || !/^v\d+\.\d+\.\d+$/.test(release.tag_name)) return null;
-  const name = android ? `Health-OS-${release.tag_name}.apk` : `Health-OS-Setup-${release.tag_name}.exe`;
-  const expected = `https://github.com/${config.repo}/releases/download/${release.tag_name}/${name}`;
-  return release.assets?.find(asset => asset.name === name && asset.browser_download_url === expected && asset.size > 0) || null;
+  const names = android ? [`Health-OS-${release.tag_name}.apk`] : [`Health-OS-Setup-${release.tag_name}.exe`, `Health-OS-Web-${release.tag_name}.zip`];
+  for (const name of names) {
+    const expected = `https://github.com/${config.repo}/releases/download/${release.tag_name}/${name}`;
+    const asset = release.assets?.find(asset => asset.name === name && asset.browser_download_url === expected && asset.size > 0);
+    if (asset) return asset;
+  }
+  return null;
 }
 
 const features = [
-  ['Today', 'Your day, beautifully connected.', 'Check your readiness, see your priorities, log the little things and pick up a workout exactly where you left it.', 'Readiness · quick logs · daily priorities', '#197a65', '◎'],
-  ['Train', 'Make every session count.', 'Plan your week, follow exercise guides, log sets and weights, take timed rests and review your workout history.', 'Planner · workout tracker · exercise library', '#d06432', '↗'],
-  ['Eat', 'Nourishment with a little clarity.', 'Log meals, protein and hydration. Build recipes, explore your food library and see how nutrition supports your goals.', 'Food diary · recipes · water · targets', '#b08219', '◒'],
-  ['Recover', 'Listen before you push.', 'Track sleep, soreness, stress and energy. Bring those signals together to help choose a sustainable training day.', 'Sleep · readiness · recovery trends', '#7964b0', '☾'],
-  ['Health', 'A home for your health records.', 'Keep symptoms, appointments, measurements and documents together. Review extracted information before you save it.', 'Timeline · check-ins · appointments · records', '#cb577c', '♡'],
-  ['Body', 'See the bigger picture.', 'Follow body measurements, your goals and changes over time with visual views of your progress.', 'Measurements · body views · progress', '#3c87aa', '◈'],
-  ['Care', 'Small rituals. Steady care.', 'Build a personal routine, organise your products, set care goals and check in on what is working for you.', 'Routines · product shelf · care calendar', '#9c6345', '✿'],
-  ['Insights', 'Turn your records into perspective.', 'Explore trends, weekly reviews and reports across your health workspace. AI coaching needs your own configured provider.', 'Trends · weekly review · report studio', '#6655a5', '✧'],
-  ['Pods', 'Keep showing up, together.', 'Create a Pod, invite someone you trust, review join requests and track shared goals. Share completions only when you choose.', 'Invitations · shared goals · weekly progress', '#24806a', '∞'],
-  ['Automations', 'A gentle nudge at the right time.', 'Set rules, reminders and report preferences. Notifications require permission; some tasks need a connected personal worker.', 'Rules · reminders · scheduled reports', '#b65c35', '⌁'],
-  ['Your workspace', 'Yours, across your devices.', 'Sign in to your own account, sync your records, change appearance and export a backup. Cloud features need an internet connection.', 'Account · sync · settings · backup export', '#44809c', '⤴'],
+  ['Today', 'Your day at a glance.', 'See sleep, recovery, your workout, daily nutrition totals and weight. Quick Log keeps entry fast.', 'Sleep · recovery · training · nutrition · weight', '#24806a', '◎'],
+  ['Track & review', 'Keep the useful details.', 'Plan workouts, record sets and body measurements, and review deterministic trends, baselines and reports in Insights.', 'Train · Recover · Body · Insights', '#6655a5', '↗'],
+  ['Your data', 'Connected on your terms.', 'Search your records, manage sync and backups in Settings, and connect external AI apps through HEOS MCP.', 'Search · backup · privacy · HEOS MCP', '#44809c', '⤴'],
 ];
 
 let welcome, update, pendingRelease, checking = false, previousFocus;
@@ -62,7 +58,7 @@ export function showWelcome() {
   const left = el('div', 'hos-art'); left.append(brandLine(`v${config.version}`), constellation(), el('p', 'hos-art-caption', 'A little more balance.\nA whole lot more you.'));
   const right = el('div', 'hos-copy');
   const close = button('×', 'hos-close', closeWelcome); close.setAttribute('aria-label', 'Close welcome tour'); right.append(close);
-  right.append(el('span', 'hos-eyebrow', 'YOUR NEXT CHAPTER STARTS HERE'), el('h1', 'hos-title', 'Health Os is here'), el('p', 'hos-intro', 'One beautiful home for your training, nourishment, recovery and everyday health.'));
+  right.append(el('span', 'hos-eyebrow', 'YOUR NEXT CHAPTER STARTS HERE'), el('h1', 'hos-title', 'Health Os is here'), el('p', 'hos-intro', 'A lightweight tracker for workouts, sleep, recovery, daily nutrition and body metrics.'));
   const tabs = el('div', 'hos-feature-tabs'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Explore Health OS features');
   const detail = el('section', 'hos-feature-detail'); detail.id = 'hos-feature-detail'; detail.setAttribute('role', 'tabpanel'); detail.tabIndex = 0;
   let selected = 0; const tabButtons = [];
@@ -88,6 +84,7 @@ export function showUpdate(release, preview = false) {
   if (welcome?.open) { pendingRelease = release; return; }
   if (update?.open) return;
   const asset = releaseAsset(release, android()); if (!asset) return;
+  const webPackage = asset.name.endsWith('.zip');
   const node = dialog(`Health OS ${release.tag_name} update available`); update = node;
   const defer = () => { node.close(); update = null; storage.set('health-os-update-deferred', JSON.stringify({ version: release.tag_name, until: Date.now() + 24 * 60 * 60 * 1000 })); };
   node.addEventListener('cancel', event => { event.preventDefault(); defer(); });
@@ -95,12 +92,12 @@ export function showUpdate(release, preview = false) {
   const copy = el('div', 'hos-copy'); const close = button('×', 'hos-close', defer); close.setAttribute('aria-label', 'Close update dialog'); copy.append(close, el('span', 'hos-eyebrow', 'SOMETHING NEW IS READY'), el('h1', 'hos-title', 'A fresh start.\nAn even better OS.'), el('p', 'hos-intro', `Health OS ${release.tag_name} is available. You’re using v${config.version}.`));
   const notes = el('div', 'hos-release-notes'); notes.append(el('h2', '', 'What’s new'), el('p', '', release.body || 'See the release page for the changes in this version.')); copy.append(notes);
   const status = el('p', 'hos-install-status'); status.setAttribute('role', 'status');
-  const install = button(android() ? 'Download Android update ↗' : 'Download & install →', 'hos-primary', async () => {
+  const install = button(android() ? 'Download Android update ↗' : webPackage ? 'Download web update ↗' : 'Download & install →', 'hos-primary', async () => {
     if (preview) { status.textContent = 'This is a preview. No update will be downloaded or installed.'; return; }
     install.disabled = true; status.textContent = 'Preparing your update…';
     try {
       let capability = null;
-      if (!android() && ['127.0.0.1', 'localhost'].includes(location.hostname)) {
+      if (!android() && !webPackage && ['127.0.0.1', 'localhost'].includes(location.hostname)) {
         const response = await fetch('/health-os-desktop', { cache: 'no-store', signal: AbortSignal.timeout(2500) });
         if (response.ok && response.headers.get('content-type')?.includes('application/json')) capability = await response.json();
       }
@@ -111,13 +108,13 @@ export function showUpdate(release, preview = false) {
         status.textContent = 'Installer opened. Choose your installation folder, then reopen Health OS when it finishes.';
       } else {
         const link = el('a'); link.href = asset.browser_download_url; link.rel = 'noopener noreferrer'; link.target = '_blank'; document.body.append(link); link.click(); link.remove();
-        status.textContent = android() ? 'Open the downloaded APK. Android will ask you to approve installation.' : 'Open the downloaded installer and choose where to install Health OS.';
+        status.textContent = android() ? 'Open the downloaded APK. Android will ask you to approve installation.' : webPackage ? 'Extract the web package and follow its README to run or host Health OS.' : 'Open the downloaded installer and choose where to install Health OS.';
       }
     } catch (error) { status.textContent = `${error.message} You can download from the release page below.`; }
     finally { install.disabled = false; }
   });
   const footer = el('div', 'hos-footer'); footer.append(button('Later', 'hos-secondary', defer), install); copy.append(status, footer);
-  const link = el('a', 'hos-footnote', 'View this release on GitHub ↗'); link.href = `https://github.com/${config.repo}/releases/tag/${release.tag_name}`; link.target = '_blank'; link.rel = 'noopener noreferrer'; copy.append(link, el('p', 'hos-footnote', android() ? 'Android controls installation approval. Your existing account and records stay in place.' : 'The installer asks for your folder every time. Your cloud account and browser records stay in place.'));
+  const link = el('a', 'hos-footnote', 'View this release on GitHub ↗'); link.href = `https://github.com/${config.repo}/releases/tag/${release.tag_name}`; link.target = '_blank'; link.rel = 'noopener noreferrer'; copy.append(link, el('p', 'hos-footnote', android() ? 'Android controls installation approval. Your existing account and records stay in place.' : webPackage ? 'Your cloud account remains available when you sign in to the updated web app.' : 'The installer asks for your folder every time. Your cloud account and browser records stay in place.'));
   node.append(art, copy); node.showModal();
 }
 

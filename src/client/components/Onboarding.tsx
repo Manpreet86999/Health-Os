@@ -5,7 +5,7 @@ import { useToast } from './Toast';
 import { useCloudAccount } from '../state/CloudAccountContext';
 import { getEffectiveSupabaseConfig, isSupabaseConfigured } from '../../shared/supabase-project';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function Onboarding() {
   const app = useApp();
@@ -30,8 +30,6 @@ export function Onboarding() {
   const [customUrl, setCustomUrl] = useState(effectiveConfig.url);
   const [customKey, setCustomKey] = useState(effectiveConfig.publishableKey);
 
-  // AI Key state
-  const [openRouterApiKey, setOpenRouterApiKey] = useState((app.settings as any)?.openRouterApiKey || '');
 
   const [busy, setBusy] = useState(false);
 
@@ -77,7 +75,6 @@ export function Onboarding() {
         height,
         isActivated: true,
         hasSeenFeatureGuide: true,
-        ...(openRouterApiKey ? { openRouterApiKey: openRouterApiKey.trim(), aiProvider: 'openrouter' } : {}),
       });
       await setup.clear().catch(()=>{});localStorage.removeItem('body-os-owner-setup-step');
       await app.refresh();
@@ -119,14 +116,12 @@ export function Onboarding() {
             <h1 style={{ margin: '6px 0 4px', fontSize: '1.75rem', letterSpacing: '-0.02em' }}>
               {step === 1 && (('A few details to get started'))}
               {step === 2 && 'Connect your private account'}
-              {step === 3 && 'Enable AI coaching (Optional)'}
-              {step === 4 && 'Your rhythm starts now'}
+              {step === 3 && 'Ready to track'}
             </h1>
             <p className="subtle" style={{ margin: 0, fontSize: 13 }}>
               {step === 1 && 'Customize your metrics and training profile.'}
               {step === 2 && 'Sync your workouts and habits securely across your signed-in devices.'}
-              {step === 3 && 'Generate tailored morning briefings and progressive overload recommendations.'}
-              {step === 4 && 'Review how readiness and daily habits keep your progress effortless.'}
+              {step === 3 && 'Review how readiness and daily habits keep your progress effortless.'}
             </p>
           </div>
 
@@ -314,50 +309,7 @@ export function Onboarding() {
             </>
           )}
 
-          {/* STEP 3: AI Coaching */}
           {step === 3 && (
-            <>
-              <div style={{ ...cardStyle, gap: 14 }} className="stack">
-                <div>
-                  <h3 style={{ margin: '0 0 6px' }}>AI Morning Briefing & Coach</h3>
-                  <p className="subtle" style={{ margin: 0, fontSize: 13 }}>
-                    Health OS uses your readiness check-in and workout volume to deliver coaching advice tailored directly to how you recover.
-                  </p>
-                </div>
-
-                <label className="stack" style={{ gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>OpenRouter API Key (Optional)</span>
-                  <input
-                    className="input"
-                    type="password"
-                    value={openRouterApiKey}
-                    onChange={(e) => setOpenRouterApiKey(e.target.value)}
-                    placeholder="sk-or-v1-..."
-                  />
-                  <span className="subtle" style={{ fontSize: 12 }}>
-                    Get a key with free models at <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" style={{ color: '#38bdf8' }}>openrouter.ai</a>. You can always add or change this in Settings.
-                  </span>
-                </label>
-              </div>
-
-              <div className="row" style={{ gap: 10 }}>
-                <button type="button" className="btn btn-soft" onClick={() => setStep(2)}>
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-hot"
-                  style={{ flex: 1 }}
-                  onClick={() => setStep(4)}
-                >
-                  {openRouterApiKey ? 'Save & Continue' : 'Skip for now'}
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* STEP 4: Ready to Train */}
-          {step === 4 && (
             <>
               <div style={{ ...cardStyle, gap: 16 }} className="stack">
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -365,7 +317,7 @@ export function Onboarding() {
                   <div>
                     <strong>Morning Readiness Check-in</strong>
                     <p className="subtle" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                      Log sleep, soreness, and energy in 30 seconds. Your training plan automatically adjusts to keep you progressing without injury.
+                      Log sleep, soreness, and energy in 30 seconds. Review your recovery before training.
                     </p>
                   </div>
                 </div>
@@ -373,9 +325,9 @@ export function Onboarding() {
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <span style={{ fontSize: 24, color: '#a3e635' }}>✓</span>
                   <div>
-                    <strong>Daily Habits on Dashboard</strong>
+                    <strong>Quick Log</strong>
                     <p className="subtle" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                      Log daily hydration, sleep, and steps with a single tap directly below readiness.
+                      Record weight, sleep, recovery and daily nutrition totals.
                     </p>
                   </div>
                 </div>
@@ -392,7 +344,7 @@ export function Onboarding() {
               </div>
 
               <div className="row" style={{ gap: 10 }}>
-                <button type="button" className="btn btn-soft" onClick={() => setStep(3)}>
+                <button type="button" className="btn btn-soft" onClick={() => setStep(2)}>
                   Back
                 </button>
                 <button

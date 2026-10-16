@@ -1,10 +1,28 @@
 import { test, expect, type Page } from '@playwright/test';
 import { setup, base } from './cloud-fixture';
+import {fileURLToPath} from 'node:url';
+const idbModule='/@fs/'+fileURLToPath(import.meta.resolve('idb')).replaceAll('\\','/');
 
 const ready = (page: Page) => expect(page.getByRole('navigation', { name: 'Health OS domains' })).toBeVisible({ timeout: 30000 });
 const bootstrap = (page: Page) => page.evaluate(async () => {
   const { cloudFetch } = await import('/lib/cloud-api.ts');
   return (await cloudFetch('/api/bootstrap')).json();
+});
+test('loading an old account cache scrubs OpenRouter secrets and preserves its health rows and other provider settings',async({page})=>{
+ await setup(page);await page.goto('/');await ready(page);
+ await expect.poll(()=>page.evaluate(async()=>{const {readWorkspaceCache}=await import('/lib/workspace-cache.ts');return Boolean(await readWorkspaceCache(JSON.parse(localStorage.getItem('body-os-supabase-session-v1')!)));})).toBe(true);
+ const result=await page.evaluate(async(moduleUrl)=>{
+  const {openDB}=await import(moduleUrl),{readWorkspaceCache,workspaceScope}=await import('/lib/workspace-cache.ts');
+  const session=JSON.parse(localStorage.getItem('body-os-supabase-session-v1')!),db=await openDB('health-os-workspace-v1:'+workspaceScope(session));
+  const before=JSON.stringify((await db.getAll('records')).filter((row:any)=>row.entityType!=='sharedPreferences'));
+  const tx=db.transaction(['records','meta'],'readwrite'),state=await tx.objectStore('meta').get('state');
+  await tx.objectStore('records').put({id:'shared-preferences',entityType:'sharedPreferences',payload:{openRouterApiKey:'SYNTHETIC-OPENROUTER',aiApiKey:'SYNTHETIC-OPENROUTER',nvidiaNimApiKey:'SYNTHETIC-NVIDIA',aiProvider:'openrouter',aiModel:'historical/model',customSetting:'preserved'},revision:1,deviceId:'old-client',updatedAt:new Date().toISOString(),changeVersion:state.cursor},'sharedPreferences:shared-preferences');
+  await tx.objectStore('meta').put({...state,count:await tx.objectStore('records').count()},'state');await tx.done;
+  const cached=await readWorkspaceCache(session),prefs=cached!.records.find(row=>row.entityType==='sharedPreferences')!.payload;
+  const stored=await db.get('records','sharedPreferences:shared-preferences'),after=JSON.stringify((await db.getAll('records')).filter((row:any)=>row.entityType!=='sharedPreferences'));db.close();
+  return {healthUnchanged:before===after,returnedSecret:'openRouterApiKey' in prefs||'aiApiKey' in prefs,storedSecret:'openRouterApiKey' in stored.payload||'aiApiKey' in stored.payload,provider:prefs.nvidiaNimApiKey,model:prefs.aiModel,custom:prefs.customSetting,configured:prefs.hasOpenRouterApiKey};
+ },idbModule);
+ expect(result).toEqual({healthUnchanged:true,returnedSecret:false,storedSecret:false,provider:'SYNTHETIC-NVIDIA',model:'historical/model',custom:'preserved',configured:true});
 });
 
 test('reload reuses history and applies additions, edits and deletions with fresh shared catalog data', async ({ page }) => {
@@ -52,7 +70,7 @@ test('reload reuses history and applies additions, edits and deletions with fres
   await page.reload(); await ready(page);
   let b = await bootstrap(page);
   expect(b.db.profile.displayName).toBe('Updated elsewhere'); expect(b.db.targets.some((r: any) => r.id === 'remote-target')).toBe(true);
-  expect(b.db.exercises.map((row: any) => row.id)).toEqual(expect.arrayContaining([first, second])); expect(fullReads).toBe(0);
+  await expect.poll(async()=>(await bootstrap(page)).db.exercises.map((row:any)=>row.id)).toEqual(expect.arrayContaining([first, second])); expect(fullReads).toBe(0);
   add('target', 'remote-target', {}); records.at(-1)!.deleted_at = new Date().toISOString();
   await page.reload(); await ready(page); b = await bootstrap(page);
   expect(b.db.targets.some((r: any) => r.id === 'remote-target')).toBe(false); expect(fullReads).toBe(0);
@@ -87,14 +105,14 @@ test('incomplete cache rebuilds safely and other accounts/projects cannot reuse 
     return [await readWorkspaceCache({ ...s, uid: '22222222-2222-4222-8222-222222222222' }), await readWorkspaceCache({ ...s, config: { ...s.config, url: 'https://other.supabase.co' } })];
   });
   expect(isolated).toEqual([null, null]);
-  await page.evaluate(async () => {
-    const { openDB } = await import('/@fs/G:/Body OS/node_modules/idb/build/index.js');
+  await page.evaluate(async (moduleUrl) => {
+    const { openDB } = await import(moduleUrl);
     const { workspaceScope } = await import('/lib/workspace-cache.ts');
     const s = JSON.parse(localStorage.getItem('body-os-supabase-session-v1')!);
     const db = await openDB(`health-os-workspace-v1:${workspaceScope(s)}`, 1);
     if (!await db.get('records', 'target:recover-me')) throw new Error('Test record missing before corruption');
     await db.delete('records', 'target:recover-me'); db.close();
-  });
+  },idbModule);
   let reads = 0; page.on('request', req => { if (req.url().includes('/body_os_records?')) reads++; });
   await page.reload(); await ready(page); expect(reads).toBeGreaterThan(0);
   expect((await bootstrap(page)).db.targets.some((r: any) => r.id === 'recover-me')).toBe(true);
@@ -128,5 +146,5 @@ test('a stalled optional IndexedDB cache cannot block authoritative cloud startu
   });
   let downloads=0;page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/body_os_records'))downloads++;});
   await page.goto('/');await ready(page);expect(downloads).toBeGreaterThan(0);
-  await expect(page.getByRole('heading',{name:/Cloud Athlete/})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Today',exact:true})).toBeVisible();
 });

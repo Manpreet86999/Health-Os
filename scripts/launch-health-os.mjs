@@ -15,7 +15,18 @@ try {
     let started = false; for (let i = 0; i < 60; i++) { if (await ready()) { started = true; break; } await new Promise(resolve => setTimeout(resolve, 250)); }
     if (!started) throw new Error('Unable to start Health OS. Port 10000 may be in use. See ' + log);
   }
-  const ps = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', `Start-Process 'http://localhost:${port}'`], { detached: true, stdio: 'ignore', windowsHide: true }); ps.unref();
+  const powershell = path.join(process.env.SystemRoot || 'C:/Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
+  await new Promise((resolve, reject) => {
+    const ps = spawn(powershell, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(root, 'scripts/open-health-os.ps1'), '-Url', `http://localhost:${port}`], { cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    let details = '';
+    ps.stdout.on('data', chunk => { details += chunk; });
+    ps.stderr.on('data', chunk => { details += chunk; });
+    ps.once('error', reject);
+    ps.once('close', code => {
+      appendFileSync(log, `${new Date().toISOString()} ${details.trim()}\n`);
+      code === 0 ? resolve() : reject(new Error('Unable to open the Health Os browser window. See ' + log));
+    });
+  });
 } catch (error) {
   process.exitCode = 1;
   appendFileSync(log, `${new Date().toISOString()} ${error.message}\n`);

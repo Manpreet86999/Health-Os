@@ -1,3 +1,4 @@
+import {dailyNutrition,dailyNutritionRecord,type NutritionKey} from './biology.js';
 import { waterMillilitres, sleepDurationHours } from './biology.js';
 import { dateOf, live, mean, num, preferredVitals, readiness, type BioRecord, type BioKind } from './biology.js';
 import { atTime, shiftDay, trainingLoad } from './biological-intelligence.js';
@@ -29,13 +30,15 @@ export function confirmedDose(records:BioRecord[],parent:BioRecord,date:string,t
   return live(records).filter(r=>r.type==='dose'&&r.metadata.parentId===parent.id&&dateOf(r.timestamp)===date&&(r.metadata.scheduledTime===time||!r.metadata.scheduledTime&&single)&&['taken','skipped'].includes(String(r.metadata.status).toLowerCase())).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)||b.timestamp.localeCompare(a.timestamp))[0];
 }
 export function dailyMetric(data:Dataset,metric:string,date:string,exercise?:string):{value:number|null;ids:string[]} {
-  if(data.dailyAggregates&&!exercise){const day=data.dailyAggregates[date];if(day&&Object.hasOwn(day.metrics,metric))return {value:day.metrics[metric],ids:day.metricRefs[metric]||[]};if(!day&&['Water','Sleep','Steps','Resting HR','HRV','Weight','Calories','Protein','Volume','Workouts','Care adherence','Energy','Stress','Soreness'].includes(metric))return {value:null,ids:[]};}
+  if(data.dailyAggregates&&!exercise&&!['Calories','Protein','Carbohydrates','Fat','Fibre','Water'].includes(metric)){const day=data.dailyAggregates[date];if(day&&Object.hasOwn(day.metrics,metric))return {value:day.metrics[metric],ids:day.metricRefs[metric]||[]};if(!day&&['Water','Sleep','Steps','Resting HR','HRV','Weight','Calories','Protein','Volume','Workouts','Care adherence','Energy','Stress','Soreness'].includes(metric))return {value:null,ids:[]};}
   const rows=live(data.records).filter(r=>dateOf(r.timestamp)===date);
   const sessions=data.db.sessions.filter(s=>s.date===date&&isFinishedSession(s));
   const selected=rows.filter(r=>r.type==='meal');
   const nutrients:Record<string,string>={Calories:'calories',Protein:'protein',Carbohydrates:'carbs',Fat:'fat',Fibre:'fibre'};
-  if(Object.hasOwn(nutrients,metric))return {value:selected.some(r=>num(r,nutrients[metric])!==null)?selected.reduce((n,r)=>n+(num(r,nutrients[metric])||0),0):null,ids:selected.map(r=>r.id)};
-  if(metric==='Water'){const rs=rows.filter(r=>r.type==='water'&&waterMillilitres(r)!==null);return {value:rs.length?rs.reduce((n,r)=>n+(waterMillilitres(r)??0),0):null,ids:rs.map(r=>r.id)};}
+  if(Object.hasOwn(nutrients,metric)||metric==='Water'){
+    const key=(metric==='Water'?'water':nutrients[metric]) as NutritionKey,daily=dailyNutritionRecord(rows,date);
+    return {value:dailyNutrition(rows,date)[key],ids:[...(daily?[daily.id]:[]),...rows.filter(r=>metric==='Water'?r.type==='water':r.type==='meal').map(r=>r.id)]};
+  }
   if(metric==='Sleep'){const rs=rows.filter(r=>r.type==='sleep'&&!r.metadata.nap).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));return {value:rs[0]?sleepDurationHours(rs[0]):null,ids:rs.slice(0,1).map(r=>r.id)};}
   if(metric==='Sleep timing'){const sleep=rows.filter(r=>r.type==='sleep'&&!r.metadata.nap).sort((a,b)=>b.timestamp.localeCompare(a.timestamp))[0];const time=String(sleep?.metadata.bedtime||'');const start=sleep?.metadata.startTime?new Date(String(sleep.metadata.startTime)):null;const value=/^\d{2}:\d{2}$/.test(time)?Number(time.slice(0,2))*60+Number(time.slice(3)):start&&!Number.isNaN(start.getTime())?start.getHours()*60+start.getMinutes():null;return {value,ids:sleep&&value!==null?[sleep.id]:[]};}
   if(metric==='Readiness'){const r=readiness(data.records,date);return {value:r.score,ids:r.contributors.flatMap(c=>c.ids)};}
@@ -110,7 +113,7 @@ export function preparedWorkout(data:Dataset,date:string,readinessScore:number|n
   return {weekId:chosen?.id,weekName:chosen?.name,weekNumber:chosen?.weekNumber,dayKey:day?.key,dayTitle:day?.title,original,adapted,adaptationRecommended:readinessScore!==null&&readinessScore<60,reason:readinessScore===null?'Readiness is incomplete; retain your prescribed plan.':`Readiness ${readinessScore}/100. Adaptation is optional.`};
 }
 export function setSuggestion(ex:PlannedExercise,previous:SetLog|undefined,increment=2.5,suggestedWeight?:number){
-  const range=parseRepRange(ex.vol),timing=/(?:x|×)\s*(\d+(?:\.\d+)?)\s*(s|sec|seconds|m|min|minutes)/i.exec(ex.vol);const mode=ex.trackingMode||'weight_reps';
+  const range=parseRepRange(ex.vol),timing=/(\d+(?:\.\d+)?)\s*(seconds?|sec|s|minutes?|min|m)\b/i.exec(ex.vol);const mode=ex.trackingMode||'weight_reps';
   const weight=mode==='weight_reps'?Math.round(Number(suggestedWeight??previous?.w??0)/increment)*increment:undefined;
   return {weight:weight||undefined,reps:mode==='time'?undefined:previous?.r?Math.max(range.low,Math.min(range.high,Number(previous.r))):range.high||undefined,durationSec:mode==='time'?Number(previous?.durationSec||previous?.r)||(timing?Number(timing[1])*(/^m/i.test(timing[2])?60:1):undefined):undefined,rir:ex.rirTarget??previous?.rir,rpe:ex.rpeTarget??previous?.rpe,source:previous?'Previous performance and progression':'Program prescription',warmups:weight?generateWarmupSets(weight):[],plates:weight?plateCalculator(weight):null};
 }

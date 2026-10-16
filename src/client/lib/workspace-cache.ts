@@ -1,9 +1,15 @@
 import { openDB } from 'idb';
 import { validateRecord, type CloudRecord, type CloudConfig } from '../../shared/cloud';
+import {publicProviderPreferences} from '../../shared/provider-preferences';
 
 type Scope = { uid: string; config: CloudConfig };
 type CatalogEntry = Record<string, any> & { id: string };
 const key = (r: CloudRecord) => `${r.entityType}:${r.id}`;
+const publicRecord=(record:CloudRecord):CloudRecord=>{
+ if(record.entityType!=='sharedPreferences')return record;
+ if(!record.payload||typeof record.payload!=='object'||Array.isArray(record.payload))throw new Error('Invalid cached provider preferences');
+ return {...record,payload:publicProviderPreferences(record.payload as Record<string,unknown>)};
+};
 export const workspaceScope = (session: Scope) => `${session.config.url.replace(/\/+$/, '')}|${session.uid}`;
 function database(session: Scope) {
   return openDB(`health-os-workspace-v1:${workspaceScope(session)}`, 1, {
@@ -32,8 +38,10 @@ export async function readWorkspaceCache(session: Scope) {
       if (state?.version !== 1 || state.scope !== workspaceScope(session) || state.count !== raw.length || !Number.isSafeInteger(state.cursor) || state.cursor < 0) return null;
       const records = raw.map((r: CloudRecord) => {
         if (!Number.isSafeInteger(r.changeVersion) || r.changeVersion! < 1) throw new Error('Incomplete cached record');
-        return { ...validateRecord(r), changeVersion: r.changeVersion };
+        return publicRecord({ ...validateRecord(r), changeVersion: r.changeVersion });
       });
+      const sanitized=records.filter((record,i)=>record.entityType==='sharedPreferences'&&JSON.stringify(record.payload)!==JSON.stringify(raw[i].payload));
+      if(sanitized.length){const cleanup=db.transaction('records','readwrite');for(const record of sanitized){const current=await cleanup.objectStore('records').get(key(record));if(current?.entityType==='sharedPreferences')await cleanup.objectStore('records').put(publicRecord(current),key(record));}await cleanup.done;}
       return { records, catalog: catalog as CatalogEntry[], cursor: state.cursor };
     } finally { db.close(); }
   } catch { return null; } // Private browsing, eviction or an old/corrupt cache: fetch safely.
@@ -63,7 +71,7 @@ export async function writeWorkspaceCache(session: Scope, records: CloudRecord[]
       // Another tab may already have stored a newer revision.
       await Promise.all(records.map(async record => {
         const old = replace ? undefined : await rows.get(key(record));
-        if (!old || (record.changeVersion || 0) >= (old.changeVersion || 0)) await rows.put(record, key(record));
+        if (!old || (record.changeVersion || 0) >= (old.changeVersion || 0)) await rows.put(publicRecord({...validateRecord(record),changeVersion:record.changeVersion}), key(record));
       }));
       await Promise.all(catalog.map(entry => details.put(entry)));
       // A save must not jump the pull cursor over changes made by another device.

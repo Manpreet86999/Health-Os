@@ -26,15 +26,16 @@ export function initializeMobileInteractions() {
     const indicator=document.createElement('div');indicator.className='hos-sync-indicator';indicator.role='status';indicator.textContent=navigator.onLine?'↻  Sync requested':'Offline · changes kept on device';document.body.append(indicator);
     clearTimeout(indicatorTimer);indicatorTimer=setTimeout(()=>indicator.remove(),2200);
   };
-  const enhance=()=>{
-    document.querySelectorAll<HTMLElement>('.domain-hero-description').forEach(description=>{
+  const enhance=(root:ParentNode=document)=>{
+    const elements=(selector:string)=>[...(root instanceof HTMLElement&&root.matches(selector)?[root]:[]),...root.querySelectorAll<HTMLElement>(selector)];
+    elements('.domain-hero-description').forEach(description=>{
       if(description.dataset.brief!==undefined||description.textContent!.length<110)return;
       description.dataset.brief='true';
       const button=document.createElement('button');button.type='button';button.className='hos-description-toggle';button.textContent='Show details';button.setAttribute('aria-expanded','false');
       button.onclick=()=>{const expanded=description.dataset.brief==='true';description.dataset.brief=String(!expanded);button.textContent=expanded?'Less detail':'Show details';button.setAttribute('aria-expanded',String(expanded));};
       description.after(button);
     });
-    document.querySelectorAll<HTMLElement>('.health-capture-drawer').forEach(drawer=>{
+    elements('.health-capture-drawer').forEach(drawer=>{
     if(drawer.querySelector('.hos-drawer-handle'))return;
     const handle=document.createElement('button');handle.type='button';handle.className='hos-drawer-handle';handle.ariaLabel='Expand or collapse Quick Capture';handle.setAttribute('aria-expanded','false');
     handle.style.setProperty('touch-action','none','important');
@@ -48,7 +49,7 @@ export function initializeMobileInteractions() {
     drawer.prepend(handle);
     });
   };
-  new MutationObserver(enhance).observe(document.body,{childList:true,subtree:true});enhance();
+  new MutationObserver(mutations=>{for(const mutation of mutations)for(const node of mutation.addedNodes)if(node instanceof HTMLElement&&(node.matches('.domain-hero-description,.health-capture-drawer')||node.querySelector('.domain-hero-description,.health-capture-drawer')))enhance(node);}).observe(document.body,{childList:true,subtree:true});enhance();
   let gesture:{x:number;y:number;scroller:HTMLElement;top:boolean;bottom:boolean}|undefined;
   document.addEventListener('touchstart',event=>{
     gesture=undefined;if(event.touches.length!==1||document.querySelector('.modal-backdrop'))return;

@@ -1,8 +1,11 @@
+import {OSIcon} from '../components/OSIcon';
+import {androidLayout} from '../lib/android-layout';
+import {AndroidWorkoutCards,WorkoutClock} from '../components/AndroidWorkoutCards';
+import {repairedSetCardCount} from '../../shared/workout-prescription';
 import { cloudFetch as fetch } from '../lib/cloud-api';
 import { setSuggestion } from '../../shared/automation-rules';
-import { useAutomations } from '../state/AutomationContext';
 import { FlashDeck } from '../components/FlashDeck';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { setSchema } from '../../shared/schemas';
 
 import { WorkoutRestCard } from '../components/WorkoutRestCard';
@@ -51,9 +54,9 @@ function defaultLoggingMode(exercise: { trackingMode?: ExerciseTrackingMode; exe
 
 export function Tracker() {
   const app = useApp();
-  const automation = useAutomations();
   const toast = useToast();
   const { tracker, setTracker, setPage, setLastSessionId, settings, analytics, db } = app;
+  const mcpMarker=useRef(tracker?.mcpRevision),mcpHydrating=useRef(false);
   const [prevSets, setPrevSets] = useState<SetLog[]>([]);
   const [tip, setTip] = useState<ProgressionTip | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -79,10 +82,6 @@ export function Tracker() {
     () => tracker?.gymMode || localStorage.getItem('workout-os-gym-mode') === '1',
   );
 
-  const [aiCues, setAiCues] = useState<string[]>([]);
-  const [cuesModel, setCuesModel] = useState('');
-  const [busyCues, setBusyCues] = useState(false);
-  const [busyRegulating, setBusyRegulating] = useState(false);
   const [busySaving, setBusySaving] = useState(false);
   const [importingTelegram, setImportingTelegram] = useState(false);
   const [flexExerciseName, setFlexExerciseName] = useState('');
@@ -120,28 +119,6 @@ export function Tracker() {
   const { draftStatus,workoutDraftMessage } = useApp();
   const draftNote = Boolean(tracker && tracker.logs?.length);
 
-  async function autoRegulate() {
-    if (!tracker) return;
-    setBusyRegulating(true);
-    try {
-      const res = await fetch('/api/ai/auto-regulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ sessionJson: JSON.stringify(tracker) })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to auto-regulate');
-      if (data.workout && data.workout.exercises) {
-        setTracker({ ...tracker, plannedExercises:tracker.plannedExercises||tracker.exercises.map(exercise=>({...exercise})),exercises: data.workout.exercises, name: data.workout.name || tracker.name });
-        toast.push(`Session optimized by AI (${data.model})`, 'ok');
-      }
-    } catch (e) {
-      toast.push((e as Error).message, 'err');
-    } finally {
-      setBusyRegulating(false);
-    }
-  }
-
   async function importTelegramGymEntries() {
     if (!tracker || importingTelegram) return;
     setImportingTelegram(true);
@@ -166,6 +143,7 @@ export function Tracker() {
 
   useEffect(() => {
     if (!tracker) return;
+    if(mcpMarker.current!==tracker.mcpRevision){mcpMarker.current=tracker.mcpRevision;mcpHydrating.current=true;}
     const ex = tracker.exercises[tracker.index];
     if (!ex) {
       setSummary(true);
@@ -175,11 +153,14 @@ export function Tracker() {
     const key = `${tracker.id}:${tracker.index}:${ex.name}`;
     const saved = tracker.currentEntry;
     if (saved?.key === key && saved.weights.length) {
-      setWeights(saved.weights);setReps(saved.reps);setDurations(saved.durations);
-      setRpes(saved.rpes);setRirs(saved.rirs);setSetTypes(saved.setTypes);setSides(saved.sides);
+      const warmups=saved.setTypes.filter(type=>type==='warmup').length;
+      const size=repairedSetCardCount(ex.vol,saved.weights.length,saved.completedSets||[],warmups);
+      const trim=(values:string[])=>values.slice(0,size);
+      setWeights(trim(saved.weights));setReps(trim(saved.reps));setDurations(trim(saved.durations));
+      setRpes(trim(saved.rpes));setRirs(trim(saved.rirs));setSetTypes(trim(saved.setTypes));setSides(trim(saved.sides));
       setJournal(saved.journal);setTrackingMode(saved.trackingMode);setEntryKey(key);
       setCompletedSets(saved.completedSets||[]);setCompletedRecords(saved.completedRecords||{});
-      const next=saved.weights.findIndex((_,index)=>!saved.completedSets?.includes(index));setSetCardIndex(Math.max(0,next));
+      const next=saved.weights.slice(0,size).findIndex((_,index)=>!saved.completedSets?.includes(index));setSetCardIndex(Math.max(0,next));
       return;
     }
     // Set cards are immediately available from the hydrated cloud workspace.
@@ -193,10 +174,10 @@ export function Tracker() {
     const nextTip = db ? buildProgressionRules(db).find(t=>t.exercise===ex.name) || null : null;
     const increment = db?.trainingConfig?.loadIncrements?.[ex.name] || (settings?.units==='lb'?5:2.5);
     const fills = Array.from({length:count},(_,i)=>setSuggestion({...ex,trackingMode:mode},previous[i],increment,nextTip?.suggestedWeight));
-    const suggested = (value:unknown)=>automation.preferences.smartDefaults?String(value??''):'';
+    const suggested = (value:unknown)=>true?String(value??''):'';
     const nextWeights = fills.map(f=>suggested(f.weight));
     const best = analytics?.personalRecords?.find(r=>r.exercise===ex.name)?.bestE1rm || 0;
-    if(ex.percent1rm && best && automation.preferences.smartDefaults){
+    if(ex.percent1rm && best && true){
       const target=weightFromPercent1rm(best,Number(ex.percent1rm));
       nextWeights.fill(String(Math.round(target/increment)*increment));
     }
@@ -204,11 +185,11 @@ export function Tracker() {
     setWeights(nextWeights);setReps(fills.map(f=>suggested(f.reps)));
     setDurations(fills.map(f=>suggested(f.durationSec)));setRpes(fills.map(f=>suggested(f.rpe)));setRirs(fills.map(f=>suggested(f.rir)));
     setSetTypes(Array.from({length:count},()=> 'work'));setSides(Array.from({length:count},()=> 'both'));
-    setJournal('');setAiCues([]);setCuesModel('');setEntryKey(key);
     setCompletedSets([]);setCompletedRecords({});setSetCardIndex(0);
-  }, [tracker?.id, tracker?.index, tracker?.exercises[tracker.index]?.name]);
+  }, [tracker?.id, tracker?.index, tracker?.exercises[tracker.index]?.name,tracker?.mcpRevision]);
 
   useEffect(() => {
+    if(mcpHydrating.current){mcpHydrating.current=false;return;}
     if (!tracker || !entryKey || entryKey !== `${tracker.id}:${tracker.index}:${tracker.exercises[tracker.index]?.name}`) return;
     const currentEntry = {key:entryKey,weights,reps,durations,rpes,rirs,setTypes,sides,journal,trackingMode,completedSets,completedRecords};
     if (JSON.stringify(tracker.currentEntry) !== JSON.stringify(currentEntry)) {
@@ -320,6 +301,41 @@ export function Tracker() {
       }
     }
 
+    const saveWorkout=async()=>{
+              setBusySaving(true);
+              try {
+                const endedAt = new Date().toISOString();
+                const started = tracker.startedAt ? new Date(tracker.startedAt).getTime() : 0;
+                const durationMinutes =
+                  started > 0 ? Math.max(1, Math.round((Date.now() - started) / 60000)) : undefined;
+                const res = await fetch('/api/sessions', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+                  body: JSON.stringify({
+                    ...tracker,
+                    endedAt,
+                    startedAt: tracker.startedAt,
+                    durationMinutes,
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to save workout');
+                
+                setLastSessionId(data.session.id);
+                setTracker(null);
+
+                setSessionPrs([]);
+                await app.refresh();
+                toast.push('Workout saved. Your daily AI report is scheduled for 23:00 IST.', 'ok');
+                setPage('Reports', 'Workout Reports');
+              } catch (e) {
+                toast.push((e as Error).message, 'err');
+                if ((e as Error).message.includes('already has')) setPage('Reports', 'Workout Reports');
+              } finally {
+                setBusySaving(false);
+              }
+};
+    if(androidLayout)return <section className="android-workout-summary"><header className="aw-top"><button className="aw-back" aria-label="Minimize workout" onClick={()=>setPage('Dashboard')}>←</button><span>WORKOUT REVIEW</span><WorkoutClock startedAt={tracker.startedAt}/></header><span className="aw-done-icon">✓</span><h1>Session complete</h1><p>{tracker.dayTitle} · {tracker.date}</p><div className="aw-summary-metrics"><div><strong>{done}</strong><span>Exercises completed</span></div><div><strong>{tracker.logs.reduce((n,l)=>n+l.sets.length,0)}</strong><span>Sets confirmed</span></div></div><div className="aw-summary-list">{tracker.logs.map((log,i)=><div key={i}><strong>{log.name}</strong><span>{log.status==='skipped'?'Skipped':log.sets.length+' sets'}</span></div>)}</div><button className="aw-complete" disabled={busySaving} onClick={()=>void saveWorkout()}>{busySaving?'Saving workout…':'Save workout'}</button><button className="btn btn-soft" onClick={()=>setPage('Dashboard')}>Keep draft & return to Train</button></section>;
     return (
       <div className="fade page-shell">
         <section className={("tracker-celebrate")}>
@@ -367,40 +383,7 @@ export function Tracker() {
             type="button"
             className="btn btn-good btn-xl w-full"
             disabled={busySaving}
-            onClick={async () => {
-              setBusySaving(true);
-              try {
-                const endedAt = new Date().toISOString();
-                const started = tracker.startedAt ? new Date(tracker.startedAt).getTime() : 0;
-                const durationMinutes =
-                  started > 0 ? Math.max(1, Math.round((Date.now() - started) / 60000)) : undefined;
-                const res = await fetch('/api/sessions/finish-and-send', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-                  body: JSON.stringify({
-                    ...tracker,
-                    endedAt,
-                    startedAt: tracker.startedAt,
-                    durationMinutes,
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to save and send report');
-                
-                setLastSessionId(data.session.id);
-                setTracker(null);
-
-                setSessionPrs([]);
-                await app.refresh();
-                toast.push('Workout saved. AI report generation and email delivery start automatically in the cloud.', 'ok');
-                setPage('Reports', 'Workout Reports');
-              } catch (e) {
-                toast.push((e as Error).message, 'err');
-                if ((e as Error).message.includes('already has')) setPage('Reports', 'Workout Reports');
-              } finally {
-                setBusySaving(false);
-              }
-            }}
+            onClick={saveWorkout}
           >
             {busySaving ? 'Saving workout…' : 'Save workout'}
           </button>
@@ -426,22 +409,6 @@ export function Tracker() {
     );
   }
 
-  async function loadCues(name: string) {
-    setBusyCues(true);
-    try {
-      const res = await app.api.exerciseCues(name);
-      if (!res.ok) {
-        toast.push(res.error || 'Failed to load cues', 'err');
-        return;
-      }
-      setAiCues(res.cues || []);
-      setCuesModel(res.model || '');
-    } catch (e) {
-      toast.push((e as Error).message, 'err');
-    } finally {
-      setBusyCues(false);
-    }
-  }
 
   function applyAll(mode: 'same' | 'up' | 'down') {
     if (trackingMode !== 'weight_reps') return;
@@ -526,12 +493,103 @@ export function Tracker() {
     const wu = generateWarmupSets(top, 5, settings?.units === 'lb' ? 45 : 20);
     setWeights((prev) => [...wu.map((x) => String(x.w)), ...prev]);
     setReps((prev) => [...wu.map((x) => String(x.r)), ...prev]);
+    setDurations((prev) => [...wu.map(() => ''), ...prev]);
     setRpes((prev) => [...wu.map(() => ''), ...prev]);
     setRirs((prev) => [...wu.map(() => ''), ...prev]);
     setSetTypes((prev) => [...wu.map((x) => x.type), ...prev]);
     setSides((prev) => [...wu.map(() => 'both'), ...prev]);
     toast.push(`Added ${wu.length} warm-up sets`, 'ok');
   }
+
+  const workoutDialogs=<>
+      <Modal
+        open={addOpen}
+        title="Add exercise"
+        onClose={() => setAddOpen(false)}
+        actions={
+          <>
+            <button type="button" className="btn btn-soft" onClick={() => setAddOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-hot"
+              onClick={() => {
+                if (!addForm.name.trim()) return;
+                const next = [...tracker.exercises];
+                next.splice(tracker.index + 1, 0, {
+                  name: addForm.name.trim(),
+                  target: addForm.target || 'Other',
+                  vol: addForm.vol || '3 x 8-12',
+                  cue: 'Added during session',
+                });
+                setTracker({ ...tracker, exercises: next });
+                setAddOpen(false);
+                setAddForm({ name: '', target: 'Other', vol: '3 x 8-12' });
+                toast.push('Exercise queued next', 'ok');
+              }}
+            >
+              Add
+            </button>
+          </>
+        }
+      >
+        <div className="stack">
+          <label className="form-field"><span>Exercise name</span><input className="input" placeholder="Exercise name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} /></label>
+          <label className="form-field"><span>Target muscles</span><input className="input" placeholder="Target" value={addForm.target} onChange={(e) => setAddForm({ ...addForm, target: e.target.value })} /></label>
+          <label className="form-field"><span>Sets × reps</span><input className="input" placeholder="Volume" value={addForm.vol} onChange={(e) => setAddForm({ ...addForm, vol: e.target.value })} /></label>
+        </div>
+      </Modal>
+      <Modal
+        open={subOpen}
+        title={`Substitute ${ex?.name || 'Exercise'}`}
+        onClose={() => setSubOpen(false)}
+        actions={
+          <>
+            <button type="button" className="btn btn-soft" onClick={() => setSubOpen(false)}>Cancel</button>
+            <button
+              type="button"
+              className="btn btn-hot"
+              onClick={() => {
+                if (!addForm.name.trim()) return;
+                const next = [...tracker.exercises];
+                next[tracker.index] = {
+                  name: addForm.name.trim(),
+                  target: addForm.target || 'Other',
+                  vol: addForm.vol || '3 x 8-12',
+                  cue: `Substituted for ${ex.name}`,
+                };
+                setTracker({ ...tracker, plannedExercises:tracker.plannedExercises||tracker.exercises.map(exercise=>({...exercise})),exercises: next,preparationChoice:'adapted',notes:[tracker.notes,`Substituted ${ex.name} with ${addForm.name.trim()}`].filter(Boolean).join('\n') });
+                setSubOpen(false);
+                setAddForm({ name: '', target: 'Other', vol: '3 x 8-12' });
+                toast.push('Exercise substituted', 'ok');
+              }}
+            >
+              Confirm Swap
+            </button>
+          </>
+        }
+      >
+        <div className="stack">
+          <label className="form-field"><span>New exercise name</span><input className="input" placeholder="New exercise name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} /></label>
+          <label className="form-field"><span>Target muscles</span><input className="input" placeholder="Target" value={addForm.target} onChange={(e) => setAddForm({ ...addForm, target: e.target.value })} /></label>
+          <label className="form-field"><span>Sets × reps</span><input className="input" placeholder="Volume" value={addForm.vol} onChange={(e) => setAddForm({ ...addForm, vol: e.target.value })} /></label>
+        </div>
+      </Modal>
+      {showExerciseDetails && ex ? (
+        <ExerciseDetailModal
+          exerciseName={ex.name}
+          allExercises={tracker.exercises}
+          currentIndex={tracker.index}
+          onClose={() => setShowExerciseDetails(false)}
+        />
+      ) : null}
+</>;
+  if(androidLayout)return <AndroidWorkoutCards exercise={ex} exercises={tracker.exercises} exerciseIndex={tracker.index} startedAt={tracker.startedAt} units={units} weights={weights} reps={reps} durations={durations} rpes={rpes} rirs={rirs} setTypes={setTypes} sides={sides} mode={trackingMode} cardIndex={setCardIndex} confirmed={completedSets} previous={prevSets} rest={tracker.restTimer} draftMessage={workoutDraftMessage}
+    change={(field,index,value)=>{const setters={weights:setWeights,reps:setReps,durations:setDurations,rpes:setRpes,rirs:setRirs,setTypes:setSetTypes,sides:setSides};setters[field](items=>items.map((item,i)=>i===index?value:item));}}
+    changeMode={setTrackingMode} selectCard={next=>{if(next<setCardIndex||completedSets.includes(setCardIndex))setSetCardIndex(next);}} complete={completeSet} next={()=>logExercise(false)} skip={()=>logExercise(true)} minimize={()=>setPage('Dashboard')} details={()=>setShowExerciseDetails(true)}
+    addSet={()=>{setWeights(a=>[...a,'']);setReps(a=>[...a,'']);setDurations(a=>[...a,'']);setRpes(a=>[...a,'']);setRirs(a=>[...a,'']);setSetTypes(a=>[...a,'work']);setSides(a=>[...a,'both']);setSetCardIndex(weights.length);}}
+    addExercise={()=>setAddOpen(true)} substitute={()=>{setAddForm({name:'',target:ex.target,vol:ex.vol});setSubOpen(true);}} warmups={injectWarmups} restChange={restTimer=>app.patchTracker({restTimer})} restFinish={()=>app.patchTracker({restTimer:undefined})} dialogs={workoutDialogs} journal={journal} changeJournal={setJournal} advanced={<div className="aw-option-actions"><button onClick={()=>void importTelegramGymEntries()} disabled={importingTelegram}><OSIcon name="Describe" size={18}/><span>Import Telegram sets</span><OSIcon name="Forward" size={15}/></button><button onClick={()=>applyAll('same')} disabled={trackingMode!=='weight_reps'}><OSIcon name="Back" size={18}/><span>Use previous loads</span><OSIcon name="Forward" size={15}/></button>{trackingMode==='weight_reps'&&<details><summary>Plate calculator</summary><PlateCalculator units={units as 'kg'|'lb'} defaultTarget={weights.find(w=>w)||''}/></details>}</div>}/>;
 
   return (
     <section className="fade tracker-shell">
@@ -575,17 +633,6 @@ export function Tracker() {
               />
               Gym mode
             </label>
-            {(settings?.hasAiApiKey || settings?.aiProvider === 'ollama') && (
-              <button
-                type="button"
-                className="btn btn-soft btn-sm"
-                style={{ padding: '4px 12px', fontSize: 12 }}
-                onClick={autoRegulate}
-                disabled={busyRegulating}
-              >
-                {busyRegulating ? 'Optimizing...' : '⚡ AI Auto-Regulate'}
-              </button>
-            )}
           </div>
         </div>
         <div className="progress-track" role="progressbar" aria-label="Workout progress" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
@@ -671,7 +718,7 @@ export function Tracker() {
             </div>
           ) : null}
           <div className="prev-banner">
-            {automation.preferences.smartDefaults&&<span>Suggested inputs · confirm performed sets when logging. </span>}
+            {true&&<span>Suggested inputs · confirm performed sets when logging. </span>}
             {prevSets.length
               ? `Last · ${workSets(prevSets).map((s) => `${s.w}×${s.r}`).join('  ·  ') || prevSets.map((s) => `${s.w}×${s.r}`).join('  ·  ')}`
               : 'First log for this lift — set a baseline'}
@@ -695,26 +742,6 @@ export function Tracker() {
               </button>
             </div>
           ) : null}
-          
-          {(settings?.hasAiApiKey || settings?.aiProvider === 'ollama') && (
-            <div className="mt-4" style={{ textAlign: 'left' }}>
-              {!aiCues.length ? (
-                <button type="button" className="btn btn-soft btn-sm" disabled={busyCues} onClick={() => loadCues(ex.name)}>
-                  {busyCues ? 'Loading Cues...' : '🧠 Get AI Form Cues'}
-                </button>
-              ) : (
-                <div className="page-ai-strip" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <h4 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 800, color: 'var(--hot)' }}>AI Form Cues</h4>
-                  <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.5 }}>
-                    {aiCues.map((c, idx) => <li key={idx}>{c}</li>)}
-                  </ul>
-                  {cuesModel ? (
-                    <span className="subtle" style={{ fontSize: 11, marginTop: 6 }}>Model: {cuesModel}</span>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <div style={{ padding: 18 }} className="stack stitch-set-workspace">
@@ -880,88 +907,7 @@ export function Tracker() {
       </div>
       </>)}
 
-      <Modal
-        open={addOpen}
-        title="Add exercise"
-        onClose={() => setAddOpen(false)}
-        actions={
-          <>
-            <button type="button" className="btn btn-soft" onClick={() => setAddOpen(false)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-hot"
-              onClick={() => {
-                if (!addForm.name.trim()) return;
-                const next = [...tracker.exercises];
-                next.splice(tracker.index + 1, 0, {
-                  name: addForm.name.trim(),
-                  target: addForm.target || 'Other',
-                  vol: addForm.vol || '3 x 8-12',
-                  cue: 'Added during session',
-                });
-                setTracker({ ...tracker, exercises: next });
-                setAddOpen(false);
-                setAddForm({ name: '', target: 'Other', vol: '3 x 8-12' });
-                toast.push('Exercise queued next', 'ok');
-              }}
-            >
-              Add
-            </button>
-          </>
-        }
-      >
-        <div className="stack">
-          <label className="form-field"><span>Exercise name</span><input className="input" placeholder="Exercise name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} /></label>
-          <label className="form-field"><span>Target muscles</span><input className="input" placeholder="Target" value={addForm.target} onChange={(e) => setAddForm({ ...addForm, target: e.target.value })} /></label>
-          <label className="form-field"><span>Sets × reps</span><input className="input" placeholder="Volume" value={addForm.vol} onChange={(e) => setAddForm({ ...addForm, vol: e.target.value })} /></label>
-        </div>
-      </Modal>
-      <Modal
-        open={subOpen}
-        title={`Substitute ${ex?.name || 'Exercise'}`}
-        onClose={() => setSubOpen(false)}
-        actions={
-          <>
-            <button type="button" className="btn btn-soft" onClick={() => setSubOpen(false)}>Cancel</button>
-            <button
-              type="button"
-              className="btn btn-hot"
-              onClick={() => {
-                if (!addForm.name.trim()) return;
-                const next = [...tracker.exercises];
-                next[tracker.index] = {
-                  name: addForm.name.trim(),
-                  target: addForm.target || 'Other',
-                  vol: addForm.vol || '3 x 8-12',
-                  cue: `Substituted for ${ex.name}`,
-                };
-                setTracker({ ...tracker, plannedExercises:tracker.plannedExercises||tracker.exercises.map(exercise=>({...exercise})),exercises: next,preparationChoice:'adapted',notes:[tracker.notes,`Substituted ${ex.name} with ${addForm.name.trim()}`].filter(Boolean).join('\n') });
-                setSubOpen(false);
-                setAddForm({ name: '', target: 'Other', vol: '3 x 8-12' });
-                toast.push('Exercise substituted', 'ok');
-              }}
-            >
-              Confirm Swap
-            </button>
-          </>
-        }
-      >
-        <div className="stack">
-          <label className="form-field"><span>New exercise name</span><input className="input" placeholder="New exercise name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} /></label>
-          <label className="form-field"><span>Target muscles</span><input className="input" placeholder="Target" value={addForm.target} onChange={(e) => setAddForm({ ...addForm, target: e.target.value })} /></label>
-          <label className="form-field"><span>Sets × reps</span><input className="input" placeholder="Volume" value={addForm.vol} onChange={(e) => setAddForm({ ...addForm, vol: e.target.value })} /></label>
-        </div>
-      </Modal>
-      {showExerciseDetails && ex ? (
-        <ExerciseDetailModal
-          exerciseName={ex.name}
-          allExercises={tracker.exercises}
-          currentIndex={tracker.index}
-          onClose={() => setShowExerciseDetails(false)}
-        />
-      ) : null}
+      {workoutDialogs}
     </section>
   );
 }

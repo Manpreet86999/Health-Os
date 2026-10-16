@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
 import { ROOT } from '../config.js';
+import { WhisperCpp } from '../../integrations/speech/whisper-worker-client.js';
+import type { SpeechToText } from '../../integrations/speech/speech-to-text.js';
 
 export class VoiceError extends Error {
   constructor(public code: string, message: string, public status = 503) { super(message); }
@@ -101,5 +103,9 @@ export class LocalWhisper {
   }
 }
 
-export const localWhisper = new LocalWhisper();
+export function createSpeechToText():SpeechToText {
+  const native=new WhisperCpp({executable:process.env.HEALTH_OS_WHISPER_CPP_BIN||path.join(ROOT,'runtime/whisper-cpp/whisper-cli.exe'),model:process.env.HEALTH_OS_WHISPER_CPP_MODEL||path.join(ROOT,'runtime/whisper-cpp/ggml-tiny.bin')});
+  return native.status().available?native:new LocalWhisper();
+}
+export const localWhisper = createSpeechToText();
 process.once('exit', () => localWhisper.dispose());

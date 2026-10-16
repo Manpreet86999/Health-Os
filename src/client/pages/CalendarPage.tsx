@@ -1,3 +1,6 @@
+import { AndroidCalendarActivity } from '../components/AndroidCalendarActivity';
+import { androidLayout } from '../lib/android-layout';
+import { useBiologicalData } from '../lib/use-biological-data';
 import { useDraftState } from '../lib/use-draft';
 import { DraftFeedback } from '../components/DraftFeedback';
 import { Calendar } from '../components/DesignSystem';
@@ -8,6 +11,7 @@ import { today } from '../lib/utils';
 
 export function CalendarPage() {
   const app = useApp();
+  const {selectedDate,setSelectedDate}=useBiologicalData();
   const toast = useToast();
   const { db, setPage, setActiveDay, setManualDay, setTracker, settings } = app;
   const [monthOffset, setMonthOffset] = useState(0);
@@ -89,9 +93,10 @@ export function CalendarPage() {
       </header>
 
       <section className="page-panel">
-        <Calendar cursor={base} selected={form.date} onSelect={date=>setForm(f=>({...f,date}))} onMonth={date=>setMonthOffset((date.getFullYear()-now.getFullYear())*12+date.getMonth()-now.getMonth())} renderDay={date=>({recorded:sessionByDate.get(date)||0,scheduled:scheduled.filter(s=>s.date===date&&s.status!=='skipped').length})}/>
+        <Calendar cursor={base} selected={androidLayout?selectedDate:form.date} onSelect={date=>{setForm(f=>({...f,date}));if(androidLayout){setSelectedDate(date);setActiveDay(new Date(`${date}T12:00:00`).toLocaleDateString('en-US',{weekday:'short'}));setManualDay(true);}}} onMonth={date=>setMonthOffset((date.getFullYear()-now.getFullYear())*12+date.getMonth()-now.getMonth())} renderDay={date=>({recorded:sessionByDate.get(date)||0,scheduled:scheduled.filter(s=>s.date===date&&s.status!=='skipped').length})}/>
       </section>
 
+      {androidLayout&&<AndroidCalendarActivity/>}
       <div className="grid-2">
         <section className="page-panel stack">
           <div className="page-panel-head">
